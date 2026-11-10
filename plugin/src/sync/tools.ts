@@ -71,8 +71,11 @@ export function registerSyncTool(
           },
         ],
       },
-      async execute(args) {
+      async execute(args, exec) {
         const runtime = runtimeOf(getRuntime, getStartupError)
+        if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+          throw new FactoryError('FORBIDDEN', 'factory_sync — global capability и недоступен дочерним агентам')
+        }
         const action = args.action ?? 'status'
         if (action === 'status') {
           const status = runtime.sync.status()

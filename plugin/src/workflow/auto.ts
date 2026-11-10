@@ -144,6 +144,7 @@ export class AutoWorkflowService {
             maxCycles: this.runtime.config.autoWorkflowMaxCycles,
           },
           exec,
+          true,
         )
         results.push(result)
         this.runtime.audit.record({

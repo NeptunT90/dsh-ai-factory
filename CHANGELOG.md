@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.20.0] — 2026-11-10
+
+### Added
+
+- BLOCK 2 Project Context Isolation: ProjectScopeService, PROJECT_MISMATCH,
+  task/memory ID gates, dispatch/review/workflow caller-project checks.
+- Child projectId in prompt/audit; project.override_active audit; dashboard project filter.
+- factory_sync and factory_auto_workflow are root-only; sync remains global capability.
+- project-isolation.test.ts (9 scenarios); 76 plugin tests.
+- Plugin 0.19.0: 39 tools; server 0.17.0.
+
 ## [0.19.0] — 2026-11-10
 
 ### Added

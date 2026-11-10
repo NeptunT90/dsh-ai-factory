@@ -16,6 +16,8 @@ export interface ScopedRunInput {
   readonly signal: AbortSignal
   readonly label?: string
   readonly timeoutMs?: number
+  /** Project identity for prompt/audit; cwd remains the session boundary. */
+  readonly projectId?: string
   /** Explicit route selected by the Model Router; overrides profile/parent derivation. */
   readonly agentOptions?: AgentOptions
 }
@@ -95,6 +97,7 @@ export class ScopedChildRunner implements ChildRunner {
       handle = await agents.create({
         sessionId,
         parentAgent: input.parent,
+        // DSH 0.2.2 session meta has no projectId field; project identity travels via cwd, prompt and audit.
         meta: { cwd: input.cwd, origin: 'subagent', delegationDepth: 1 },
         ...(options === undefined ? {} : { agentOptions: options }),
         setup: (agentCtx) => {
@@ -119,6 +122,7 @@ export class ScopedChildRunner implements ChildRunner {
             data: {
               sessionId,
               profile: input.profile.name,
+              ...(input.projectId === undefined ? {} : { projectId: input.projectId }),
               allowedHost: HOST_TOOL_NAMES.filter((name) => allowed.includes(name)),
               deniedHost: [...HOST_TOOL_NAMES, ...BROWSER_TOOL_NAMES].filter((name) => !allowed.includes(name)),
               knownHost: known.filter((name) => (HOST_TOOL_NAMES as readonly string[]).includes(name) || (BROWSER_TOOL_NAMES as readonly string[]).includes(name)),

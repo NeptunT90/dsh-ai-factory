@@ -105,6 +105,14 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Project context (v0.19.0 / BLOCK 2)
+
+- `ProjectScopeService` проверяет caller project для task/memory ID-операций, dispatch, review и workflow; ошибка `PROJECT_MISMATCH`.
+- `factory_sync` — **global capability**, root-only; дочерний агент получает `FORBIDDEN`. Project-scoped sync — отдельный этап после BLOCK 2 (без миграции v6 сейчас).
+- `projectIdOverride` схлопывает несколько workspace в один project; изоляция между ними не работает. При старте пишется audit `project.override_active`.
+- path-level isolation для host file-tools — ответственность DSH, не плагина. `safeWorkspacePath` подготовлен для будущих plugin-owned tools и сейчас не используется.
+- child получает projectId в prompt и audit; DSH session meta 0.2.2 не имеет поля projectId, границей остаётся cwd.
+
 ## Tool Health (v0.18.0)
 
 - Health покрывает только `factory_*`; host-tools DSH (`read`/`write`/`pwsh`/`browser_*`/`office_*`) не получают статусов и не фильтруются.

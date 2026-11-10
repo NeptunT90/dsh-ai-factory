@@ -16,9 +16,10 @@ import { SyncService } from './sync/service.js'
 import { ModelRouter } from './models/router.js'
 import { AutoWorkflowService } from './workflow/auto.js'
 import type { ToolHealthService } from './health/service.js'
+import { ProjectScopeService } from './projects/policy.js'
 import { isHostCapability } from './agents/allowlists.js'
 
-export const FACTORY_VERSION = '0.18.0'
+export const FACTORY_VERSION = '0.19.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -55,6 +56,7 @@ export class FactoryRuntime {
   readonly agents: AgentRegistry
   readonly tasks: TaskEngine
   readonly planner: PlannerService
+  readonly scope: ProjectScopeService
   readonly sync: SyncService
   readonly models: ModelRouter
   autoWorkflow?: AutoWorkflowService
@@ -74,6 +76,7 @@ export class FactoryRuntime {
     this.agents.seedBuiltins()
     this.tasks = new TaskEngine(db, this.projects, this.agents, config)
     this.planner = new PlannerService(this.tasks, this.agents)
+    this.scope = new ProjectScopeService(this.projects, config.allowGlobalMemory)
     this.sync = new SyncService(db, this.memory, this.audit, config)
     this.models = new ModelRouter(config)
     if (config.syncAuto) this.sync.startAuto()
@@ -99,6 +102,16 @@ export class FactoryRuntime {
         recoveredTasks: this.recoveredOnStart,
       },
     })
+    if (config.projectIdOverride.trim() !== '') {
+      this.audit.record({
+        event: 'project.override_active',
+        level: 'warn',
+        data: {
+          projectId: config.projectIdOverride.trim(),
+          note: 'projectIdOverride collapses multiple workspaces into one project; isolation between them does not apply',
+        },
+      })
+    }
     if (this.recoveredOnStart > 0) {
       this.audit.record({
         event: 'factory.tasks_recovered',
@@ -164,7 +177,11 @@ export class FactoryRuntime {
       actor: exec.agent?.id ?? 'agent',
       projectId: project?.id ?? null,
       sessionId: exec.agent?.id ?? null,
-      data,
+      data: {
+        ...data,
+        actorProjectId: this.projectFor(exec).id,
+        targetProjectId: project?.id ?? null,
+      },
     })
   }
 

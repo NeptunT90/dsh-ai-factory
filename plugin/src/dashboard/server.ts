@@ -88,13 +88,15 @@ export class DashboardServer {
   private actualPort = 0
   private readonly port: number
   private readonly getToolHealth: () => readonly ToolHealthSummary[]
+  private readonly projectFilter: string | null
 
   constructor(
     private readonly runtime: FactoryRuntime,
     private readonly getTools: () => readonly DashboardTool[],
-    options: { port?: number; getToolHealth?: () => readonly ToolHealthSummary[] } = {},
+    options: { port?: number; getToolHealth?: () => readonly ToolHealthSummary[]; projectId?: string } = {},
   ) {
     this.getToolHealth = options.getToolHealth ?? (() => [])
+    this.projectFilter = options.projectId?.trim() || null
     const port = options.port ?? 0
     if (!Number.isInteger(port) || port < 0 || port > 65_535) {
       throw new FactoryError('INVALID_INPUT', 'port должен быть целым числом 0..65535')
@@ -230,9 +232,13 @@ export class DashboardServer {
 
   private state(): Record<string, unknown> {
     const runtime = this.runtime
-    const projects = runtime.projects.list(200)
-    const projectNames = new Map(projects.map((project) => [project.id, project.name]))
-    const tasks = runtime.tasks.listAll(100).map((task) => ({
+    const allProjects = runtime.projects.list(200)
+    const projects = this.projectFilter === null ? allProjects : allProjects.filter((project) => project.id === this.projectFilter)
+    const projectNames = new Map(allProjects.map((project) => [project.id, project.name]))
+    const tasks = runtime.tasks
+      .listAll(100)
+      .filter((task) => this.projectFilter === null || task.projectId === this.projectFilter)
+      .map((task) => ({
       id: task.id,
       projectId: task.projectId,
       projectName: projectNames.get(task.projectId) ?? task.projectId,
@@ -246,7 +252,13 @@ export class DashboardServer {
       error: task.error ?? '',
       updatedAt: task.updatedAt,
     }))
-    const memory = runtime.memory.search({ limit: 50 }).map((hit) => ({
+    const memory = runtime.memory
+      .search(
+        this.projectFilter === null
+          ? { limit: 50 }
+          : { projectId: this.projectFilter, includeGlobal: false, limit: 50 },
+      )
+      .map((hit) => ({
       id: hit.id,
       projectId: hit.projectId,
       projectName: hit.projectId ? projectNames.get(hit.projectId) ?? hit.projectId : 'global',
@@ -288,7 +300,7 @@ export class DashboardServer {
       projectId: record.projectId,
       data: record.data,
     }))
-    const taskStats = runtime.tasks.statsAll()
+    const taskStats = this.projectFilter === null ? runtime.tasks.statsAll() : runtime.tasks.stats(this.projectFilter)
     const memoryStats = runtime.memory.stats()
     return {
       generatedAt: Date.now(),
@@ -300,6 +312,7 @@ export class DashboardServer {
         dbPath: runtime.db.path,
         autonomy: runtime.config.defaultAutonomy,
         projects: projects.length,
+        projectFilter: this.projectFilter,
         agents: agents.length,
         runningAgents: agents.filter((agent) => agent.enabled).length,
         tasks: taskStats,

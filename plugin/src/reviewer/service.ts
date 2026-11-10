@@ -55,7 +55,8 @@ function composePrompt(runtime: FactoryRuntime, task: TaskRecord, reviewer: Agen
     `ID: ${task.id}`,
     `Цель: ${task.goal || task.title}`,
     `Описание: ${task.description || '(нет)'}`,
-    `Проект: ${project.name} (${project.rootPath})`,
+    `Проект: ${project.name} (${project.id})`,
+    `Project root: ${project.rootPath}`,
     `Результат исполнителя: ${task.result || '(не записан)'}`,
     `Попытки исполнителя: ${task.attempts}/${task.maxAttempts}`,
     extra?.trim() ? `Дополнительные указания: ${extra.trim()}` : '',
@@ -82,9 +83,10 @@ export class ReviewerService {
     this.runner = runner ?? new ScopedChildRunner(ctx, runtime)
   }
 
-  async review(input: ReviewInput, exec: ToolRunContext): Promise<ReviewResult> {
+  async review(input: ReviewInput, exec: ToolRunContext, allowCrossProject = false): Promise<ReviewResult> {
     const runtime = this.runtime
     const task = runtime.tasks.require(input.taskId)
+    if (!allowCrossProject) runtime.scope.assertTask(exec, task, 'review')
     if (task.status !== 'REVIEW') {
       throw new FactoryError('CONFLICT', `factory_review требует задачу в REVIEW, сейчас ${task.status}`)
     }
@@ -122,7 +124,13 @@ export class ReviewerService {
       actor: parent.id,
       projectId: task.projectId,
       sessionId: parent.id,
-      data: { taskId: task.id, reviewerAgentId: reviewer.id, allowedTools: effectiveAllowed.length },
+      data: {
+        taskId: task.id,
+        reviewerAgentId: reviewer.id,
+        allowedTools: effectiveAllowed.length,
+        actorProjectId: runtime.projectFor(exec).id,
+        targetProjectId: task.projectId,
+      },
     })
 
     try {
@@ -132,6 +140,7 @@ export class ReviewerService {
         result = await this.runner.run({
           parent,
           cwd: project.rootPath,
+          projectId: task.projectId,
           prompt: composePrompt(runtime, task, reviewer, input.instructions),
           profile: reviewer,
           signal: exec.signal,

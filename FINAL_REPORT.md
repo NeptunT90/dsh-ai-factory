@@ -1,6 +1,6 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-10. Плагин **dsh-ai-factory 0.18.0**, sync-сервер **0.17.0**,
+Дата: 2026-11-10. Плагин **dsh-ai-factory 0.19.0**, sync-сервер **0.17.0**,
 DSH Desktop **0.2.2-rc.1**, схема SQLite **v5**, **39** инструментов.
 
 ## Что внедрено
@@ -22,12 +22,12 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v5**, **39** инструмен�
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
 | Tests | готово | 59 plugin + 10 server |
-| Install desktop | готово | live 0.18.0, 39 tools, schema 5 |
-| Portable profile | готово | `portable-test` 0.18.0 |
+| Install desktop | готово | live 0.19.0, 39 tools, schema 5 |
+| Portable profile | готово | `portable-test` 0.19.0 |
 
 ## Live-доказательства
 
-- `factory_status`: 0.18.0, schema 5, 10 профилей (7 builtin + 3 test; `BADROUTE` disabled), 29 задач, 2 памяти.
+- `factory_status`: 0.19.0, schema 5, 10 профилей (7 builtin + 3 test; `BADROUTE` disabled), 29 задач, 3 памяти.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -38,6 +38,13 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v5**, **39** инструмен�
 - PostgreSQL multi-writer: два PgStore, один `opId` → ровно один apply.
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
+
+## BLOCK 2 Project Context Isolation (v0.19.0)
+
+- `ProjectScopeService` + `PROJECT_MISMATCH`; task/memory ID gates; dispatch/review/workflow caller check.
+- Child projectId in prompt/audit; dashboard project filter; root-only sync/auto; override audit.
+- 9 project-isolation tests; live A/B cross-project task/memory/dispatch/workflow refusals; dashboard filtered state.
+- 76 plugin tests, 10 server.
 
 ## BLOCK 1 Tool Health (v0.18.0)
 
@@ -71,9 +78,9 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v5**, **39** инструмен�
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-0.18.0.tgz
-  169 144 байт
-  41398296b940dd5604eb2634eef790be10f5e15e234eb5008c434460e5249843
+dist/dsh-ai-factory-0.19.0.tgz
+  173 562 байт
+  18ded1576062a6df616986d352f5c7c516bf00f54ebe5041556facd577dc06c8
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -81,7 +88,7 @@ dist/dsh-ai-factory-sync-server-0.17.0.tgz
 ```
 
 `dist/SHA256SUMS` содержит оба файла; release notes —
-`dist/RELEASE_NOTES-v0.19.0.md`.
+`dist/RELEASE_NOTES-v0.20.0.md`.
 
 ## Ограничения (внешняя инфраструктура)
 
@@ -107,7 +114,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.18.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.19.0.tgz
 ```
 
 Проверка в DSH:

@@ -1,17 +1,17 @@
 # Текущий блок
 
-**BLOCK 1 — Tool Health Check.**
+**BLOCK 2 — Project Context Isolation.**
 
 Сделано:
 
-1. Migration v5: tool_health + tool_health_history.
-2. Risk registry 44 action-записей / 36 factory-tools; R1=REGISTERED, R2=NOT_TESTABLE.
-3. R0 probes через ctx.tools.execute; first live factory_status → HEALTHY 1ms.
-4. 3 root-only health tools; effectiveAllowedTools только factory_*.
-5. Dashboard health; docs/TOOL_HEALTH.md; 67 тестов.
-6. Plugin 0.18.0, root 0.19.0, server 0.17.0.
+1. ProjectScopeService + PROJECT_MISMATCH; task/memory ID gates.
+2. Dispatch/review/workflow caller-project check до claim/child.
+3. child projectId в prompt/audit; dashboard project filter.
+4. factory_sync и factory_auto_workflow root-only; projectIdOverride audit.
+5. 76 тестов, 9 project-isolation сценариев; live A/B отказы.
+6. Plugin 0.19.0, root 0.20.0, server 0.17.0.
 
-Осталось: BLOCK 2 — factory_agent_save security; live full health sweep.
+Осталось: BLOCK 3 — project-scoped sync; factory_agent_save security.
 
 ## Предыдущий блок: browser/sync/live sync
 

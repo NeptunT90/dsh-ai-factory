@@ -5,7 +5,7 @@ import type { ChildRunner, ScopedRunInput, ScopedRunResult } from '../src/agents
 import { DispatchService } from '../src/dispatch/service.js'
 import { createTestRuntime, track } from './helpers.js'
 
-function fakeExec(): ToolRunContext {
+function fakeExec(cwd = 'C:/workspace'): ToolRunContext {
   return {
     callId: 'call_dispatch',
     name: 'factory_dispatch',
@@ -14,7 +14,7 @@ function fakeExec(): ToolRunContext {
     agent: {
       id: 'ses_parent',
       options: { provider: 'fake', model: 'fake-model' },
-      session: { header: { cwd: 'C:/workspace' } },
+      session: { header: { cwd } },
     },
   } as unknown as ToolRunContext
 }
@@ -48,7 +48,7 @@ describe('DispatchService', () => {
       runner({ childId: 'ses_child', output: 'Отчёт готов. Проверено тестом.', stopReason: 'completed', diagnostic: '' }, captured),
     )
 
-    const output = await service.dispatch({ taskId: task.id }, fakeExec())
+    const output = await service.dispatch({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(output.stopReason).toBe('completed')
     expect(output.childId).toBe('ses_child')
@@ -71,7 +71,7 @@ describe('DispatchService', () => {
       runner({ childId: 'ses_child', output: 'Результат для ревью.', stopReason: 'completed', diagnostic: '' }),
     )
 
-    const output = await service.dispatch({ taskId: task.id, review: true }, fakeExec())
+    const output = await service.dispatch({ taskId: task.id, review: true }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(output.taskStatus).toBe('REVIEW')
     expect(runtime.tasks.require(task.id).status).toBe('REVIEW')
@@ -87,7 +87,7 @@ describe('DispatchService', () => {
       runner({ childId: 'ses_child', output: '', stopReason: 'error', diagnostic: 'child failed' }),
     )
 
-    const output = await service.dispatch({ taskId: task.id }, fakeExec())
+    const output = await service.dispatch({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(output.stopReason).toBe('error')
     expect(output.taskStatus).toBe('READY')
@@ -111,7 +111,7 @@ describe('DispatchService', () => {
     }
     const output = await new DispatchService(fakeContext(), runtime, fallbackRunner).dispatch(
       { taskId: task.id },
-      fakeExec(),
+      fakeExec(runtime.projects.require(projectId).rootPath),
     )
     expect(output.taskStatus).toBe('COMPLETED')
     expect(output.childId).toBe('ses_second')
@@ -140,7 +140,7 @@ describe('DispatchService', () => {
     }
     const output = await new DispatchService(fakeContext(), runtime, sideEffectRunner).dispatch(
       { taskId: task.id },
-      fakeExec(),
+      fakeExec(runtime.projects.require(projectId).rootPath),
     )
     expect(calls).toHaveLength(1)
     expect(output.stopReason).toBe('error')
@@ -152,7 +152,7 @@ describe('DispatchService', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Без agents' })
     await expect(
-      new DispatchService(fakeContext(), runtime).dispatch({ taskId: task.id }, fakeExec()),
+      new DispatchService(fakeContext(), runtime).dispatch({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath)),
     ).rejects.toThrowError(/ctx\.agents/)
     expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
@@ -164,7 +164,7 @@ describe('DispatchService', () => {
     await expect(
       new DispatchService(fakeContext(), runtime, runner({ childId: 'x', output: 'x', stopReason: 'completed', diagnostic: '' })).dispatch(
         { taskId: task.id },
-        fakeExec(),
+        fakeExec(runtime.projects.require(projectId).rootPath),
       ),
     ).rejects.toThrowError(/allowedTools/)
     expect(runtime.tasks.require(task.id).status).toBe('READY')

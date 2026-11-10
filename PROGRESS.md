@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### BLOCK 2 Project Context Isolation v0.19.0
+
+- ProjectScopeService, PROJECT_MISMATCH, task/memory gates.
+- dispatch/review/workflow caller-project checks; child prompt/audit projectId.
+- root-only sync/auto; project override audit; dashboard filter; 76 tests.
+
 ### BLOCK 1 Tool Health v0.18.0
 
 - Migration v5, risk registry, R0 pipeline probes, R1/R2 statuses.

@@ -1,4 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
+import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { FactoryError } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
@@ -134,6 +135,15 @@ function formatHit(hit: SearchHitView): string {
 
 function asRecord(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
+}
+
+function assertMemoryProject(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  entry: { id: string; projectId: string | null },
+  operation: 'read' | 'write' | 'delete',
+): void {
+  runtime.scope.assertMemory(exec, entry, operation)
 }
 
 function requireRuntime(getRuntime: () => FactoryRuntime | undefined, startupError: () => string | undefined): FactoryRuntime {
@@ -318,9 +328,10 @@ export function registerMemoryTools(
           schema: ENTRY_OUTPUT,
           render: (_args, value) => [{ type: 'text', text: formatEntry(value) }],
         },
-        async execute(args) {
+        async execute(args, exec) {
           const runtime = requireRuntime(getRuntime, getStartupError)
           const entry = runtime.memory.require(args.id)
+          assertMemoryProject(runtime, exec, entry, 'read')
           return view(entry)
         },
       }),
@@ -352,6 +363,8 @@ export function registerMemoryTools(
         },
         async execute(args, exec) {
           const runtime = requireRuntime(getRuntime, getStartupError)
+          const existing = runtime.memory.require(args.id)
+          assertMemoryProject(runtime, exec, existing, 'write')
           const entry = runtime.memory.update({
             id: args.id,
             title: args.title,
@@ -397,6 +410,8 @@ export function registerMemoryTools(
         },
         async execute(args, exec) {
           const runtime = requireRuntime(getRuntime, getStartupError)
+          const existing = runtime.memory.require(args.id)
+          assertMemoryProject(runtime, exec, existing, 'delete')
           const entry = runtime.memory.forget(args.id, exec.agent?.id ?? 'agent', args.reason ?? 'forget')
           runtime.auditTool('memory.forget', runtime.projectFor(exec), exec, { memoryId: entry.id })
           return { id: entry.id, forgotten: true, version: entry.version }
@@ -454,8 +469,10 @@ export function registerMemoryTools(
             },
           ],
         },
-        async execute(args) {
+        async execute(args, exec) {
           const runtime = requireRuntime(getRuntime, getStartupError)
+          const entry = runtime.memory.require(args.id)
+          assertMemoryProject(runtime, exec, entry, 'read')
           const versions = runtime.memory.history(args.id)
           return {
             count: versions.length,

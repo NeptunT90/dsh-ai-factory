@@ -14,7 +14,11 @@ export function workspaceRootOf(exec: Pick<ToolRunContext, 'agent'> | undefined)
   return resolve(process.cwd())
 }
 
-/** Resolve a user-supplied path inside the workspace, rejecting escapes. */
+/**
+ * Prepared for future plugin-owned file-tools; not used for host file-tools.
+ * Path enforcement for DSH host file-tools is the DSH sandbox's responsibility,
+ * not this plugin's.
+ */
 export function safeWorkspacePath(root: string, requested: string): string {
   if (requested.trim() === '') throw new Error('Путь не указан')
   const target = isAbsolute(requested) ? resolve(requested) : resolve(root, requested)

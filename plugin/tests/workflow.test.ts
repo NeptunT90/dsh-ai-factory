@@ -5,7 +5,7 @@ import type { ChildRunner, ScopedRunInput, ScopedRunResult } from '../src/agents
 import { WorkflowService } from '../src/workflow/service.js'
 import { createTestRuntime, track } from './helpers.js'
 
-function fakeExec(): ToolRunContext {
+function fakeExec(cwd = 'C:/workspace'): ToolRunContext {
   return {
     callId: 'call_workflow',
     name: 'factory_workflow_run',
@@ -14,7 +14,7 @@ function fakeExec(): ToolRunContext {
     agent: {
       id: 'ses_parent',
       options: { provider: 'fake', model: 'fake-model' },
-      session: { header: { cwd: 'C:/workspace' } },
+      session: { header: { cwd } },
     },
   } as unknown as ToolRunContext
 }
@@ -63,7 +63,7 @@ describe('WorkflowService', () => {
     const task = runtime.tasks.create({ projectId, title: 'Автономная задача', assignedAgentId: developer.id })
     const service = new WorkflowService(fakeContext(), runtime, scriptedRunner(['FAIL', 'PASS']))
 
-    const result = await service.run({ taskId: task.id, maxCycles: 3 }, fakeExec())
+    const result = await service.run({ taskId: task.id, maxCycles: 3 }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(result.status).toBe('PASSED')
     expect(result.cycles).toHaveLength(2)
@@ -80,7 +80,7 @@ describe('WorkflowService', () => {
     const task = runtime.tasks.create({ projectId, title: 'Бесконечный FAIL' })
     const service = new WorkflowService(fakeContext(), runtime, scriptedRunner(['FAIL', 'FAIL']))
 
-    const result = await service.run({ taskId: task.id, maxCycles: 1 }, fakeExec())
+    const result = await service.run({ taskId: task.id, maxCycles: 1 }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(result.status).toBe('EXHAUSTED')
     expect(result.cycles).toHaveLength(1)
@@ -93,7 +93,7 @@ describe('WorkflowService', () => {
     const task = runtime.tasks.create({ projectId, title: 'Без agents' })
     const result = await new WorkflowService(fakeContext(), runtime).run(
       { taskId: task.id, maxCycles: 1 },
-      fakeExec(),
+      fakeExec(runtime.projects.require(projectId).rootPath),
     )
     expect(result.status).toBe('ERROR')
     expect(result.message).toContain('ctx.agents')

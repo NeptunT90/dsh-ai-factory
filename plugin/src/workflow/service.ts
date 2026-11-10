@@ -43,17 +43,28 @@ export class WorkflowService {
     private readonly runner?: ChildRunner,
   ) {}
 
-  async run(input: WorkflowInput, exec: ToolRunContext): Promise<WorkflowResult> {
+  async run(input: WorkflowInput, exec: ToolRunContext, allowCrossProject = false): Promise<WorkflowResult> {
     const runtime = this.runtime
+    if (!allowCrossProject) {
+      const initial = runtime.tasks.require(input.taskId)
+      runtime.scope.assertTask(exec, initial, 'workflow')
+    }
     const maxCycles = Math.max(1, Math.min(5, Math.floor(input.maxCycles ?? 3)))
     let currentId = input.taskId
     const cycles: WorkflowCycle[] = []
     let lastFix = ''
+    const startedTask = runtime.tasks.require(input.taskId)
     runtime.audit.record({
       event: 'workflow.started',
       level: 'info',
       actor: exec.agent?.id,
-      data: { taskId: input.taskId, maxCycles },
+      projectId: startedTask.projectId,
+      data: {
+        taskId: input.taskId,
+        maxCycles,
+        actorProjectId: runtime.projectFor(exec).id,
+        targetProjectId: startedTask.projectId,
+      },
     })
 
     try {
@@ -66,6 +77,7 @@ export class WorkflowService {
           const dispatch = await new DispatchService(this.ctx, runtime, this.runner).dispatch(
             { taskId: currentId, review: true },
             exec,
+            allowCrossProject,
           )
           task = runtime.tasks.require(currentId)
           if (dispatch.stopReason !== 'completed' || task.status !== 'REVIEW') {
@@ -98,6 +110,7 @@ export class WorkflowService {
             ...(input.instructions ? { instructions: input.instructions } : {}),
           },
           exec,
+          allowCrossProject,
         )
         cycles.push({
           cycle,

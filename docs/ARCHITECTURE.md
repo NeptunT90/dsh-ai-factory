@@ -344,6 +344,20 @@ Auto workflow не является daemon: живёт только пока з�
 - TTL 10 мин, circuit breaker 3 ошибки/5 мин только для R0;
 - host-tools вне health.
 
+### 7.5e. Project Context Isolation (v0.19.0 / BLOCK 2)
+
+`ProjectScopeService` (`plugin/src/projects/policy.ts`) проверяет caller project для
+ID-addressed операций. Project id — workspace identity, не пользователь.
+
+- default deny: `PROJECT_MISMATCH`, если task/memory project не равен current;
+- task tools/engine: `assertTask` / `requireForProject`;
+- memory tools: `assertMemory`; global memory — explicit policy;
+- dispatch/review/workflow проверяют task project до claim/child;
+- child prompt/audit содержит projectId; DSH session meta 0.2.2 поля projectId не имеет,
+  границей остаётся cwd;
+- `factory_sync` — global capability, root-only; project-scoped sync — отдельный этап;
+- `projectIdOverride` задокументирован и аудируется как `project.override_active`.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в

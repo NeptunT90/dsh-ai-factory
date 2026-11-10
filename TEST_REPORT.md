@@ -19,7 +19,7 @@
 
 ```
 Test Files  15 passed (15)
-Tests       67 passed (67)
+Tests       76 passed (76)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
@@ -76,6 +76,15 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Project Context Isolation v0.19.0 (live)
+
+- HMR loaded **0.19.0**; schema v5, 39 tools.
+- Two live projects A (`C:\AI Factory`) and B (`C:\AI Factory\.research\project-b-live`).
+- B task/memory seeded; calling `factory_task_get`, `factory_memory_get` from A →
+  `PROJECT_MISMATCH`; `factory_dispatch` and `factory_workflow_run` rejected before claim/child.
+- Dashboard with `projectId=B`: `tasks=1`, `memory=1`, only B rows; overview projectFilter=B.
+- 76 plugin tests (9 project-isolation scenarios); server 10/10.
 
 ### Tool Health Check v0.18.0 (live)
 
@@ -202,12 +211,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.18.0.tgz`: **169 144 байт**.
-- SHA256: `41398296b940dd5604eb2634eef790be10f5e15e234eb5008c434460e5249843`.
+- `dist/dsh-ai-factory-0.19.0.tgz`: **173 562 байт**.
+- SHA256: `18ded1576062a6df616986d352f5c7c516bf00f54ebe5041556facd577dc06c8`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.19.0.md` (1 940 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.20.0.md` (1 732 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -219,7 +228,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.18.0; schema 5, 39 инструментов.
+- `portable-test` обновлён с 0.15.0 на 0.19.0; schema 5, 39 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -234,7 +243,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл реализован bounded (autoWorkflow*, default off); standalone PostgreSQL/TLS реализованы, deploy не выполнен.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.18.0 не выполнен.
+- Полный restart DSH после 0.19.0 не выполнен.
 
 ## 8. Повтор
 

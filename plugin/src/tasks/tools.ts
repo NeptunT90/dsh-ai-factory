@@ -137,8 +137,29 @@ function currentProject(
   exec: Pick<ToolRunContext, 'agent'>,
   explicit?: string,
 ): ProjectRecord {
-  if (explicit?.trim()) return runtime.projects.require(explicit.trim())
+  if (explicit?.trim()) return runtime.scope.requireSame(exec, explicit.trim(), 'read')
   return runtime.projectFor(exec)
+}
+
+function assertTaskProject(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  task: TaskRecord,
+  operation: 'read' | 'write' | 'delete' | 'recover',
+): void {
+  runtime.scope.assertTask(exec, task, operation)
+}
+
+function requireTaskFor(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  id: string,
+  operation: 'read' | 'write' | 'delete' | 'recover',
+): TaskRecord {
+  const project = runtime.scope.current(exec)
+  const task = runtime.tasks.requireForProject(id, project.id)
+  runtime.scope.assertTask(exec, task, operation)
+  return task
 }
 
 function leaseMsFromMinutes(minutes: number | undefined, fallback: number): number {
@@ -271,9 +292,9 @@ export function registerTaskTools(
           id: { type: 'string', required: true, description: 'id задачи' },
         },
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
-        async execute(args) {
+        async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
-          return view(runtime.tasks.require(args.id))
+          return view(requireTaskFor(runtime, exec, args.id, 'read'))
         },
       }),
     ),
@@ -302,6 +323,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.update(args.id, {
             title: args.title,
             description: args.description,
@@ -338,6 +360,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.claim(args.id, {
             owner: args.owner?.trim() || exec.agent?.id || 'host',
             leaseMs: leaseMsFromMinutes(args.leaseMinutes, 15 * 60_000),
@@ -366,6 +389,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           return view(
             runtime.tasks.heartbeat(
               args.id,
@@ -390,6 +414,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.submitForReview(args.id, exec.agent?.id ?? 'agent', args.result ?? null)
           runtime.auditTool('task.review', runtime.projects.require(task.projectId), exec, { taskId: task.id })
           return view(task)
@@ -411,6 +436,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.complete(args.id, exec.agent?.id ?? 'agent', args.result ?? null)
           runtime.auditTool('task.completed', runtime.projects.require(task.projectId), exec, { taskId: task.id })
           return view(task)
@@ -433,6 +459,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.fail(args.id, exec.agent?.id ?? 'agent', args.error, args.retryable ?? true)
           runtime.auditTool('task.failed', runtime.projects.require(task.projectId), exec, {
             taskId: task.id,
@@ -456,6 +483,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.cancel(args.id, exec.agent?.id ?? 'agent', args.reason ?? '')
           runtime.auditTool('task.cancelled', runtime.projects.require(task.projectId), exec, { taskId: task.id })
           return view(task)
@@ -475,6 +503,7 @@ export function registerTaskTools(
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'write')
           const task = runtime.tasks.retry(args.id, exec.agent?.id ?? 'agent')
           runtime.auditTool('task.retry', runtime.projects.require(task.projectId), exec, { taskId: task.id })
           return view(task)
@@ -501,12 +530,13 @@ export function registerTaskTools(
         },
         async execute(_args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
-          const recovered = runtime.tasks.recoverStale()
+          const project = runtime.projectFor(exec)
+          const recovered = runtime.tasks.recoverStaleForProject(project.id)
           runtime.audit.record({
             event: 'task.recovered',
             level: 'warn',
             actor: exec.agent?.id ?? 'agent',
-            data: { count: recovered },
+            data: { count: recovered, actorProjectId: project.id, targetProjectId: project.id },
           })
           return { recovered }
         },
@@ -563,8 +593,9 @@ export function registerTaskTools(
             },
           ],
         },
-        async execute(args) {
+        async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          requireTaskFor(runtime, exec, args.id, 'read')
           const events = runtime.tasks.events(args.id, args.limit)
           return {
             count: events.length,

@@ -70,8 +70,11 @@ export function registerAutoWorkflowTool(
         ],
       },
       timeoutMs: 120 * 60_000,
-      async execute(args) {
+      async execute(args, exec) {
         const runtime = runtimeOf(getRuntime, getStartupError)
+        if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+          throw new FactoryError('FORBIDDEN', 'factory_auto_workflow обрабатывает все проекты и недоступен дочерним агентам')
+        }
         const service = runtime.autoWorkflow ?? new AutoWorkflowService(ctx, runtime)
         const action = args.action ?? 'status'
         if (action === 'status') {

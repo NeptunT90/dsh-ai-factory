@@ -5,7 +5,7 @@ import type { ChildRunner, ScopedRunInput, ScopedRunResult } from '../src/agents
 import { ReviewerService } from '../src/reviewer/service.js'
 import { createTestRuntime, track } from './helpers.js'
 
-function fakeExec(): ToolRunContext {
+function fakeExec(cwd = 'C:/workspace'): ToolRunContext {
   return {
     callId: 'call_review',
     name: 'factory_review',
@@ -14,7 +14,7 @@ function fakeExec(): ToolRunContext {
     agent: {
       id: 'ses_parent',
       options: { provider: 'fake', model: 'fake-model' },
-      session: { header: { cwd: 'C:/workspace' } },
+      session: { header: { cwd } },
     },
   } as unknown as ToolRunContext
 }
@@ -59,7 +59,7 @@ describe('ReviewerService', () => {
       runner({ childId: 'ses_review', output: 'VERDICT: PASS\nВсё проверено.', stopReason: 'completed', diagnostic: '' }, captured),
     )
 
-    const result = await service.review({ taskId: task.id }, fakeExec())
+    const result = await service.review({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(result.verdict).toBe('PASS')
     expect(result.taskStatus).toBe('COMPLETED')
@@ -87,7 +87,7 @@ describe('ReviewerService', () => {
       }),
     )
 
-    const result = await service.review({ taskId: task.id }, fakeExec())
+    const result = await service.review({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
 
     expect(result.verdict).toBe('FAIL')
     expect(result.taskStatus).toBe('FAILED')
@@ -104,7 +104,7 @@ describe('ReviewerService', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = reviewTask(runtime, projectId)
     await expect(
-      new ReviewerService(fakeContext(), runtime).review({ taskId: task.id }, fakeExec()),
+      new ReviewerService(fakeContext(), runtime).review({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath)),
     ).rejects.toThrowError(/ctx\.agents/)
     expect(runtime.tasks.require(task.id).status).toBe('REVIEW')
   })

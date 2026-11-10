@@ -253,6 +253,19 @@ export class TaskEngine {
     return task
   }
 
+  /** Project-scoped lookup used by tools and services at the task boundary. */
+  requireForProject(id: string, projectId: string): TaskRecord {
+    const task = this.require(id)
+    if (task.projectId !== projectId) {
+      throw new FactoryError(
+        'PROJECT_MISMATCH',
+        `Задача ${id} принадлежит проекту ${task.projectId}, текущий проект ${projectId}`,
+        { taskId: id, currentProjectId: projectId, targetProjectId: task.projectId },
+      )
+    }
+    return task
+  }
+
   list(filter: TaskListFilter): TaskRecord[] {
     this.projects.require(filter.projectId)
     const limit = Math.max(1, Math.min(200, Math.floor(filter.limit ?? 50)))
@@ -537,9 +550,19 @@ export class TaskEngine {
 
   /** Recover RUNNING tasks whose lease expired (crash/restart). */
   recoverStale(nowTs = now()): number {
+    return this.recoverStaleWhere(null, nowTs)
+  }
+
+  /** Recover only one project's stale leases; used by the project-scoped tool. */
+  recoverStaleForProject(projectId: string, nowTs = now()): number {
+    this.projects.require(projectId)
+    return this.recoverStaleWhere(projectId, nowTs)
+  }
+
+  private recoverStaleWhere(projectId: string | null, nowTs: number): number {
     const stale = this.db.all<TaskRow>(
-      `${SELECT} WHERE status = 'RUNNING' AND (lease_until IS NULL OR lease_until <= ?)`,
-      [nowTs],
+      `${SELECT} WHERE status = 'RUNNING' AND (lease_until IS NULL OR lease_until <= ?)${projectId === null ? '' : ' AND project_id = ?'}`,
+      projectId === null ? [nowTs] : [nowTs, projectId],
     )
     if (stale.length === 0) return 0
     this.db.transaction(() => {

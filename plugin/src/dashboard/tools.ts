@@ -23,9 +23,10 @@ export class DashboardManager {
     private readonly getToolHealth: () => readonly ToolHealthSummary[] = () => [],
   ) {}
 
-  async start(port = 0): Promise<DashboardStatus> {
+  async start(port = 0, projectId?: string): Promise<DashboardStatus> {
     const runtime = this.getRuntime()
     if (!runtime) throw new FactoryError('UNAVAILABLE', 'AI Factory не инициализирован')
+    if (projectId?.trim()) runtime.projects.require(projectId.trim())
     if (this.server?.running) {
       return {
         running: true,
@@ -34,7 +35,7 @@ export class DashboardManager {
         port: new URL(this.server.url).port ? Number(new URL(this.server.url).port) : 0,
       }
     }
-    const server = new DashboardServer(runtime, this.getTools, { port, getToolHealth: this.getToolHealth })
+    const server = new DashboardServer(runtime, this.getTools, { port, getToolHealth: this.getToolHealth, ...(projectId?.trim() ? { projectId: projectId.trim() } : {}) })
     const started = await server.start()
     this.server = server
     runtime.audit.record({
@@ -98,6 +99,10 @@ export function registerDashboardTool(ctx: Context, manager: DashboardManager): 
           type: 'number',
           description: 'Порт 0..65535 (0 — свободный порт, по умолчанию). Только loopback.',
         },
+        projectId: {
+          type: 'string',
+          description: 'Опциональный фильтр dashboard по projectId.',
+        },
       },
       output: {
         schema: {
@@ -137,7 +142,7 @@ export function registerDashboardTool(ctx: Context, manager: DashboardManager): 
           return { ...status, message: status.running ? 'Dashboard работает.' : 'Dashboard не запущен.' }
         }
         try {
-          const status = await manager.start(args.port)
+          const status = await manager.start(args.port, args.projectId)
           return { ...status, message: 'Dashboard запущен.' }
         } catch (error) {
           throw new FactoryError('UNAVAILABLE', `Не удалось запустить dashboard: ${errorMessage(error)}`)
