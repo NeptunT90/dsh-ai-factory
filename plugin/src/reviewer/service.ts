@@ -180,7 +180,9 @@ export class ReviewerService {
         .join('\n')
 
       if (parsed.verdict === 'PASS' || parsed.verdict === 'PASS_WITH_WARNINGS') {
-        const completed = runtime.tasks.complete(task.id, parent.id, reviewText)
+        const priorResult = task.result?.trim() ?? ''
+        const completionText = priorResult ? `${priorResult}\n\n--- REVIEW ---\n${reviewText}` : reviewText
+        const completed = runtime.tasks.complete(task.id, parent.id, completionText)
         runtime.audit.record({
           event: 'review.completed',
           level: 'info',

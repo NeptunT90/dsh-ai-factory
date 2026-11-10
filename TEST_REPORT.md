@@ -40,7 +40,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.7.0**.
+- HMR загрузил AI Factory **v0.7.1**.
 - `factory.started`: schema **3**, agents 7, tools **34**.
 - SQLite v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
@@ -60,6 +60,10 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
   structured **PASS**, задача COMPLETED, fix не создавался.
 - `factory_workflow_run` задачи `tsk_28c73300…` → **PASSED** за 1 цикл,
   задача COMPLETED.
+- Полный live-цикл: `tsk_6375418b…` FAIL → fix `tsk_ecefb80a…` → PASS,
+  workflow PASSED за 2 цикла.
+- Найден дефект: PASS перезаписывал executor result; исправлено в 0.7.1
+  (исходный result + `--- REVIEW ---`).
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
@@ -106,10 +110,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.7.0.tgz`: **132 219 байт**.
-- SHA256: `e9b95123df3704efacfba214912c17a9c6ad2f2180345140edf3859c525906c4`.
+- `dist/dsh-ai-factory-0.7.1.tgz`: **132 342 байт**.
+- SHA256: `23be3ca8ce1c094ee48ffe7fea67483aa7f3101cdd489257a59ba350df35ac92`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.6.0 на 0.7.0; schema 3, 34 инструмента.
+- `portable-test` обновлён с 0.6.0 на 0.7.1; schema 3, 34 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -120,11 +124,11 @@ Read-only auth/405 проверены автотестами.
 - Нет автоматического планировщика backup/restore и multi-writer; backup
   endpoint/скрипт запускаются вручную.
 - Auto-sync реализован; live-сервер к desktop-профилю не подключался.
-- `factory_workflow_run` live проверен на REVIEW→PASS; ветка FAIL→fix→PASS
-  покрыта unit-тестами.
+- `factory_workflow_run` live полностью проверен: REVIEW→PASS и
+  FAIL→fix→PASS.
 - Scoped tool allowlist, Model Router, фоновый автономный цикл не реализованы.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.7.0 не выполнен.
+- Полный restart DSH после 0.7.1 не выполнен.
 
 ## 8. Повтор
 

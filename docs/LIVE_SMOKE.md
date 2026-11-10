@@ -75,8 +75,35 @@ workflow: PASSED
 ```
 
 `factory_task_get` подтвердил COMPLETED и review-текст с фактической проверкой
-Task Engine/БД. Это live-проверка workflow на REVIEW-задаче; ветка
-executor → FAIL → fix в live-режиме не запускалась (покрыта unit-тестами).
+Task Engine/БД. Это live-проверка workflow на REVIEW-задаче.
+
+### Полная ветка FAIL → fix → PASS
+
+Задача `tsk_6375418b-eaae-4302-9f0d-464f332c842c` создана READY с требованием
+вернуть PONG. `factory_workflow_run(maxCycles=2)`:
+
+```
+workflow: PASSED
+цикл 1: tsk_6375418b… → FAIL (FAILED), fix tsk_ecefb80a…
+цикл 2: tsk_ecefb80a… → PASS (COMPLETED)
+```
+
+Проверено через `factory_task_get`:
+
+- исходная задача — FAILED, result `PONG`, ошибка `VERDICT: FAIL`;
+- REVIEWER создал fix-задачу `tsk_ecefb80a-2f6e-4872-b331-0a5b5b752ebf`;
+- fix-исполнитель — реальный `agt_developer`, вернул ровно `WORKFLOW_FIXED`;
+- повторный REVIEWER — PASS, fix-задача COMPLETED.
+
+Это полный live-цикл, включая реальный FAIL и автоматический запуск
+fix-задачи.
+
+### Найденный и исправленный дефект
+
+Live-проверка показала: при PASS `tasks.complete` перезаписывал result
+исполнителя review-текстом. В 0.7.1 `ReviewerService` сохраняет исходный
+result и добавляет review через разделитель `--- REVIEW ---`; тест проверяет
+наличие обоих текстов.
 
 ## 6. Dashboard
 
@@ -88,9 +115,7 @@ executor → FAIL → fix в live-режиме не запускалась (по
 
 ## 7. Ограничения smoke
 
-- Live workflow проверен на старте из REVIEW (PASS за один цикл); ветка
-  executor → FAIL → fix task → повторный PASS в live-режиме не запускалась,
-  она покрыта unit-тестами.
+- Live workflow полностью проверен: REVIEW→PASS и FAIL→fix→PASS.
 - Сервер синхронизации в live-режиме не подключался; e2e PGlite проверен
   отдельно.
 - Это smoke намеренно не менял файлы проекта.

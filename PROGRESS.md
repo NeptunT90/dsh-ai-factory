@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Fixed v0.7.1
+
+- REVIEWER PASS сохраняет executor result (раньше перезаписывал review-текстом);
+  live smoke выявил дефект, тест проверяет оба текста.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,

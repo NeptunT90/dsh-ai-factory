@@ -14,7 +14,7 @@ import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
 
-export const FACTORY_VERSION = '0.7.0'
+export const FACTORY_VERSION = '0.7.1'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {

@@ -73,6 +73,7 @@ describe('ReviewerService', () => {
     expect(result.verdict).toBe('PASS')
     expect(result.taskStatus).toBe('COMPLETED')
     expect(runtime.tasks.require(task.id).status).toBe('COMPLETED')
+    expect(runtime.tasks.require(task.id).result).toContain('Артефакт собран')
     expect(runtime.tasks.require(task.id).result).toContain('VERDICT: PASS')
     expect(captured?.provider).toBe('spawn')
     expect(captured?.request.outputSchema?.type).toBe('object')
