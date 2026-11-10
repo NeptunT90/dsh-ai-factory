@@ -34,6 +34,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 Для `factory_dispatch` в профиле должны быть активны `dsh-subagent` и
 `dsh-subagent-spawn-in-process`. Если сервиса нет, инструмент возвращает
 понятную ошибку `UNAVAILABLE` и не захватывает задачу.
+
+### Dashboard
+
+В чате:
+
+> Вызови `factory_dashboard` с action=start и дай мне URL.
+
+Инструмент поднимет сервер только на `127.0.0.1` и вернёт URL с одноразовым
+токеном. После открытия токен превращается в HttpOnly-cookie. Остановка:
+
+> Вызови `factory_dashboard` с action=stop.
+
+Панель read-only; если DSH перезапущен, dashboard нужно запустить снова.
 - `dbPath` указывает на `%USERPROFILE%\.dsh\ai-factory\factory.db`
 
 Затем:

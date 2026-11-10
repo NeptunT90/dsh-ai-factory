@@ -8,83 +8,72 @@
 | Проверка | Команда | Результат |
 |---|---|---|
 | TypeScript strict | `pnpm --filter dsh-ai-factory typecheck` | PASS |
-| Сборка | `pnpm --filter dsh-ai-factory build` | PASS, `plugin/lib/index.js` создан |
+| Сборка | `pnpm --filter dsh-ai-factory build` | PASS |
 | Манифесты | `package.json`, `dsh.bundle.patch` | PASS |
 | BOM | JSON/YAML/TS без BOM, `.ps1` с BOM | PASS |
 
 ## 2. Автотесты
 
-Команда: `pnpm --filter dsh-ai-factory test`
-
 ```
-Test Files  8 passed (8)
-Tests       32 passed (32)
+Test Files  9 passed (9)
+Tests       34 passed (34)
 ```
 
 Покрыто:
 
-- миграции v1→v2 идемпотентны, проект переживает upgrade;
-- транзакции, FTS5, кириллический поиск;
-- память: dedupe, версии, TTL, soft delete, `expectedVersion`, секреты;
-- seed 7 профилей агентов, CRUD, лимиты, отключение;
-- Task Engine: зависимости, claim/lease/heartbeat, retry/backoff, terminal
-  guard, лимит параллельных задач, recovery, события;
-- Planner: DAG, роли, продвижение зависимых задач, циклы;
-- **Dispatch**: успешный дочерний запуск через fake `SubagentRuntime`,
-  сохранение output в задачу, COMPLETED; ошибка ребёнка → READY/FAILED;
-  отсутствие `ctx.subagents` не захватывает задачу;
-- 30 инструментов, включая `factory_dispatch`; tool contract для memory,
-  agent, plan, task и brief.
+- миграции v1→v2, сохранение данных;
+- FTS5, память, версии, TTL, секреты;
+- 7 профилей агентов, CRUD, лимиты;
+- Task Engine: зависимости, lease, retry/backoff, recovery, события;
+- Planner DAG и продвижение шагов;
+- Dispatch через fake `SubagentRuntime`: успех, ошибка, отсутствие сервиса;
+- Dashboard:
+  - 401 без токена;
+  - Bearer-токен → 200 и реальный JSON;
+  - токен в URL → 302 + HttpOnly-cookie → HTML;
+  - POST → 405 (read-only);
+  - остановка сервера освобождает порт;
+- 31 инструмент, включая `factory_dashboard`.
 
-## 3. Интеграция с реальным DSH
+## 3. Живой DSH
 
-### 3.1. `desktop`
+- HMR загрузил AI Factory **v0.4.0**.
+- `factory.started`: schema 2, agents 7, tools 31;
+- SQLite schema 2, 7 профилей;
+- 27 прежних плагинов сохранены;
+- схема `factory_dashboard` доставлена в Web GUI-сессию;
+- `doctor.ps1` проходит.
 
-- Все прежние 27 плагинов сохранены.
-- HMR загрузил AI Factory **v0.3.0**:
-  - `factory.started`: `schemaVersion: 2`, `agents: 7`, `tasks: 0`;
-  - `factory.tools_registered`: **30**;
-  - groups: status, memory, agents, tasks, orchestration, dispatch.
-- SQLite: `PRAGMA user_version = 2`; таблицы `agent_profiles`, `tasks`,
-  `task_events`; 7 профилей.
-- В живую Web GUI-сессию доставлена схема `factory_dispatch` вместе с
-  остальными 29 инструментами.
-- `doctor.ps1` проходит; данные/схема читаются.
+## 4. Браузерная проверка dashboard
 
-### 3.2. `factory-test`
+Запущен локальный demo-runtime (SQLite, 7 агентов, план из 3 задач, 2 записи
+памяти) и `DashboardServer` на ephemeral-порту.
 
-- Headless boot после исправления BOM: v0.2.0/0.3.0, schema 2, agents 7,
-  tools 29/30. Ожидаемая ошибка `MISSING_CREDENTIAL` не связана с плагином.
+Проверено в браузере:
 
-### 3.3. Dispatch с реальной моделью
+- токен в URL → редирект `/` + HttpOnly-cookie, токен исчезает из адресной
+  строки;
+- Обзор: 7 агентов, 4 активных задачи, 2 записи памяти, очередь по статусам,
+  системные факты;
+- Агенты: 7 карточек с ролями, доступом, лимитами, инструментами;
+- Задачи: таблица с RUNNING/WAITING/PLANNING, приоритетом, попытками;
+- Настройки: реальные config-поля и честные `plan`-пометки для
+  Model Router, REVIEWER, Server sync, GitHub;
+- адаптивная вёрстка, русский интерфейс, без внешних CDN.
 
-Код вызывает **официальный** `ctx.subagents.startActivation`; в профиле
-активны `dsh-subagent` и `dsh-subagent-spawn-in-process`. Тест с fake-service
-проверяет контракт. Живой запуск с реальной LLM в Web GUI ещё не выполнен:
-для него нужен обычный чат-запрос, а текущий клиент не инициирует tool-call
-напрямую. Это единственный незакрытый smoke-пункт.
+Скриншот: [docs/assets/dashboard-overview.png](docs/assets/dashboard-overview.png).
 
-## 4. Инцидент BOM
+## 5. Ограничения / не проверено
 
-PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`.
-HMR выгрузил плагин и не смог импортировать новую версию:
+- Live-вызов `factory_dashboard` из модели в Web GUI ещё не сделан; сервер
+  проверен напрямую в тестах и браузере.
+- Live dispatch с реальной LLM не выполнен; fake-service контракт пройден.
+- Tool allowlist ребёнка и Model Router не реализованы.
+- Dashboard read-only; Workflows/KB/Models/Scheduler/Security/Server/GitHub
+  разделов пока нет.
+- Полный restart DSH после v0.4.0 не выполнен.
 
-```
-SyntaxError: Unexpected token '﻿', ... is not valid JSON
-```
-
-BOM удалён; манифест проверен; HMR загрузил v0.2.0, затем v0.3.0. Правило:
-JSON/YAML/TS — UTF-8 без BOM; `.ps1` — UTF-8 с BOM.
-
-## 5. Что не проверено
-
-- Живой dispatch с моделью в Web GUI (fake-service тест пройден).
-- Ограничение host-tools ребёнка по allowlist профиля — не реализовано.
-- Model Router с fallback — не реализован.
-- Полный restart DSH после v0.3.0; recovery проверен unit-тестом и startup-хуком.
-- Dashboard, server sync, GitHub.
-
-## 6. Повтор проверки
+## 6. Повтор
 
 ```powershell
 pnpm install
@@ -94,7 +83,6 @@ pnpm build
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1 -Profile desktop
 ```
 
-Живой smoke в чате:
+Live smoke в чате:
 
-> Вызови `factory_status`, затем `factory_plan_create` из двух шагов, затем
-> `factory_dispatch` для READY-шага.
+> Вызови `factory_dashboard` с action=start и дай мне URL. Затем `factory_status`.

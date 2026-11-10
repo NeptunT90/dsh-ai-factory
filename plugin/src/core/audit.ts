@@ -13,6 +13,28 @@ export interface AuditInput {
   readonly data?: Record<string, unknown>
 }
 
+export interface AuditRecord {
+  readonly id: string
+  readonly ts: number
+  readonly level: AuditLevel
+  readonly event: string
+  readonly actor: string | null
+  readonly projectId: string | null
+  readonly sessionId: string | null
+  readonly data: Record<string, unknown>
+}
+
+interface AuditRow {
+  id: string
+  ts: number
+  level: AuditLevel
+  event: string
+  actor: string | null
+  project_id: string | null
+  session_id: string | null
+  data: string
+}
+
 /** Durable audit trail. Never stores full memory content or credentials. */
 export class AuditLog {
   constructor(
@@ -45,5 +67,37 @@ export class AuditLog {
 
   count(): number {
     return this.db.get<{ n: number }>('SELECT count(*) AS n FROM audit_log')?.n ?? 0
+  }
+
+  /** Read the newest audit records for the dashboard. */
+  recent(limit = 50): AuditRecord[] {
+    const capped = Math.max(1, Math.min(200, Math.floor(limit)))
+    return this.db
+      .all<AuditRow>(
+        `SELECT id, ts, level, event, actor, project_id, session_id, data
+         FROM audit_log ORDER BY ts DESC LIMIT ?`,
+        [capped],
+      )
+      .map((row) => {
+        let data: Record<string, unknown> = {}
+        try {
+          const parsed: unknown = JSON.parse(row.data)
+          if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            data = parsed as Record<string, unknown>
+          }
+        } catch {
+          data = {}
+        }
+        return {
+          id: row.id,
+          ts: row.ts,
+          level: row.level,
+          event: row.event,
+          actor: row.actor,
+          projectId: row.project_id,
+          sessionId: row.session_id,
+          data,
+        }
+      })
   }
 }

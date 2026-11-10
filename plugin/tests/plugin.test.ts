@@ -11,15 +11,15 @@ interface Harness {
   readonly tools: Map<string, ToolDefinition>
   readonly workspace: string
   readonly dir: string
-  dispose(): void
+  dispose(): Promise<void>
 }
 
 const harnesses: Harness[] = []
 
-afterEach(() => {
+afterEach(async () => {
   for (const harness of harnesses.splice(0)) {
     try {
-      harness.dispose()
+      await harness.dispose()
     } finally {
       rmSync(harness.dir, { recursive: true, force: true })
     }
@@ -36,7 +36,7 @@ function createHarness(): Harness {
     warn() {},
     error() {},
   }
-  let lifecycle: (() => void) | undefined
+  let lifecycle: (() => void | Promise<void>) | undefined
   const ctx = {
     logger: Object.assign((_name?: string) => logger, logger),
     tools: {
@@ -45,7 +45,7 @@ function createHarness(): Harness {
         return () => tools.delete(definition.name)
       },
     },
-    effect(execute: () => () => void) {
+    effect(execute: () => () => void | Promise<void>) {
       lifecycle = execute()
       return async () => {}
     },
@@ -56,8 +56,8 @@ function createHarness(): Harness {
     tools,
     workspace,
     dir,
-    dispose() {
-      lifecycle?.()
+    async dispose() {
+      await lifecycle?.()
     },
   }
   harnesses.push(harness)
@@ -83,11 +83,12 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(30)
+    expect(harness.tools.size).toBe(31)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)
     expect(harness.tools.has('factory_dispatch')).toBe(true)
+    expect(harness.tools.has('factory_dashboard')).toBe(true)
 
     const status = await harness.tools.get('factory_status')!.execute({}, fakeExec(harness.workspace) as never)
     expect((status as { status: string }).status).toBe('ready')

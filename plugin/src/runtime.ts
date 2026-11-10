@@ -13,7 +13,7 @@ import { AgentRegistry } from './agents/registry.js'
 import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
 
-export const FACTORY_VERSION = '0.3.0'
+export const FACTORY_VERSION = '0.4.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {

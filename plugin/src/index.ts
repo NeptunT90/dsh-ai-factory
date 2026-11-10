@@ -8,6 +8,7 @@ import { registerAgentTools } from './agents/tools.js'
 import { registerTaskTools } from './tasks/tools.js'
 import { registerOrchestrationTools } from './orchestration/tools.js'
 import { registerDispatchTool } from './dispatch/tools.js'
+import { DashboardManager, registerDashboardTool } from './dashboard/tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -41,6 +42,11 @@ export function apply(ctx: Context, config: FactoryConfig): void {
   let runtime: FactoryRuntime | undefined
   let startupError: string | undefined
   const disposers: Array<() => void> = []
+  const dashboard = new DashboardManager(
+    () => runtime,
+    () => ctx.tools.definitions().map(({ name, description }) => ({ name, description })),
+    logger,
+  )
 
   try {
     runtime = FactoryRuntime.create(config, logger)
@@ -60,12 +66,13 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(...registerTaskTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       disposers.push(registerDispatchTool(ctx, () => runtime, () => startupError))
+      disposers.push(registerDashboardTool(ctx, dashboard))
       runtime.audit.record({
         event: 'factory.tools_registered',
         level: 'info',
         data: {
           count: disposers.length,
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)
@@ -76,7 +83,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
   }
 
   ctx.effect(
-    () => () => {
+    () => async () => {
       for (const dispose of disposers.splice(0).reverse()) {
         try {
           dispose()
@@ -84,6 +91,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
           logger.warn(`[ai-factory] tool disposer failed: ${errorMessage(error)}`)
         }
       }
+      await dashboard.close()
       runtime?.close()
       runtime = undefined
     },

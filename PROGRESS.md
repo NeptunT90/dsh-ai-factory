@@ -64,6 +64,18 @@
 - Ограничение: профильный allowlist инструментов пока не enforced; Model Router
   без fallback; автоматического цикла DIRECTOR нет.
 
+### Dashboard v0.4.0
+
+- Локальный read-only dashboard: `factory_dashboard` (start/status/stop).
+- Сервер только на 127.0.0.1, случайный токен, HttpOnly-cookie после
+  одноразового URL, CSP/no-store, без внешних ассетов.
+- Разделы: Обзор, Агенты, Задачи, Память, Журнал, Инструменты, Настройки;
+  неподдерживаемые подсистемы честно помечены `plan`.
+- Данные реальные: SQLite, 7 профилей, задачи, память, audit, host-tools.
+- Панель проверена в браузере (Overview/Agents/Tasks/Settings), скриншот
+  снят; HTTP-тесты покрывают auth, redirect-cookie, read-only и stop.
+- 34 автотеста; плагин v0.4.0, 31 инструмент.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,
@@ -72,8 +84,9 @@
 
 ### Открыто
 
-- Вызвать memory/task-tools из модели в Web GUI (схемы уже доставлены).
-- Фактический запуск дочерних LLM-агентов через `ctx.agents` и scoped-tools.
-- Model Router, workflow-автоматизация, REVIEWER-цикл.
-- Проверка записи/чтения после полного перезапуска DSH.
-- Dashboard, server sync, GitHub — следующие фазы.
+- Живой smoke memory/task/dispatch/dashboard из модели в Web GUI (схемы
+  доставлены; текущий клиент не инициирует tool-call).
+- Scoped-ограничение host-tools дочернего агента; Model Router.
+- Автономный DIRECTOR/REVIEWER-цикл, workflow-ветвления.
+- Полный restart DSH и повторная проверка данных.
+- Server sync, GitHub, release, второй ПК.

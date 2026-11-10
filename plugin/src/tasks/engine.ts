@@ -597,6 +597,44 @@ export class TaskEngine {
     }
   }
 
+  /** Recent tasks across every project, newest activity first. */
+  listAll(limit = 50): TaskRecord[] {
+    const capped = Math.max(1, Math.min(200, Math.floor(limit)))
+    return this.db
+      .all<TaskRow>(`${SELECT} ORDER BY updated_at DESC LIMIT ?`, [capped])
+      .map(mapTask)
+  }
+
+  /** Aggregate task statistics across every project. */
+  statsAll(): TaskStats {
+    const byStatus = Object.fromEntries(TASK_STATUSES.map((status) => [status, 0])) as Record<TaskStatus, number>
+    for (const row of this.db.all<{ status: TaskStatus; n: number }>(
+      'SELECT status, count(*) AS n FROM tasks GROUP BY status',
+    )) {
+      byStatus[row.status] = row.n
+    }
+    const total = Object.values(byStatus).reduce((sum, value) => sum + value, 0)
+    const overdue =
+      this.db.get<{ n: number }>(
+        `SELECT count(*) AS n FROM tasks WHERE due_at IS NOT NULL AND due_at < ?
+         AND status NOT IN ('COMPLETED', 'CANCELLED')`,
+        [now()],
+      )?.n ?? 0
+    return {
+      projectId: '*',
+      total,
+      active: total - byStatus.COMPLETED - byStatus.CANCELLED,
+      ready: byStatus.READY,
+      running: byStatus.RUNNING,
+      waiting: byStatus.WAITING,
+      failed: byStatus.FAILED,
+      completed: byStatus.COMPLETED,
+      cancelled: byStatus.CANCELLED,
+      overdue,
+      byStatus,
+    }
+  }
+
   count(): number {
     return this.db.get<{ n: number }>('SELECT count(*) AS n FROM tasks')?.n ?? 0
   }

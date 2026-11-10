@@ -14,13 +14,14 @@
 
 ## Следующая очередь
 
-- Живой smoke: `factory_plan_create` → `factory_dispatch` с моделью.
+- Живой smoke: `factory_plan_create` → `factory_task_claim` →
+  `factory_dispatch` с моделью.
+- Проверить `factory_dashboard` в живом DSH и открыть URL.
 - Ограничение инструментов дочернего агента через scoped registration/restrict.
 - Model Router: fallback, выбор по роли, стоимость/контекст.
 - Автоматический DIRECTOR-цикл: claim → dispatch → REVIEWER → fix.
-- Phase 3b: workflow-ветвления, автоматический executor.
-- Инъекция brief/памяти в начало сессии через официальный `agent.inject`.
-- Dashboard, server sync, GitHub — после стабилизации ядра.
+- Workflows/KB/Models/Scheduler/Security/Server/GitHub разделы dashboard.
+- Server sync, release, установка на второй ПК.
 
 ## Запреты
 

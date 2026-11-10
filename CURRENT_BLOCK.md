@@ -1,28 +1,25 @@
 # Текущий блок
 
-**Phase 2b — реальный запуск дочернего агента через `ctx.subagents`.**
+**Phase 7 (v1) — локальный read-only dashboard.**
 
 Сделано:
 
-1. `factory_dispatch`: старт дочернего агента через официальный
-   `ctx.subagents.startActivation` (провайдер `spawn`), ожидание результата.
-2. Ребёнок получает отдельную сессию, проектный cwd, инструкцию/модель профиля
-   и справочный контекст памяти.
-3. Связка с Task Engine: READY → RUNNING → COMPLETED или retry/FAILED;
-   heartbeat lease во время работы; запись результата в задачу.
-4. 32 автотеста; dispatch-сценарии проверены с fake SubagentRuntime.
-5. Плагин v0.3.0 загружен в живой DSH: schema 2, 7 агентов, 30 инструментов;
-   схема `factory_dispatch` доставлена в Web GUI.
+1. `factory_dashboard` запускает HTTP-сервер только на 127.0.0.1.
+2. Случайный токен; URL с токеном → HttpOnly-cookie + редирект без токена.
+3. Read-only API и UI: Обзор, Агенты, Задачи, Память, Журнал, Инструменты,
+   Настройки. Неподдерживаемые подсистемы помечены `plan`.
+4. Реальные данные из SQLite/реестров; автообновление раз в 10 секунд.
+5. 34 автотеста, включая auth/401, cookie, POST→405, loopback/stop.
+6. Панель открыта в браузере и визуально проверена на реальном demo-runtime.
 
 Осталось:
 
-1. Проверить реальный dispatch с моделью в Web GUI (нужен чат-запрос).
-2. Принудительно ограничить host-tools ребёнка по allowlist профиля.
-3. Model Router: fallback, стоимость, ограничения контекста.
-4. Автоматический DIRECTOR-цикл: claim → dispatch → review → fix.
-5. Phase 3b: workflow-ветвления и автоматический execution loop.
-6. Dashboard, server sync, GitHub — следующие фазы.
+1. Проверить dashboard в живом DSH через `factory_dashboard` (схема уже
+   зарегистрирована; нужен чат-вызов).
+2. Phase 2c: scoped-ограничение tools дочернего агента, Model Router.
+3. Workflows, KB, Models, Scheduler, Security, Server, GitHub разделы.
+4. Мутации из UI — только с отдельной CSRF/approval-политикой.
+5. Server sync, release, второй ПК.
 
-Критерий выхода Phase 2b: реальный ребёнок запускается и его результат
-попадает в Task Engine — достигнут на уровне кода и fake-service теста; живой
-вызов с моделью ещё нужно подтвердить.
+Критерий текущего блока: read-only dashboard отдаёт реальные данные и
+защищён токеном — достигнут в тестах и браузерной проверке.

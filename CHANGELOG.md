@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.4.0] — 2026-11-10
+
+### Added
+
+- Локальный read-only dashboard v1:
+  - `factory_dashboard` (start/status/stop);
+  - сервер только на `127.0.0.1`, ephemeral-порт по умолчанию;
+  - случайный токен, редирект из URL в HttpOnly-cookie;
+  - CSP, `no-store`, `nosniff`, `X-Frame-Options`;
+  - разделы Обзор, Агенты, Задачи, Память, Журнал, Инструменты, Настройки;
+  - реальные данные SQLite/реестров, русский адаптивный интерфейс.
+- `TaskEngine.listAll`/`statsAll`, `AuditLog.recent` для панели.
+- 2 HTTP dashboard-теста (всего 34).
+- 31 инструмент в DSH.
+
+### Security
+
+- Только loopback, токен, отсутствие POST/мутаций, без внешних ассетов.
+- Неподдерживаемые подсистемы честно помечены `plan`, без фиктивных данных.
+
+### Known limitations
+
+- Dashboard read-only; Workflows/KB/Models/Scheduler/Security/Server/GitHub
+  разделов нет.
+- Live-вызов `factory_dashboard` из модели ещё не выполнен.
+- Tool allowlist и Model Router — Phase 2c.
+
 ## [0.3.0] — 2026-11-10
 
 ### Added
@@ -13,40 +40,16 @@
 - 3 теста dispatch с fake `SubagentRuntime` (всего 32).
 - Зависимость `@deepseek-ai/dsh-subagent` как optional peer и dev dependency.
 
-### Fixed
-
-- Allowlist инструментов профиля пока не enforced — это явно указано в
-  документации, не имитируется.
-- Задача не захватывается, если сервис `ctx.subagents` недоступен.
-
-### Known limitations
-
-- Нет Model Router/fallback и scoped tool restrictions.
-- Нет автоматического DIRECTOR/REVIEWER-цикла.
-- Живой dispatch с моделью требует chat-запроса в Web GUI.
-
 ## [0.2.0] — 2026-11-10
 
 ### Added
 
-- Миграция схемы v2: `agent_profiles`, `tasks`, `task_events`; upgrade v1→v2
-  без потери данных.
-- Agent Registry: 7 встроенных профилей (DIRECTOR, RESEARCHER, DEVELOPER,
-  SYSADMIN, ANALYST, EXECUTOR, REVIEWER), CRUD, версии, лимиты, доступ,
-  память и включение/отключение.
-- Task Engine: приоритеты, зависимости, статусы, атомарный claim с lease,
-  heartbeat, review, complete/fail, cancel, ручной retry, retry с backoff,
-  recovery просроченных lease, аудит переходов.
-- Planner: проверка DAG/циклов, топологическая декомпозиция, назначение ролей.
-- Инструменты `factory_plan_create`, `factory_director_brief`,
-  `factory_tools_list` и 18 инструментов агентов/задач.
-- 13 новых автотестов (всего 29).
-
-### Fixed
-
-- BOM в `package.json`, из-за которого HMR не загружал bundle.
-- Ручной retry расширяет бюджет попыток.
-- План задачи хранится как произвольный JSON.
+- Миграция схемы v2: `agent_profiles`, `tasks`, `task_events`.
+- Agent Registry: 7 профилей, CRUD, версии, лимиты.
+- Task Engine: зависимости, lease, heartbeat, retry/backoff, recovery.
+- Planner DAG, `factory_plan_create`, `factory_director_brief`,
+  `factory_tools_list`.
+- 13 новых тестов (всего 29).
 
 ## [0.1.0] — 2026-11-10
 
@@ -54,9 +57,5 @@
 
 - Устанавливаемый DSH-плагин `dsh-ai-factory` для DSH Desktop 0.2.2-rc.1.
 - SQLite (`node:sqlite`), WAL, миграции, FTS5.
-- Memory Engine v1: 5 типов, project/global, trust, confidence, TTL,
-  дедупликация, версии, soft delete.
-- 8 инструментов: статус и память.
-- Фильтр секретов, prompt-injection маркеры, durable audit.
-- 16 автотестов; скрипты install/uninstall/backup/restore/doctor.
-- Проверка загрузки в изолированном и основном профиле DSH.
+- Memory Engine v1, 8 инструментов, фильтр секретов, audit.
+- 16 тестов, install/uninstall/backup/restore/doctor.

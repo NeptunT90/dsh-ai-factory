@@ -110,10 +110,16 @@
 
 ## Phase 7 — Dashboard / Management
 
-- [ ] Overview, Agents, Tasks, Workflows, Tools, Memory, KB, Models,
-      Scheduler, Logs, Security, Settings, Server, GitHub.
-- [ ] Русский интерфейс, адаптивность.
-- [ ] Локальный HTTP с токеном либо client-plugin.
+- [x] Dashboard v1: Overview, Agents, Tasks, Memory, Audit/Logs, Tools,
+      Settings.
+- [x] Русский интерфейс, адаптивность, read-only.
+- [x] Локальный HTTP только на 127.0.0.1, случайный токен, HttpOnly-cookie,
+      CSP/no-store, без внешних ассетов.
+- [ ] Workflows, Knowledge Base, Models, Scheduler, Security, Server, GitHub
+      разделы (сейчас честно показаны как `plan`).
+- [ ] Мутации из UI (agent save/task create) с отдельной CSRF/approval
+      политикой — не реализованы.
+- [ ] Client-plugin внутри Web GUI вместо отдельного loopback-сервера — позже.
 
 ## Phase 8 — Self-improvement / Plugin Creator
 

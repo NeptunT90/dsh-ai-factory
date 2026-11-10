@@ -158,7 +158,8 @@ apply(ctx, config)
   ├─ registerStatusTool (всегда)
   ├─ registerMemoryTools / AgentTools / TaskTools / OrchestrationTools
   ├─ registerDispatchTool (ctx.subagents, optional)
-  └─ ctx.effect(() => dispose tools → close DB)
+  ├─ registerDashboardTool (loopback HTTP, opt-in)
+  └─ ctx.effect(async () => stop dashboard → dispose tools → close DB)
 ```
 
 Ошибка запуска не валит DSH: `factory_status` остаётся доступным и показывает
@@ -231,7 +232,24 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 родителя; allowlist — Phase 2c. Dispatch синхронный; автоматический цикл
 DIRECTOR/REVIEWER — следующие фазы.
 
-### 7.5. Реализовано / ещё нет
+### 7.5. Dashboard v1
+
+`factory_dashboard` поднимает `node:http`-сервер:
+
+- bind `127.0.0.1`, порт 0 (ephemeral) или заданный;
+- `crypto.randomBytes(24)` токен; заголовок `Authorization: Bearer`,
+  query или HttpOnly-cookie;
+- URL с токеном → 302 на `/` + cookie, токен исчезает из адресной строки;
+- только GET; POST → 405; CSP `default-src 'self'`, `no-store`,
+  `nosniff`, `frame-ancestors 'none'`;
+- без внешних CDN/шрифтов, без мутаций.
+
+Данные `/api/state`: overview, agents, tasks, memory, audit, tools, settings,
+capabilities. UI на русском, адаптивный, обновление раз в 10 секунд.
+Неподдерживаемые разделы (Workflows/KB/Models/Scheduler/Security/Server/
+GitHub) показаны как `plan`, а не имитируются.
+
+### 7.6. Реализовано / ещё нет
 
 | Подсистема | Статус |
 |---|---|
@@ -240,16 +258,17 @@ DIRECTOR/REVIEWER — следующие фазы.
 | Planner DAG + `factory_plan_create` | реализовано и проверено |
 | DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
 | Реальный дочерний агент через `ctx.subagents` (`factory_dispatch`) | реализовано |
+| Read-only dashboard на 127.0.0.1 | реализовано |
 | Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
-| Scheduler, dashboard, server sync, GitHub | Phase 4/5/7 |
+| Scheduler, server sync, GitHub | Phase 4/5/7 |
 
 | Будущая подсистема | Точка интеграции |
 |---|---|
 | Reviewer | отдельный агент + правила приёмки |
 | Workflow | граф шагов над Task Engine |
 | Scheduler | `ctx.effect` + таймеры, только пока процесс жив |
-| Dashboard | локальный HTTP + токен или client-plugin |
+| Dashboard v2 | мутации, client-plugin, остальные разделы |
 | Server sync | outbox + REST + pgvector |
 | GitHub | `git`/API через Tool Registry |
 | Plugin Creator | отдельный контролируемый модуль |
@@ -277,6 +296,8 @@ DIRECTOR/REVIEWER — следующие фазы.
   allowlist-ом профиля; это Phase 2c.
 - Task Engine не запускает исполнителей автоматически; dispatch вызывается
   явно, полный DIRECTOR/REVIEWER-цикл — Phase 3b+.
+- Dashboard v1 read-only; мутации из UI и остальные разделы — позже.
+- Dashboard работает, пока жив host-процесс DSH; фонового демона нет.
 - Нет embeddings/векторного поиска.
 - Нет UI; взаимодействие через инструменты и SQLite/CLI-диагностику.
 - Нет автоматического brief в промпт; это Phase 2b.

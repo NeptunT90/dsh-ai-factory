@@ -6,17 +6,17 @@
 регистрирует инструменты через официальный `ctx.tools`, хранит данные в
 локальном SQLite и переживает перезапуск приложения.
 
-> Статус: **Phase 1 завершена; Phase 2/3 core + реальный dispatch дочернего
-> агента проверены на DSH**. Работают память, профили специалистов, Task
-> Engine, Planner, DIRECTOR brief и `factory_dispatch` через официальный
-> `ctx.subagents` (провайдер `spawn`). Model Router, принудительное ограничение
-> инструментов профиля, автономный workflow и REVIEWER-цикл ещё не
+> Статус: **Phase 1–2b и локальный dashboard v1 проверены на DSH**. Работают
+> память, профили специалистов, Task Engine, Planner, DIRECTOR brief,
+> `factory_dispatch` через официальный `ctx.subagents` (spawn) и read-only
+> панель управления на 127.0.0.1 с токеном. Model Router, принудительное
+> ограничение инструментов профиля, автономный workflow и REVIEWER-цикл ещё не
 > реализованы. Полный план — в [PLAN.md](PLAN.md).
 
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.3.0 регистрирует **30 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.4.0 регистрирует **31 инструмент**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v2**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -39,11 +39,14 @@
   `ctx.subagents.startActivation` (spawn), ждёт его результат и завершает
   связанную задачу. Ребёнок получает отдельную сессию, роль/инструкцию профиля,
   проектный cwd и справочный контекст памяти.
+- **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory,
+  Audit, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
+  внешних ассетов и без мутаций.
 - Аудит действий без записи содержимого памяти.
-- 32 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
-  tool contract), строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема v2, 7 агентов, 30
-  инструментов, audit `factory.started`; драйвер — `node:sqlite`.
+- 34 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
+  dashboard, tool contract), строгая типизация TypeScript, сборка в `lib/`.
+- Проверено в реальном Electron-процессе DSH: схема v2, 7 агентов, 31
+  инструмент, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
 
@@ -92,11 +95,23 @@
 | `factory_director_brief` | Фактический брифинг для DIRECTOR |
 | `factory_tools_list` | Реальные инструменты DSH, видимые агенту |
 | `factory_dispatch` | Запустить дочернего агента через `ctx.subagents` и завершить задачу |
+| `factory_dashboard` | Запустить/остановить локальную read-only панель и получить URL |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
 Профили агентов — durable-конфигурация ролей. `factory_dispatch` реально
 создаёт дочернюю сессию через официальный сервис, но пока не ограничивает её
 host-инструменты по allowlist профиля; это Phase 2c.
+
+### Dashboard
+
+`factory_dashboard` запускает сервер только на `127.0.0.1` (порт 0 — свободный).
+URL содержит одноразовый токен; после открытия токен превращается в
+HttpOnly-cookie и исчезает из адресной строки. Панель read-only: GET‑запросы,
+без внешних CDN, с CSP и `no-store`. Разделы: состояние, агенты, задачи,
+память, журнал, инструменты, настройки. Остальные разделы ТЗ честно помечены
+как `plan` в «Настройки → Подсистемы».
+
+![DSH AI Factory dashboard](docs/assets/dashboard-overview.png)
 
 ## Требования
 
@@ -205,6 +220,7 @@ plugin/                 устанавливаемый npm-пакет
   src/planner/          DAG-планировщик
   src/orchestration/    DIRECTOR brief и реестр инструментов
   src/dispatch/         запуск дочернего агента через ctx.subagents
+  src/dashboard/        локальный read-only HTTP dashboard
   src/projects/         проектный реестр
   src/tools/            диагностика
   tests/                Vitest
@@ -220,8 +236,10 @@ config/                 примеры конфигурации
 - Нет автоматической инъекции памяти в промпт: инструменты вызываются моделью.
 - `factory_dispatch` запускает ребёнка реально, но allowlist инструментов
   профиля пока не enforced, а Model Router/fallback не реализованы (Phase 2c).
-- Нет автономного workflow-цикла, автоматического REVIEWER и dashboard/
-  GitHub/сервера (Phase 3b+).
+- Dashboard v1 — read-only и не содержит Workflows/KB/Models/Scheduler/
+  Security/Server/GitHub разделов; они честно помечены как `plan`.
+- Нет автономного workflow-цикла, автоматического REVIEWER, GitHub и
+  серверной синхронизации (Phase 3b+).
 - `node:sqlite` помечен в Node 24 как experimental. Плагин проверяет драйвер и
   сообщает об ошибке; в DSH 0.2.2-rc.1 он проверен и работает.
 - HMR-применение нового bundle зависит от настроек профиля; если плагин не
