@@ -15,6 +15,13 @@
 - 2 HTTP dashboard-теста (всего 34).
 - 31 инструмент в DSH.
 
+### Release / portability
+
+- `scripts/package.ps1`, `verify-package.ps1`, `install.ps1 -Tarball`,
+  `update.ps1`, SHA256SUMS.
+- Release workflow на тег `v*`.
+- Tarball установлен в отдельный профиль `portable-test` без `link:`.
+
 ### Security
 
 - Только loopback, токен, отсутствие POST/мутаций, без внешних ассетов.

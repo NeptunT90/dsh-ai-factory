@@ -9,6 +9,7 @@
     "build": "pnpm --filter dsh-ai-factory build",
     "typecheck": "pnpm --filter dsh-ai-factory typecheck",
     "test": "pnpm --filter dsh-ai-factory test",
-    "verify": "pnpm typecheck && pnpm test && pnpm build"
+    "verify": "pnpm typecheck && pnpm test && pnpm build",
+    "package:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
   }
 }

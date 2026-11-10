@@ -76,6 +76,19 @@
   снят; HTTP-тесты покрывают auth, redirect-cookie, read-only и stop.
 - 34 автотеста; плагин v0.4.0, 31 инструмент.
 
+### Release / portability v0.4.0
+
+- `scripts/package.ps1`: build → `pnpm pack` → проверка архива → SHA256SUMS.
+- `scripts/verify-package.ps1`: обязательные файлы, версия, отсутствие
+  `node_modules`.
+- `scripts/install.ps1 -Tarball`: установка релизного пакета официальным
+  `dsh plugin add`; `update.ps1` делает backup перед обновлением.
+- Tarball `dist/dsh-ai-factory-0.4.0.tgz` (110432 байт) проверен.
+- Установлен из tarball в отдельный профиль `portable-test` как обычная папка
+  (не link); DSH загрузил v0.4.0, 31 инструмент.
+- Добавлены `.github/workflows/release.yml`, `docs/release.md`,
+  `docs/portability.md`, package README/LICENSE.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,

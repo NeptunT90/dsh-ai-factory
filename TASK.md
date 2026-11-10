@@ -17,11 +17,12 @@
 - Живой smoke: `factory_plan_create` → `factory_task_claim` →
   `factory_dispatch` с моделью.
 - Проверить `factory_dashboard` в живом DSH и открыть URL.
+- Настроить GitHub remote, tag `v0.4.0`, Release по workflow.
+- Фактическая установка на второй ПК; upgrade-тест.
 - Ограничение инструментов дочернего агента через scoped registration/restrict.
 - Model Router: fallback, выбор по роли, стоимость/контекст.
 - Автоматический DIRECTOR-цикл: claim → dispatch → REVIEWER → fix.
-- Workflows/KB/Models/Scheduler/Security/Server/GitHub разделы dashboard.
-- Server sync, release, установка на второй ПК.
+- Server sync (PostgreSQL/pgvector), остальные разделы dashboard.
 
 ## Запреты
 

@@ -1,25 +1,25 @@
 # Текущий блок
 
-**Phase 7 (v1) — локальный read-only dashboard.**
+**Phase 9 (v1) — релизный tarball и установка на второй профиль.**
 
 Сделано:
 
-1. `factory_dashboard` запускает HTTP-сервер только на 127.0.0.1.
-2. Случайный токен; URL с токеном → HttpOnly-cookie + редирект без токена.
-3. Read-only API и UI: Обзор, Агенты, Задачи, Память, Журнал, Инструменты,
-   Настройки. Неподдерживаемые подсистемы помечены `plan`.
-4. Реальные данные из SQLite/реестров; автообновление раз в 10 секунд.
-5. 34 автотеста, включая auth/401, cookie, POST→405, loopback/stop.
-6. Панель открыта в браузере и визуально проверена на реальном demo-runtime.
+1. `scripts/package.ps1`: build → `pnpm pack` → verify → SHA256SUMS.
+2. `scripts/verify-package.ps1`: manifest, lib, bundle patch, README/LICENSE,
+   отсутствие `node_modules`, версия.
+3. `scripts/install.ps1 -Tarball` и `scripts/update.ps1` (backup перед update).
+4. `dist/dsh-ai-factory-0.4.0.tgz` собран (110432 байта) и проверен.
+5. Tarball установлен в профиль `portable-test` как обычная папка (не link);
+   DSH загрузил v0.4.0, schema 2, 7 агентов, 31 инструмент.
+6. Release workflow на тег `v*`, документация release/portability.
 
 Осталось:
 
-1. Проверить dashboard в живом DSH через `factory_dashboard` (схема уже
-   зарегистрирована; нужен чат-вызов).
-2. Phase 2c: scoped-ограничение tools дочернего агента, Model Router.
-3. Workflows, KB, Models, Scheduler, Security, Server, GitHub разделы.
-4. Мутации из UI — только с отдельной CSRF/approval-политикой.
-5. Server sync, release, второй ПК.
+1. Настроить GitHub remote, создать тег и Release (нужны credentials).
+2. Проверить физически второй ПК.
+3. Upgrade-тест с предыдущей версии с реальными данными.
+4. Server sync (Phase 4), scoped-tools/Model Router (Phase 2c).
+5. Dashboard: остальные разделы и live tool-call.
 
-Критерий текущего блока: read-only dashboard отдаёт реальные данные и
-защищён токеном — достигнут в тестах и браузерной проверке.
+Критерий блока: артефакт собирается, проверяется и устанавливается без
+`link:` — достигнут; публикация Release и второй ПК — нет.

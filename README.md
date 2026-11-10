@@ -138,6 +138,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 3. устанавливает локальную ссылку через официальный `dsh plugin add`;
 4. проверяет, что пакет и bundle-строка появились в профиле.
 
+### Установка из релизного tarball
+
+```powershell
+pnpm run package:release
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.4.0.tgz
+```
+
+Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
+имеет `SHA256SUMS`. Подробно — [docs/release.md](docs/release.md) и
+[docs/portability.md](docs/portability.md).
+
 Если DSH не применил новый bundle на лету, перезапустите приложение. После
 запуска вызовите в чате:
 
@@ -253,6 +265,8 @@ config/                 примеры конфигурации
 - [PROGRESS.md](PROGRESS.md) — текущий прогресс.
 - [TEST_REPORT.md](TEST_REPORT.md) — результаты проверок.
 - [SECURITY.md](SECURITY.md) — модель угроз и правила.
+- [release.md](docs/release.md) — сборка, tarball, GitHub Release.
+- [portability.md](docs/portability.md) — установка на второй ПК.
 
 ## Лицензия
 

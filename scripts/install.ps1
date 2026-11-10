@@ -10,6 +10,7 @@
 param(
   [string]$Profile = 'desktop',
   [string]$DshCli = '',
+  [string]$Tarball = '',
   [switch]$SkipBuild,
   [switch]$NoBackup
 )
@@ -48,7 +49,15 @@ if (-not $NoBackup) {
   Write-Host "[backup] конфигурация профиля: $backup"
 }
 
-if (-not $SkipBuild) {
+$tarballPath = ''
+if ($Tarball) {
+  if (-not (Test-Path $Tarball)) { throw "Релизный tarball не найден: $Tarball" }
+  $tarballPath = (Resolve-Path $Tarball).Path
+  if ($tarballPath -notmatch '\.(tgz|tar\.gz)$') { throw 'Ожидается .tgz или .tar.gz релизный tarball.' }
+  Write-Host "[install] tarball: $tarballPath"
+}
+
+if (-not $tarballPath -and -not $SkipBuild) {
   $pnpm = Get-Command 'pnpm.cmd' -ErrorAction SilentlyContinue
   if (-not $pnpm) { $pnpm = Get-Command 'pnpm' -ErrorAction SilentlyContinue }
   if (-not $pnpm) { throw 'pnpm не найден в PATH. Установите pnpm или используйте -SkipBuild после ручной сборки.' }
@@ -62,11 +71,11 @@ if (-not $SkipBuild) {
   }
 }
 
-if (-not (Test-Path (Join-Path $plugin 'lib\index.js'))) {
+if (-not $tarballPath -and -not (Test-Path (Join-Path $plugin 'lib\index.js'))) {
   throw 'Нет собранного plugin/lib/index.js. Соберите плагин: pnpm --filter dsh-ai-factory build'
 }
 
-$spec = "link:$($plugin -replace '\\', '/')"
+$spec = if ($tarballPath) { $tarballPath } else { "link:$($plugin -replace '\\', '/')" }
 Write-Host "[install] $spec -> профиль '$Profile'"
 & $DshCli plugin --profile $Profile add $spec
 if ($LASTEXITCODE -ne 0) { throw "dsh plugin add завершился с кодом $LASTEXITCODE" }

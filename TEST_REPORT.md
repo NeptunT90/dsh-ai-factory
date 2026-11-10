@@ -63,7 +63,23 @@ Tests       34 passed (34)
 
 Скриншот: [docs/assets/dashboard-overview.png](docs/assets/dashboard-overview.png).
 
-## 5. Ограничения / не проверено
+## 5. Release package / portability
+
+- `scripts/package.ps1` — PASS.
+- `dist/dsh-ai-factory-0.4.0.tgz`: 110432 байта.
+- SHA256: `ac50541ef97390b2a3a5d718926497f7d6a2dd2ffb46077f1c4ad2c541d001d6`.
+- `scripts/verify-package.ps1`: package.json, lib/index.js, cordis.patch.yml,
+  README, LICENSE присутствуют; `node_modules` отсутствует.
+- Установка из tarball в профиль `portable-test`:
+  - `node_modules/dsh-ai-factory` — обычная папка, **не link/junction**;
+  - dependency `file:C:/...tgz`, bundle добавлен;
+  - `--dump-config` содержит `id: ai-factory`;
+  - boot: `factory.started` v0.4.0, schema 2, 7 агентов,
+    `factory.tools_registered: 31`.
+- Release workflow `.github/workflows/release.yml` на тег `v*` готов;
+  фактический GitHub Release не создан (нет remote/credentials).
+
+## 6. Ограничения / не проверено
 
 - Live-вызов `factory_dashboard` из модели в Web GUI ещё не сделан; сервер
   проверен напрямую в тестах и браузере.
@@ -73,7 +89,7 @@ Tests       34 passed (34)
   разделов пока нет.
 - Полный restart DSH после v0.4.0 не выполнен.
 
-## 6. Повтор
+## 7. Повтор
 
 ```powershell
 pnpm install

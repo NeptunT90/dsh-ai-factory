@@ -129,6 +129,13 @@
 
 ## Phase 9 — Release
 
-- [ ] Полный прогон тестов и установки на втором ПК.
-- [ ] GitHub Actions, теги v0.1.0 / v0.2.0 / v0.3.0 / v1.0.0.
-- [ ] README/CHANGELOG/SECURITY, релизный пакет.
+- [x] Релизный tarball без `node_modules`, проверка обязательных файлов и
+      SHA256SUMS (`scripts/package.ps1`).
+- [x] Установка из tarball в отдельный профиль `portable-test` (не link),
+      boot v0.4.0 с 31 инструментом.
+- [x] GitHub Actions CI + release workflow на тег `v*`.
+- [x] README/CHANGELOG/SECURITY, release/portability docs.
+- [ ] Тег и GitHub Release (нужен remote/credentials).
+- [ ] Физически второй компьютер.
+- [ ] Обновление с предыдущей версии без потери данных — backup/update
+      скрипты есть, но полный upgrade-тест ещё нужен.
