@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-factory",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "description": "DSH AI Factory — autonomous multi-agent factory for DeepSeek Harness: durable memory, tasks, tools, review and recovery.",
   "type": "module",
   "main": "lib/index.js",
@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "^3.18.1",
+    "tar": "7.4.3",
     "yaml": "2.8.1"
   },
   "peerDependencies": {

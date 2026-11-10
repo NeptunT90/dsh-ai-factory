@@ -46,3 +46,28 @@ foreach ($name in @('package.json', 'cordis.patch.yml', 'pnpm-lock.yaml', 'pnpm-
   if (Test-Path $source) { Copy-Item $source (Join-Path $profileBackup $name) -Force }
 }
 Write-Host "[backup] профиль: $profileBackup"
+
+$manifestPath = Join-Path $OutputDir 'manifest.json'
+$snapshotPath = Join-Path $OutputDir 'factory.db'
+if (Test-Path $snapshotPath) {
+  $nodeForManifest = Get-Command 'node.exe' -ErrorAction SilentlyContinue
+  if ($nodeForManifest) {
+    $pluginPackage = Join-Path $repo 'plugin\package.json'
+    & $nodeForManifest.Source (Join-Path $PSScriptRoot 'backup-manifest.mjs') $snapshotPath $manifestPath $pluginPackage
+    if ($LASTEXITCODE -ne 0) { throw 'Не удалось создать manifest.json.' }
+  } else {
+    Write-Warning 'node не найден: manifest.json не создан.'
+  }
+}
+
+$archivePath = "$OutputDir.tar.gz"
+$tar = Get-Command 'tar.exe' -ErrorAction SilentlyContinue
+if (-not $tar) { $tar = Get-Command 'tar' -ErrorAction SilentlyContinue }
+if ($tar) {
+  & $tar.Source -czf $archivePath -C $OutputDir .
+  if ($LASTEXITCODE -ne 0) { throw 'Не удалось создать tar.gz архив.' }
+  Write-Host "[backup] архив: $archivePath"
+} else {
+  Write-Warning 'tar не найден: архив не создан.'
+}
+Write-Host "[backup] manifest: $manifestPath"

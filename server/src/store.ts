@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite-pgvector'
@@ -351,6 +352,23 @@ export class PGliteStore {
   async dump(): Promise<Uint8Array> {
     const blob = await this.db.dumpDataDir('gzip')
     return new Uint8Array(await blob.arrayBuffer())
+  }
+
+  /** Manifest metadata for scheduled PGlite backups. */
+  async backupManifest(): Promise<{ schemaVersion: number; tables: Array<{ name: string; rows: number; sha256: string }> }> {
+    const tables: Array<{ name: string; rows: number; sha256: string }> = []
+    for (const name of ['sync_memory', 'sync_operations']) {
+      const result = await this.db.query<Record<string, unknown>>(`SELECT * FROM ${name}`)
+      const encoded = result.rows
+        .map((row) => {
+          const sorted: Record<string, unknown> = {}
+          for (const key of Object.keys(row).sort()) sorted[key] = row[key]
+          return JSON.stringify(sorted)
+        })
+        .join('\n')
+      tables.push({ name, rows: result.rows.length, sha256: createHash('sha256').update(encoded).digest('hex') })
+    }
+    return { schemaVersion: 1, tables }
   }
 
   async health(): Promise<{ ok: true; vector: boolean; memories: number; operations: number }> {

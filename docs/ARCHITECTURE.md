@@ -393,6 +393,14 @@ Host inventory cache, separate from tool health and from tool permissions.
 - 3 root-only tools; no child access; files use atomic temp+rename;
 - health: 51 factory tools / 59 actions; plugin total 54.
 
+### 7.5i. Backup verification (v0.23.0 / BLOCK 6)
+
+- `scripts/backup.ps1` writes `manifest.json` + `.tar.gz`; table/file hashes.
+- `factory_backup_verify` (R0) checks gzip, manifest, tar safety, in-memory SQLite quick_check and table hashes.
+- `factory_backup_restore_test` (R1) restores to temp, reports agents/tasks/memory, always cleans up.
+- server backups get a sidecar manifest and `X-Backup-Manifest` header.
+- 56 plugin tools; health 53 factory tools / 61 actions.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в

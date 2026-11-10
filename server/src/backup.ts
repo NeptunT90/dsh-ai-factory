@@ -1,8 +1,21 @@
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 export interface DumpableStore {
   dump(): Promise<Uint8Array>
+  backupManifest?(): Promise<BackupManifestInfo>
+}
+
+export interface BackupTableInfo {
+  readonly name: string
+  readonly rows: number
+  readonly sha256: string
+}
+
+export interface BackupManifestInfo {
+  readonly schemaVersion: number
+  readonly tables: readonly BackupTableInfo[]
 }
 
 export interface BackupSchedulerOptions {
@@ -18,6 +31,7 @@ export interface BackupResult {
   readonly file: string
   readonly bytes: number
   readonly sha256: string
+  readonly manifestFile: string
   readonly pruned: number
 }
 
@@ -50,8 +64,27 @@ export class BackupScheduler {
     writeFileSync(file, bytes)
     const sha256 = createHash('sha256').update(bytes).digest('hex')
     writeFileSync(`${file}.sha256`, `${sha256}  ${file.split(/[\\/]/).pop()}\n`, 'utf8')
+    const info = this.store.backupManifest ? await this.store.backupManifest() : { schemaVersion: 1, tables: [] }
+    const serverVersion = (() => {
+      try {
+        return JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version as string
+      } catch {
+        return '0.0.0'
+      }
+    })()
+    const manifestFile = `${file}.manifest.json`
+    const manifest = {
+      format: 'factory.server-backup/v1',
+      pluginVersion: serverVersion,
+      schemaVersion: info.schemaVersion,
+      createdAt: new Date().toISOString(),
+      source: 'server',
+      archive: { path: file.split(/[\\/]/).pop(), bytes: bytes.byteLength, sha256 },
+      tables: info.tables,
+    }
+    writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
     const pruned = this.prune(dir)
-    return { file, bytes: bytes.byteLength, sha256, pruned }
+    return { file, bytes: bytes.byteLength, sha256, manifestFile, pruned }
   }
 
   start(): void {
@@ -86,6 +119,7 @@ export class BackupScheduler {
     for (const name of archives.slice(keep)) {
       rmSync(join(dir, name), { force: true })
       rmSync(join(dir, `${name}.sha256`), { force: true })
+      rmSync(join(dir, `${name}.manifest.json`), { force: true })
       pruned += 1
     }
     return pruned

@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.24.0] — 2026-11-11
+
+### Added
+
+- BLOCK 6 Automatic Backup Expansion: local backup manifest with table/file hashes,
+  gzip archive; server sidecar manifest and HTTP header.
+- `factory_backup_verify` (R0) and `factory_backup_restore_test` (R1), root-only.
+- 56 tools, health 53/61; 125 plugin tests.
+- Plugin 0.23.0; server 0.17.0.
+
 ## [0.23.0] — 2026-11-10
 
 ### Added

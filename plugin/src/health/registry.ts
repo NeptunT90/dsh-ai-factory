@@ -38,6 +38,9 @@ export const TOOL_HEALTH_SPECS: readonly ToolHealthSpec[] = [
   { tool: 'factory_capability_get', action: '*', risk: 'R0', mode: 'observed', probeReason: 'requires_capability_id' },
   { tool: 'factory_capability_check', action: '*', risk: 'R0', mode: 'probe', arguments: { requirements: [] } },
   { tool: 'factory_capability_refresh', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_backup_verify', action: '*', risk: 'R0', mode: 'observed', probeReason: 'requires_backup_archive' },
+  { tool: 'factory_backup_restore_test', action: '*', risk: 'R1', mode: 'schema' },
+
 
 
   { tool: 'factory_task_create', action: '*', risk: 'R1', mode: 'schema' },

@@ -11,5 +11,6 @@ export interface SyncStore {
   pull(since: string, limit?: number): Promise<PullOutcome>
   health(): Promise<{ ok: true; vector: boolean; memories: number; operations: number }>
   dump?(): Promise<Uint8Array>
+  backupManifest?(): Promise<{ schemaVersion: number; tables: Array<{ name: string; rows: number; sha256: string }> }>
   close(): Promise<void>
 }

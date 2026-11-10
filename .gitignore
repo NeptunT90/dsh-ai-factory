@@ -32,7 +32,7 @@ Thumbs.db
 *.log
 
 # Local backups
-backups/
+/backups/
 
 # OpenWolf local brain state
 .dshwolf/

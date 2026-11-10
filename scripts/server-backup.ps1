@@ -16,7 +16,13 @@ if (-not $OutFile) {
   $OutFile = Join-Path (Get-Location) "dsh-ai-factory-sync-backup-$stamp.tar.gz"
 }
 $headers = @{ Authorization = "Bearer $Token" }
-Invoke-WebRequest -Uri "$($Url.TrimEnd('/'))/v1/admin/backup" -Headers $headers -UseBasicParsing -TimeoutSec 120 -OutFile $OutFile
+$response = Invoke-WebRequest -Uri "$($Url.TrimEnd('/'))/v1/admin/backup" -Headers $headers -UseBasicParsing -TimeoutSec 120 -OutFile $OutFile
 $hash = (Get-FileHash -LiteralPath $OutFile -Algorithm SHA256).Hash.ToLowerInvariant()
+$manifestFile = "$OutFile.manifest.json"
 Write-Host "Backup: $OutFile" -ForegroundColor Green
+if ($response.Headers['X-Backup-Manifest']) {
+  $raw = [Convert]::FromBase64String(($response.Headers['X-Backup-Manifest'] -join ''))
+  [IO.File]::WriteAllBytes($manifestFile, $raw)
+  Write-Host "Manifest: $manifestFile"
+}
 Write-Host "SHA256: $hash"

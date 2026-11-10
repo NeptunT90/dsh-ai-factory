@@ -143,10 +143,14 @@ export class SyncHttpServer {
         return
       }
       const bytes = await this.store.dump()
+      const info = this.store.backupManifest ? await this.store.backupManifest() : { schemaVersion: 1, tables: [] }
+      const manifest = Buffer.from(JSON.stringify({ format: 'factory.server-backup/v1', schemaVersion: info.schemaVersion, tables: info.tables }), 'utf8').toString('base64')
       res.writeHead(200, {
         'Content-Type': 'application/gzip',
         'Content-Disposition': `attachment; filename="dsh-ai-factory-sync-${Date.now()}.tar.gz"`,
         'Content-Length': String(bytes.byteLength),
+        'X-Backup-Manifest': manifest,
+        'X-Backup-Schema-Version': String(info.schemaVersion),
       })
       res.end(Buffer.from(bytes))
       return

@@ -18,14 +18,14 @@
 ### Plugin
 
 ```
-Test Files  23 passed (23)
-Tests       122 passed (122)
+Test Files  24 passed (24)
+Tests       125 passed (125)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (54 инструмента).
+contract (56 инструментов).
 
 ### Sync server
 
@@ -76,6 +76,13 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Backup Expansion v0.23.0 (live)
+
+- `scripts/backup.ps1`: manifest 20 tables, schema 7, plugin 0.23.0; archive 183 567 bytes.
+- `factory_backup_verify`: OK; 20 tables; schema 7.
+- `factory_backup_restore_test`: agents 11, tasks 29, memory 4, schema 7; temp removed.
+- Health 61 actions; 56 tools.
 
 ### Agent Marketplace v0.22.0 (live)
 
@@ -241,12 +248,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.22.0.tgz`: **220 234 байт**.
-- SHA256: `3a3e6a442d42c53a8f30199a7a248b9dca4951c16725a93d92782921fa55b58f`.
+- `dist/dsh-ai-factory-0.23.0.tgz`: **229 933 байт**.
+- SHA256: `749d3e7fb39ec86b61e3e6b144eb649cb5ec07da44a0c90cbe04762d3b823605`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.23.0.md` (1 642 байта), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.24.0.md` (1 601 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -258,7 +265,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.22.0; schema 7, 54 инструмента.
+- `portable-test` обновлён на 0.23.0; schema 7, 56 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
