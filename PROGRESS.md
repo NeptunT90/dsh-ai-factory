@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Auto workflow tool v0.16.0
+
+- `factory_auto_workflow` status/run/start/stop; live run-once PASSED.
+- 36 tools, 56 tests.
+
 ### Autonomous workflow v0.15.0
 
 - Coordinator root Agent + timer scans READY tasks; bounded cycles.

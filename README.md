@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.15.0 регистрирует **35 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.16.0 регистрирует **36 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -111,6 +111,7 @@
 | `factory_sync` | status/push/pull памяти через outbox и sync-сервер |
 | `factory_review` | Независимое ревью задачи child-агентом REVIEWER; FAIL создаёт fix-задачу |
 | `factory_workflow_run` | Bounded-цикл dispatch → review → fix (до 5 циклов) |
+| `factory_auto_workflow` | status/run/start/stop фонового auto workflow |
 | `factory_model_route` | Read-only Model Router: primary, fallbacks, chain |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
@@ -178,7 +179,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.15.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.16.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и

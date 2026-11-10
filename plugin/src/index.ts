@@ -14,6 +14,7 @@ import { registerReviewerTool } from './reviewer/tools.js'
 import { registerWorkflowTool } from './workflow/tools.js'
 import { registerModelTool } from './models/tools.js'
 import { AutoWorkflowService } from './workflow/auto.js'
+import { registerAutoWorkflowTool } from './workflow/auto-tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -84,12 +85,13 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(registerReviewerTool(ctx, () => runtime, () => startupError))
       disposers.push(registerWorkflowTool(ctx, () => runtime, () => startupError))
       disposers.push(registerModelTool(ctx, () => runtime, () => startupError))
+      disposers.push(registerAutoWorkflowTool(ctx, () => runtime, () => startupError))
       runtime.audit.record({
         event: 'factory.tools_registered',
         level: 'info',
         data: {
           count: disposers.length - 1, // exclude the tool guard
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)

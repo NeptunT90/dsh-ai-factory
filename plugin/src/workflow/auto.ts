@@ -19,6 +19,7 @@ export class AutoWorkflowService {
   private handle: Awaited<ReturnType<AgentRegistry['create']>> | undefined
   private coordinator: Agent | undefined
   private active: Promise<void> | undefined
+  private ticking = false
   private stopped = false
 
   constructor(
@@ -32,7 +33,11 @@ export class AutoWorkflowService {
   }
 
   get running(): boolean {
-    return this.active !== undefined
+    return this.active !== undefined || this.ticking
+  }
+
+  get timerActive(): boolean {
+    return this.timer !== undefined
   }
 
   async start(): Promise<void> {
@@ -83,6 +88,16 @@ export class AutoWorkflowService {
   /** One scan; exposed for tests and manual diagnostics. */
   async tickOnce(): Promise<WorkflowResult[]> {
     if (this.stopped) return []
+    if (this.ticking) return []
+    this.ticking = true
+    try {
+      return await this.tickOnceInner()
+    } finally {
+      this.ticking = false
+    }
+  }
+
+  private async tickOnceInner(): Promise<WorkflowResult[]> {
     const tasks = this.runtime.tasks
       .listAll(200)
       .filter((task) => task.status === 'READY')

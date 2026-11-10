@@ -25,7 +25,7 @@ Tests       56 passed (56)
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (35 инструментов).
+contract (36 инструментов).
 
 ### Sync server
 
@@ -48,7 +48,7 @@ cert (openssl). Docker Compose не запускался — Docker нет.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.15.0**.
+- HMR загрузил AI Factory **v0.16.0**.
 - `factory.started`: schema **4**, agents 7, tools **35**.
 - SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
@@ -60,7 +60,7 @@ cert (openssl). Docker Compose не запускался — Docker нет.
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.15.0, schema 4, 7 агентов, 35 инструментов.
+- `factory_status` → 0.16.0, schema 4, 8 профилей, 36 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -76,6 +76,12 @@ cert (openssl). Docker Compose не запускался — Docker нет.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
+### Auto workflow tool v0.16.0 (live)
+
+- `factory_auto_workflow status`: enabled=false, timer=false.
+- Создана READY-задача `tsk_eda508af…`; `factory_auto_workflow run` →
+  **PASSED**, 1 цикл, задача COMPLETED.
+- Конфиг fallback восстановлен после теста.
 ### Autonomous workflow v0.15.0 (live)
 
 - Создана READY-задача `tsk_aee61490…`; включены autoWorkflow*, interval 30s,
@@ -154,10 +160,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.15.0.tgz`: **145 425 байт**.
-- SHA256: `0c6828d0dc3d9d03cce7b7df119d0c54674b9aae44f1e325a5de1765c7739947`.
+- `dist/dsh-ai-factory-0.16.0.tgz`: **147 777 байт**.
+- SHA256: `4e16a85e57b0ca6eb356b861ca55b1608ea0c147674aeaff5cd6f76293fcb035`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.10.1 на 0.15.0; schema 4, 35 инструментов.
+- `portable-test` обновлён с 0.15.0 на 0.16.0; schema 4, 36 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -172,7 +178,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл реализован bounded (autoWorkflow*, default off); standalone PostgreSQL/TLS реализованы, deploy не выполнен.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.15.0 не выполнен.
+- Полный restart DSH после 0.16.0 не выполнен.
 
 ## 8. Повтор
 

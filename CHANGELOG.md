@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.16.0] — 2026-11-10
+
+### Added
+
+- `factory_auto_workflow` (36th tool): status/run/start/stop, on-demand
+  tick without autoWorkflowEnabled; tick guard against overlap.
+- Live run-once: READY task → PASSED, 1 cycle; config restored.
+- 56 tests, 36 tools.
+
 ## [0.15.0] — 2026-11-10
 
 ### Added

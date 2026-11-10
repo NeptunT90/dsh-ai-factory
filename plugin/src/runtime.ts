@@ -16,7 +16,7 @@ import { SyncService } from './sync/service.js'
 import { ModelRouter } from './models/router.js'
 import { AutoWorkflowService } from './workflow/auto.js'
 
-export const FACTORY_VERSION = '0.15.0'
+export const FACTORY_VERSION = '0.16.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {

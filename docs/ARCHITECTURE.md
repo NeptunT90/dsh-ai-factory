@@ -314,6 +314,8 @@ tools, поэтому проверяет артефакты сам. Ответ �
 - для каждой запускает bounded `WorkflowService` (`dispatch → review → fix`)
   с `autoWorkflowMaxCycles`, не более `autoWorkflowMaxTasks` за tick;
 - audit `auto_workflow.started/tick/failed`;
+- `factory_auto_workflow` даёт status/run/start/stop; `run` выполняет один tick
+  без включённого таймера;
 - `stop()` снимает таймер и dispose-ит coordinator.
 
 Auto workflow не является daemon: живёт только пока загружен плагин.
