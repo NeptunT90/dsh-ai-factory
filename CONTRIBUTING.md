@@ -1,47 +1,75 @@
-# Участие в разработке
+# Contributing to DSH AI Factory
 
-## Правила
+Thanks for your interest. This project is a host plugin for DeepSeek Harness
+Desktop and is intentionally conservative about tool permissions and data
+handling.
 
-1. Не менять исходники DSH. Работать только через официальный plugin API.
-2. Не добавлять фиктивные функции и «заглушки», которые выглядят как
-   реализация.
-3. Каждый модуль — с тестами и записью в `PROGRESS.md`.
-4. Не коммитить секреты, БД и `node_modules`.
-5. Новые миграции — только добавлением; существующие не редактировать.
-6. Опасные действия (shell, SSH, удаление данных) — только с политикой
-   approvals и отдельным тестом.
+## Development setup
 
-## Локальный цикл
+Requirements:
+
+- Node.js **22.19+**
+- pnpm 10+
+- DSH Desktop **0.2.2-rc.1** for live verification
 
 ```powershell
 pnpm install
-pnpm typecheck
-pnpm test
-pnpm build
+pnpm verify
+pnpm --filter @dsh-ai-factory/sync-server test
 pwsh -NoProfile -File scripts/doctor.ps1
 ```
 
-## Стиль
+`pnpm verify` runs strict TypeScript, the plugin test suite and the build.
 
-- ESM, TypeScript strict, NodeNext.
-- Импорты с `.js` в исходниках.
-- Публичные функции и интерфейсы — с JSDoc на английском; пользовательские
-  сообщения инструментов — на русском.
-- Время — epoch milliseconds; id — с префиксом (`mem_`, `prj_`, `tsk_`).
-- SQL — только параметризованный.
-- Кодировка: JSON/YAML/TS — UTF-8 **без BOM**; PowerShell-скрипты для
-  Windows PowerShell 5.1 — UTF-8 **с BOM**. `Set-Content -Encoding UTF8` в
-  PowerShell 5.1 добавляет BOM и уже один раз ломал `package.json`.
+## Rules
 
-## Коммиты
+1. Use the official DSH plugin API (`ctx.tools`, `ctx.agents`, `ctx.effect`).
+   Do not patch DSH sources.
+2. Do not add placeholder behavior that looks like a feature but is not
+   implemented. If something is unavailable, return a precise error.
+3. Every new tool or security boundary needs tests. Update `TEST_REPORT.md` for
+   critical changes.
+4. Never commit secrets, databases, backups, `.env` files or `node_modules`.
+5. Migrations are append-only. Add a new migration version; do not edit an
+   existing one.
+6. Root-only tools must remain root-only, and `allowedTools` must not be widened
+   implicitly.
+7. Destructive operations need an explicit policy, a test and a recovery path.
 
-Короткие сообщения в императиве, например:
+## Style
 
-```
+- ESM, TypeScript strict, NodeNext; imports include `.js`.
+- Public functions and interfaces use English JSDoc. User-facing tool messages
+  are Russian.
+- Time is epoch milliseconds. IDs use prefixes (`mem_`, `prj_`, `tsk_`, `agt_`).
+- SQL must be parameterized.
+- UTF-8 without BOM for JSON/YAML/TS. PowerShell scripts intended for Windows
+  PowerShell 5.1 use UTF-8 with BOM.
+
+## Commits
+
+Use short imperative messages:
+
+```text
 feat(memory): add FTS5 search with project filter
 fix(plugin): keep factory_status available after storage failure
-test(memory): cover version history and soft delete
+test(backup): cover corrupt manifest and temp cleanup
 ```
 
-Перед коммитом: `pnpm verify` и обновить `TEST_REPORT.md`, если менялись
-критические проверки.
+Before opening a pull request:
+
+```text
+pnpm verify
+```
+
+## Pull requests
+
+- Describe the user-visible behavior and the security impact.
+- Include tests and, for live changes, the exact commands/evidence.
+- Keep changes focused; large refactors should be discussed first.
+- Never include a real token, credential, personal database or backup archive.
+
+## Security
+
+Do not open a public issue with a vulnerability or secret. Follow
+[SECURITY.md](SECURITY.md).

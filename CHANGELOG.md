@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.0] — 2026-11-11
+
+### Added
+
+- Open Source release with English README and Russian translation.
+- MIT license, contribution guide and security policy.
+- Final gate: 56 tools, schema v7, 125 plugin tests / 10 server tests.
+- Plugin and root packages version 1.0.0.
+
 ## [0.24.0] — 2026-11-11
 
 ### Added

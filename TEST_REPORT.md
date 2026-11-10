@@ -248,12 +248,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.23.0.tgz`: **229 933 байт**.
-- SHA256: `749d3e7fb39ec86b61e3e6b144eb649cb5ec07da44a0c90cbe04762d3b823605`.
+- `dist/dsh-ai-factory-1.0.0.tgz`: **229 922 байт**.
+- SHA256: `b884ea7ec84e5019fa89d45e7e407e0201ac7bda3f4cf1310b03fc4c63fb3cc5`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.24.0.md` (1 601 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v1.0.0.md` (1 532 байта), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -265,7 +265,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 0.23.0; schema 7, 56 инструментов.
+- `portable-test` обновлён на 1.0.0; schema 7, 56 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

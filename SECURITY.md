@@ -1,3 +1,20 @@
+# Security Policy
+
+## Reporting a vulnerability
+
+Do **not** open a public issue, discussion or pull request for a security
+vulnerability. Use GitHub Security Advisories for
+
+https://github.com/NeptunT90/dsh-ai-factory/security/advisories/new
+
+or contact the maintainer privately. Do not include API keys, tokens, personal
+data or production database dumps in a report.
+
+Please include: affected version, DSH version, exact tool/command, impact and a
+minimal reproduction. You will receive an acknowledgement as soon as possible.
+
+---
+
 # Безопасность DSH AI Factory
 
 ## Модель угроз

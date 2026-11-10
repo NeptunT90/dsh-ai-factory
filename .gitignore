@@ -31,7 +31,10 @@ Thumbs.db
 # Logs
 *.log
 
-# Local backups
+# Local project-local assets and backups
+.agents/
+.skills/
+logs/
 /backups/
 
 # OpenWolf local brain state
