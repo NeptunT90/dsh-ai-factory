@@ -1,6 +1,6 @@
 {
   "name": "@dsh-ai-factory/sync-server",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "private": true,
   "description": "Optional AI Factory memory sync server (embedded PostgreSQL/PGlite)",
   "type": "module",

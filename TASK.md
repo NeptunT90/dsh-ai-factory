@@ -16,9 +16,9 @@
 
 - Standalone PostgreSQL/Ubuntu + TLS reverse proxy (нужен сервер/доступ;
   локально нет psql/Docker).
-- Backup/restore планировщик сервера, multi-writer.
+- Backup-планировщик сервера (restore CLI уже есть), multi-writer.
 - CRDT/merge и server-side conflict journal.
-- Автоматический flush outbox по таймеру.
+- Автоматический flush outbox по таймеру уже есть (syncAuto); нужен live-сервер.
 - Живой smoke: `factory_plan_create` → `factory_task_claim` →
   `factory_dispatch`; `factory_dashboard`; `factory_sync`.
 - Настроить GitHub remote/tag/Release.

@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Backup/restore server v0.11.0
+
+- PGlite restore via loadDataDir; empty-target guard; CLI script.
+- Test dump→restore; live CLI memories=1/ops=2/vector=true.
+- 6 server tests.
+
 ### Live fallback v0.10.1
 
 - BADROUTE invalid model → deepseek-flash fallback; COMPLETED, audit model.fallback.

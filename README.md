@@ -130,7 +130,7 @@ triggers), при ошибке остаются там и повторяются
 LWW по `updatedAt` и не создаёт обратный outbox.
 
 Сервер: [server/README.md](server/README.md) (PGlite PostgreSQL + pgvector,
-Bearer auth, Docker Compose, backup endpoint). Контракт:
+Bearer auth, Docker Compose, backup endpoint, restore CLI). Контракт:
 [docs/sync-protocol.md](docs/sync-protocol.md).
 
 Для автоматического flush/pull задайте `syncAuto: true` и

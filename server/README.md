@@ -75,13 +75,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\server-backup.ps1
   -Url http://127.0.0.1:8787 -OutFile .\sync-backup.tar.gz
 ```
 
-Restore:
+Restore (server остановлен, целевой каталог пуст):
 
-1. Остановить сервер.
-2. Сохранить текущий `SYNC_DB_DIR` (переименовать, не удалять).
-3. Создать пустой `SYNC_DB_DIR` и распаковать туда архив:
-   `tar -xzf sync-backup.tar.gz -C <SYNC_DB_DIR>`.
-4. Запустить сервер и проверить `/health` (`memories`/`operations`).
+```powershell
+node server\scripts\restore.mjs .\sync-backup.tar.gz C:\sync-restore\data
+```
+
+Скрипт загружает dump через PGlite `loadDataDir`, проверяет pgvector/health и
+отказывается писать в непустой каталог. Затем:
+
+1. Сохранить/переименовать старый `SYNC_DB_DIR`.
+2. Запустить сервер с восстановленным каталогом.
+3. Проверить `/health` (`memories`/`operations`).
 
 Архив содержит полноценный PGlite data-dir; не публикуйте его — там память
 пользователя.

@@ -97,7 +97,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/server-backup.ps1 `
   -Url http://127.0.0.1:8787 -OutFile .\sync-backup.tar.gz
 ```
 
-PGlite — embedded PostgreSQL; standalone PostgreSQL/Ubuntu — следующий шаг.
+Restore (server остановлен, пустой target):
+
+```powershell
+node server\scripts\restore.mjs .\sync-backup.tar.gz C:\sync-restore\data
+```
+
+Сервер версии **0.11.0**: dump→restore проверен, pgvector сохраняется,
+непустой target отклоняется. PGlite — embedded PostgreSQL; standalone
+PostgreSQL/Ubuntu — следующий шаг.
 
 ## 7. GitHub Actions
 

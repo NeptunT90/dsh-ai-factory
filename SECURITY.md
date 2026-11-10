@@ -115,8 +115,13 @@ host-возможность, которая обходит этот реестр
   HTTPS reverse proxy. Docker Compose публикует порт только на loopback.
 - `SYNC_TOKEN` сервера и `DSH_AI_FACTORY_SYNC_TOKEN` клиента не хранятся в
   репозитории.
-- Отдельного автоматического sync-таймера нет: отправка запускается
-  `factory_sync`; ошибки повторяются с backoff.
+- Auto-sync (`syncAuto`) отправляет outbox по таймеру; ошибки остаются в
+  outbox и повторяются с backoff.
+- `GET /v1/admin/backup` отдаёт consistent `.tar.gz` PGlite data-dir;
+  `scripts/server-backup.ps1` сохраняет файл и SHA256.
+- Restore CLI принимает только **пустой** каталог, использует PGlite
+  `loadDataDir` и проверяет health. Backup содержит память пользователя; не
+  публиковать.
 - Standalone PostgreSQL/Ubuntu и TLS-терминация ещё не развёрнуты.
 
 ## Reviewer / child-агенты

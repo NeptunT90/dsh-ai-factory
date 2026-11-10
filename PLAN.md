@@ -93,7 +93,8 @@
 - [x] End-to-end: два SQLite-runtime через реальный HTTP-сервер.
 - [x] Store/HTTP тесты сервера (5).
 - [ ] Standalone PostgreSQL/Ubuntu + TLS reverse proxy.
-- [ ] Backup/restore планировщик сервера, multi-writer.
+- [x] Backup/restore сервера: dump, CLI restore, empty-target guard.
+- [ ] Backup-планировщик и multi-writer.
 - [ ] CRDT/merge и server-side conflict journal.
 - [ ] Автоматический flush outbox по таймеру.
 - [ ] Второй физический ПК и production deployment.

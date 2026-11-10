@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.0] — 2026-11-10
+
+### Added
+
+- Sync server backup/restore: `PGliteStore.restore` via `loadDataDir`,
+  `server/scripts/restore.mjs`, guard against non-empty target.
+- 6th server test: dump → restore preserves memory + pgvector schema.
+- Live CLI restore from real backup: `memories:1`, `operations:2`, `vector:true`.
+
 ## [0.10.1] — 2026-11-10
 
 ### Fixed

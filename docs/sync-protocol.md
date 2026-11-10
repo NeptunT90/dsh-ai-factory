@@ -87,8 +87,11 @@ PGlite подходит для одного writer-процесса.
   при загруженном плагине; таймер `unref`-нут, снимается при unload.
 - `status` показывает `auto`, `running`, `lastSyncAt`, `lastSyncError`.
 - `GET /v1/admin/backup` (Bearer) отдаёт consistent `.tar.gz` PGlite data-dir;
-  `scripts/server-backup.ps1` сохраняет файл и SHA256. Restore — остановить
-  сервер, сохранить текущий data-dir, распаковать архив, запустить.
+  `scripts/server-backup.ps1` сохраняет файл и SHA256.
+- Restore: `node server/scripts/restore.mjs <backup.tar.gz> <empty-dir>`.
+  Скрипт использует PGlite `loadDataDir`, проверяет `vector`/`memories` и
+  отказывается писать в непустой каталог. Затем сервер запускается на этом
+  каталоге.
 - Backup содержит память пользователя; не публиковать.
 
 ## Outbox

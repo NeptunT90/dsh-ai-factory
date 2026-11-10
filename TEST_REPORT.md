@@ -30,13 +30,16 @@ contract (35 инструментов).
 ### Sync server
 
 ```
-tests 5
-pass 5
+tests 6
+pass 6
 fail 0
 ```
 
 Покрыто: pgvector health, idempotent push, pull/cursor, LWW и conflict,
-invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
+invalid payload, HTTP Bearer auth, backup endpoint (gzip), dump→restore, health.
+
+Restore CLI проверен на реальном backup:
+`memories:1`, `operations:2`, `vector:true`; непустой target отклоняется.
 
 ## 3. Живой DSH
 

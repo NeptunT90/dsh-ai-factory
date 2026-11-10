@@ -1,4 +1,4 @@
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync } from 'node:fs'
 import { PGlite } from '@electric-sql/pglite'
 import { vector } from '@electric-sql/pglite-pgvector'
 
@@ -146,6 +146,21 @@ export class PGliteStore {
   static async open(dataDir: string): Promise<PGliteStore> {
     mkdirSync(dataDir, { recursive: true })
     const db = await PGlite.create(dataDir, { extensions: { vector } })
+    const store = new PGliteStore(db)
+    await store.migrate()
+    return store
+  }
+
+  /** Restore a data directory from a `dumpDataDir('gzip')` archive. */
+  static async restore(dataDir: string, bytes: Uint8Array): Promise<PGliteStore> {
+    if (existsSync(dataDir) && readdirSync(dataDir).length > 0) {
+      throw new Error(`restore target is not empty: ${dataDir}`)
+    }
+    mkdirSync(dataDir, { recursive: true })
+    const db = await PGlite.create(dataDir, {
+      extensions: { vector },
+      loadDataDir: new Blob([bytes]),
+    })
     const store = new PGliteStore(db)
     await store.migrate()
     return store

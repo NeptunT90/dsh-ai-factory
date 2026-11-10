@@ -1,6 +1,18 @@
 # Текущий блок
 
-**Phase 3c — live Model fallback.**
+**Phase 4b — backup/restore сервера.**
+
+Сделано:
+
+1. `PGliteStore.restore(loadDataDir)` + guard непустого каталога.
+2. `server/scripts/restore.mjs`; восстановление реального backup.
+3. 6 server-тестов; CLI: memories=1, operations=2, vector=true.
+4. Plugin 0.10.1 без изменений; server 0.11.0.
+
+Осталось: standalone PostgreSQL/TLS, GitHub Release, второй ПК.
+
+## Предыдущий блок: live Model fallback
+
 
 Сделано:
 
