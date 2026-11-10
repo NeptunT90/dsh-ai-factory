@@ -88,6 +88,18 @@ pnpm server:test
 pnpm server:build
 ```
 
+Релизный серверный архив:
+
+```text
+dist/dsh-ai-factory-sync-server-0.17.0.tgz — 17 189 байт
+SHA256: 8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5
+```
+
+Внутри: `dist/`, `scripts/restore.mjs`, `package.json`, `Dockerfile`,
+`docker-compose.yml`, `.env.example`, README, LICENSE. Установка:
+распаковать, `npm install --omit=dev`, задать env и запустить
+`node dist/index.js`.
+
 Docker-образ и Compose — [server/README.md](../server/README.md). Перед
 публикацией сервера задайте `SYNC_TOKEN`, TLS reverse proxy и volume для
 данных. Backup:

@@ -1,6 +1,17 @@
 # Текущий блок
 
-**Phase 4b — multi-writer idempotency для PostgreSQL.**
+**Release — server artifact.**
+
+Сделано:
+
+1. `scripts/package-server.ps1`: server tarball + SHA256.
+2. `dist/dsh-ai-factory-sync-server-0.17.0.tgz` (17 189 байт).
+3. Plugin tarball 0.16.0 и server tarball в общем SHA256SUMS.
+4. 56 plugin-тестов, 10 server-тестов.
+
+Осталось: фактический Ubuntu/Docker deploy, GitHub Release, второй ПК.
+
+## Предыдущий блок: multi-writer
 
 Сделано:
 

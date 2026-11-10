@@ -132,7 +132,8 @@
 triggers), при ошибке остаются там и повторяются с backoff. Pull использует
 LWW по `updatedAt` и не создаёт обратный outbox.
 
-Сервер: [server/README.md](server/README.md) (PGlite или standalone PostgreSQL + pgvector,
+Сервер: [server/README.md](server/README.md) (релизный архив
+`dist/dsh-ai-factory-sync-server-0.17.0.tgz`) (PGlite или standalone PostgreSQL + pgvector,
 Bearer auth, Docker Compose, backup endpoint, restore CLI, scheduled backups).
 Контракт:
 [docs/sync-protocol.md](docs/sync-protocol.md).

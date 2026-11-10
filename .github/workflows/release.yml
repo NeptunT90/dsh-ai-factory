@@ -52,9 +52,13 @@ jobs:
       - name: Test sync server
         run: pnpm server:test
 
-      - name: Build and package
+      - name: Build and package plugin
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
+
+      - name: Build and package sync server
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-server.ps1
 
       - name: Verify package
         shell: pwsh

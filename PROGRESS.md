@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Server release artifact
+
+- package-server.ps1; server tarball 17189 bytes, SHA256.
+- Shared SHA256SUMS; extraction verified.
+
 ### PostgreSQL multi-writer v0.17.0
 
 - opId reservation with ON CONFLICT before apply.

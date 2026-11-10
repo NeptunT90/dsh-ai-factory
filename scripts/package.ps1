@@ -58,7 +58,12 @@ Write-Host '[4/4] checksums'
 $hash = (Get-FileHash -LiteralPath $tarball -Algorithm SHA256).Hash.ToLowerInvariant()
 $name = Split-Path -Leaf $tarball
 $sumFile = Join-Path $OutDir 'SHA256SUMS'
-"$hash  $name" | Set-Content -LiteralPath $sumFile -Encoding ASCII
+$lines = @()
+if (Test-Path $sumFile) {
+  $lines = @(Get-Content -LiteralPath $sumFile | Where-Object { $_ -and ($_ -notmatch [regex]::Escape($name)) })
+}
+$lines += "$hash  $name"
+[IO.File]::WriteAllText($sumFile, (($lines -join ([char]10)) + [char]10), (New-Object Text.ASCIIEncoding))
 $size = (Get-Item $tarball).Length
 Write-Host ''
 Write-Host "Готово: $tarball" -ForegroundColor Green
