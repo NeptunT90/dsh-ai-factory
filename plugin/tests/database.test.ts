@@ -53,7 +53,7 @@ describe('FactoryDatabase', () => {
     raw.close()
 
     const upgraded = new FactoryDatabase(path)
-    expect(upgraded.schemaVersion).toBe(4)
+    expect(upgraded.schemaVersion).toBe(5)
     expect(upgraded.get<{ name: string }>('SELECT name FROM projects WHERE id = ?', ['prj_v1'])?.name).toBe('old')
     expect(upgraded.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")).toBeDefined()
     expect(upgraded.get("SELECT count(*) AS n FROM agent_profiles")?.n).toBe(0)

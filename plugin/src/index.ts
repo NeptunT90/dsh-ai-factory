@@ -15,6 +15,8 @@ import { registerWorkflowTool } from './workflow/tools.js'
 import { registerModelTool } from './models/tools.js'
 import { AutoWorkflowService } from './workflow/auto.js'
 import { registerAutoWorkflowTool } from './workflow/auto-tools.js'
+import { ToolHealthService } from './health/service.js'
+import { registerHealthTools } from './health/tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -52,11 +54,13 @@ export function apply(ctx: Context, config: FactoryConfig): void {
     () => runtime,
     () => ctx.tools.definitions().map(({ name, description }) => ({ name, description })),
     logger,
+    () => runtime?.health?.summaries() ?? [],
   )
 
   try {
     runtime = FactoryRuntime.create(config, logger)
     runtime.autoWorkflow = new AutoWorkflowService(ctx, runtime)
+    runtime.health = new ToolHealthService(ctx, runtime)
     if (config.autoWorkflowEnabled) void runtime.autoWorkflow.start()
     logger.info(
       `[ai-factory] v${FACTORY_VERSION} ready; driver=${runtime.db.driver}; db=${runtime.db.path}`,
@@ -86,12 +90,13 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(registerWorkflowTool(ctx, () => runtime, () => startupError))
       disposers.push(registerModelTool(ctx, () => runtime, () => startupError))
       disposers.push(registerAutoWorkflowTool(ctx, () => runtime, () => startupError))
+      disposers.push(...registerHealthTools(ctx, () => runtime, () => startupError))
       runtime.audit.record({
         event: 'factory.tools_registered',
         level: 'info',
         data: {
           count: disposers.length - 1, // exclude the tool guard
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto', 'health'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)

@@ -325,4 +325,45 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE agent_profiles ADD COLUMN allowed_tools TEXT NOT NULL DEFAULT '[]';
     `,
   },
+  {
+    version: 5,
+    name: 'tool health overlay and history',
+    sql: `
+      CREATE TABLE tool_health (
+        tool_name TEXT NOT NULL,
+        action TEXT NOT NULL DEFAULT '*',
+        risk TEXT NOT NULL CHECK (risk IN ('R0', 'R1', 'R2')),
+        status TEXT NOT NULL CHECK (status IN (
+          'HEALTHY', 'DEGRADED', 'UNAVAILABLE', 'UNKNOWN',
+          'DISABLED', 'REGISTERED', 'NOT_TESTABLE'
+        )),
+        source TEXT NOT NULL DEFAULT 'auto',
+        last_checked_at INTEGER,
+        last_ok_at INTEGER,
+        latency_ms INTEGER,
+        error_kind TEXT,
+        error_message TEXT,
+        consecutive_failures INTEGER NOT NULL DEFAULT 0,
+        next_check_at INTEGER,
+        details TEXT NOT NULL DEFAULT '{}',
+        PRIMARY KEY (tool_name, action)
+      );
+      CREATE INDEX ix_tool_health_status ON tool_health(status);
+      CREATE INDEX ix_tool_health_next_check ON tool_health(next_check_at);
+
+      CREATE TABLE tool_health_history (
+        id TEXT PRIMARY KEY,
+        tool_name TEXT NOT NULL,
+        action TEXT NOT NULL,
+        status TEXT NOT NULL,
+        checked_at INTEGER NOT NULL,
+        latency_ms INTEGER,
+        error_kind TEXT,
+        error_message TEXT,
+        details TEXT NOT NULL DEFAULT '{}'
+      );
+      CREATE INDEX ix_tool_health_history_tool
+        ON tool_health_history(tool_name, action, checked_at DESC);
+    `,
+  },
 ]

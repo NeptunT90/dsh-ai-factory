@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.19.0] — 2026-11-10
+
+### Added
+
+- Tool Health Check for factory_* tools: schema v5 tool_health/history, risk registry,
+  TTL 10 minutes, R0/R1/R2 statuses, circuit breaker, mixed-action aggregate.
+- `factory_tool_health`, `factory_tool_health_check`, `factory_tool_health_history`;
+  health tools are root-only and not in their own risk registry.
+- R0 probes via ctx.tools.execute (DSH pipeline), never ToolDefinition.execute.
+- R1 = REGISTERED with dependenciesChecked=false; R2 = NOT_TESTABLE.
+- effectiveAllowedTools filters only factory_*; host tools pass through.
+- Dashboard health columns; docs/TOOL_HEALTH.md.
+- Plugin 0.18.0: 67 tests, 39 tools; server 0.17.0.
+
 ## [0.18.0] — 2026-11-10
 
 ### Fixed

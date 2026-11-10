@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 
 /** Branded id helpers; all ids are opaque strings. */
-export function newId(prefix: 'mem' | 'prj' | 'tsk' | 'aud' | 'evt' | 'agt'): string {
+export function newId(prefix: 'mem' | 'prj' | 'tsk' | 'aud' | 'evt' | 'agt' | 'hlt'): string {
   return `${prefix}_${randomUUID()}`
 }
 

@@ -14,7 +14,24 @@ describe('DashboardServer', () => {
   it('requires the token and serves read-only state', async () => {
     const { runtime } = track(createTestRuntime())
     runtime.tasks.create({ projectId: runtime.projects.ensure('C:/workspace', 'Test').id, title: 'Dashboard task' })
-    const server = new DashboardServer(runtime, () => [{ name: 'factory_status', description: 'status' }])
+    const server = new DashboardServer(
+      runtime,
+      () => [{ name: 'factory_status', description: 'status' }],
+      {
+        getToolHealth: () => [{
+          toolName: 'factory_status',
+          risk: 'R0',
+          status: 'HEALTHY',
+          source: 'auto',
+          lastCheckedAt: 1,
+          latencyMs: 1,
+          errorKind: null,
+          errorMessage: null,
+          dependenciesChecked: false,
+          actions: [],
+        }],
+      },
+    )
     servers.push(server)
     const started = await server.start()
     const base = `http://127.0.0.1:${started.port}`
@@ -34,12 +51,13 @@ describe('DashboardServer', () => {
       models: { enabled: boolean; maxAttempts: number; fallbacks: string[] }
       sync: { configured: boolean; auto: boolean; pending: number; failed: number }
     }
-    expect(state.overview.version).toBe('0.17.0')
+    expect(state.overview.version).toBe('0.18.0')
     expect(state.overview.agents).toBe(7)
     expect(state.overview.tasks.total).toBeGreaterThanOrEqual(1)
     expect(state.agents).toHaveLength(7)
     expect(state.tasks.length).toBeGreaterThanOrEqual(1)
     expect(state.tools).toHaveLength(1)
+    expect((state.tools[0] as { healthStatus?: string }).healthStatus).toBe('HEALTHY')
     expect(state.models.enabled).toBe(true)
     expect(state.models.maxAttempts).toBe(2)
     expect(state.sync.configured).toBe(false)
@@ -56,6 +74,7 @@ describe('DashboardServer', () => {
     expect(html).toContain('/api/state')
     expect(html).toContain('data-tab="models"')
     expect(html).toContain('data-tab="sync"')
+    expect(html).toContain('Статус')
 
     const post = await fetch(`${base}/api/state`, {
       method: 'POST',

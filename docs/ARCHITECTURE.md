@@ -72,7 +72,7 @@
 - Соединение синхронное; все операции одного процесса сериализованы. Для
   будущего фонового scheduler этого достаточно, пока один writer.
 
-### Схема (v1–v4)
+### Схема (v1–v5)
 
 | Таблица | Версия | Назначение |
 |---|---|---|
@@ -90,6 +90,8 @@
 | `sync_apply_guard` | v3 | Подавление outbox при pull |
 | `memory_sync_insert/update` | v3 | Триггеры автоматического outbox |
 | `agent_profiles.allowed_tools` | v4 | Явный allowlist инструментов ребёнка |
+| `tool_health` | v5 | Health-overlay `(tool_name, action)` для factory_* |
+| `tool_health_history` | v5 | История health-проверок |
 
 Ключевые инварианты:
 
@@ -331,6 +333,16 @@ fix-задачи исходная FAILED-задача тоже становит�
   `auto_workflow.stop_timeout`.
 
 Auto workflow не является daemon: живёт только пока загружен плагин.
+
+### 7.5d. Tool Health (v0.18.0)
+
+`ToolHealthService` — overlay над DSH `ctx.tools`, не второй реестр.
+
+- `tool_health` / `tool_health_history` (migration v5) хранят статусы и историю по `(tool, action)`;
+- R0 pure probes — `ctx.tools.execute`; R1 — schema/registration (`REGISTERED`, dependenciesChecked false); R2 — `NOT_TESTABLE`;
+- `effectiveAllowedTools` фильтрует только `factory_*`; mixed удаляется только при всех `UNAVAILABLE`;
+- TTL 10 мин, circuit breaker 3 ошибки/5 мин только для R0;
+- host-tools вне health.
 
 ### 7.6. Sync client / outbox
 

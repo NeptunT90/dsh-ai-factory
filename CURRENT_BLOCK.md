@@ -1,6 +1,19 @@
 # Текущий блок
 
-**Три проверки: browser, sync-границы, live sync.**
+**BLOCK 1 — Tool Health Check.**
+
+Сделано:
+
+1. Migration v5: tool_health + tool_health_history.
+2. Risk registry 44 action-записей / 36 factory-tools; R1=REGISTERED, R2=NOT_TESTABLE.
+3. R0 probes через ctx.tools.execute; first live factory_status → HEALTHY 1ms.
+4. 3 root-only health tools; effectiveAllowedTools только factory_*.
+5. Dashboard health; docs/TOOL_HEALTH.md; 67 тестов.
+6. Plugin 0.18.0, root 0.19.0, server 0.17.0.
+
+Осталось: BLOCK 2 — factory_agent_save security; live full health sweep.
+
+## Предыдущий блок: browser/sync/live sync
 
 Сделано:
 

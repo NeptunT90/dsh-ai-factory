@@ -105,6 +105,16 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Tool Health (v0.18.0)
+
+- Health покрывает только `factory_*`; host-tools DSH (`read`/`write`/`pwsh`/`browser_*`/`office_*`) не получают статусов и не фильтруются.
+- R0 pure probes идут через `ctx.tools.execute` (batch pipeline: pre-execute, approval, guard, timeout), а не через `ToolDefinition.execute`.
+- R1 = `REGISTERED`: зарегистрирован, схема валидна, но runtime-зависимости (БД, сеть, порт) **не проверялись** (`dependenciesChecked:false`, BLOCK 4).
+- R2 = `NOT_TESTABLE`: `factory_dispatch`, `factory_review`, `factory_workflow_run`, `factory_sync push/pull/sync`, `factory_auto_workflow run/start` не вызываются health-чекером.
+- `factory_memory_search`, `factory_task_list/get/events/stats`, `factory_director_brief` помечены `UNKNOWN`: их probe пишет в `audit_log`/`projects.updated_at`; real probe — TODO после BLOCK 1.
+- Удаление из `effectiveAllowedTools` только когда **все** действия инструмента `UNAVAILABLE`; mixed с R0 unavailable — `DEGRADED`, не удаляется.
+- Health tools root-only; в child allowlists не входят. `factory_agent_save` — отдельный BLOCK 2/Security risk (root-only/adminTools + «нельзя выдать больше, чем имеешь»).
+
 ## Model Router
 
 - Маршруты и fallback-и задаются оператором (`modelFallbacks`), не моделью.

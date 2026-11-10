@@ -3,6 +3,7 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime, PluginLogger } from '../runtime.js'
 import type { DashboardTool } from './server.js'
+import type { ToolHealthSummary } from '../health/types.js'
 import { DashboardServer } from './server.js'
 
 export interface DashboardStatus {
@@ -19,6 +20,7 @@ export class DashboardManager {
     private readonly getRuntime: () => FactoryRuntime | undefined,
     private readonly getTools: () => readonly DashboardTool[],
     private readonly logger: PluginLogger,
+    private readonly getToolHealth: () => readonly ToolHealthSummary[] = () => [],
   ) {}
 
   async start(port = 0): Promise<DashboardStatus> {
@@ -32,7 +34,7 @@ export class DashboardManager {
         port: new URL(this.server.url).port ? Number(new URL(this.server.url).port) : 0,
       }
     }
-    const server = new DashboardServer(runtime, this.getTools, { port })
+    const server = new DashboardServer(runtime, this.getTools, { port, getToolHealth: this.getToolHealth })
     const started = await server.start()
     this.server = server
     runtime.audit.record({

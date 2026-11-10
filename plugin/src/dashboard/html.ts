@@ -331,10 +331,15 @@ tr:last-child td { border-bottom: 0; }
   }
   function renderTools(d) {
     var rows = (d.tools || []).map(function (tool) {
-      return '<tr><td><strong class="mono">' + esc(tool.name) + '</strong></td><td>' + esc(tool.description) + '</td></tr>';
+      var status = tool.healthStatus || (tool.name.indexOf('factory_') === 0 ? 'UNKNOWN' : 'DSH-managed');
+      var risk = tool.risk || '—';
+      var checked = tool.healthCheckedAt ? new Date(tool.healthCheckedAt).toLocaleTimeString() : '—';
+      var latency = tool.latencyMs === null || tool.latencyMs === undefined ? '—' : tool.latencyMs + ' ms';
+      var error = tool.errorKind ? ' · ' + esc(tool.errorKind) : '';
+      return '<tr><td><strong class="mono">' + esc(tool.name) + '</strong></td><td>' + esc(status) + error + '</td><td>' + esc(risk) + '</td><td>' + esc(checked) + '</td><td>' + esc(latency) + '</td><td>' + esc(tool.description) + '</td></tr>';
     }).join('');
-    return '<div class="section-head"><h2>Tool Registry</h2><p>' + esc((d.tools || []).length) + ' инструментов хоста видны агенту</p></div>' +
-      (rows ? '<div class="table-wrap"><table><thead><tr><th>Инструмент</th><th>Описание</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('Инструменты не найдены.'));
+    return '<div class="section-head"><h2>Tool Registry</h2><p>' + esc((d.tools || []).length) + ' инструментов; health только для factory_*</p></div>' +
+      (rows ? '<div class="table-wrap"><table><thead><tr><th>Инструмент</th><th>Статус</th><th>Риск</th><th>Проверено</th><th>Latency</th><th>Описание</th></tr></thead><tbody>' + rows + '</tbody></table></div>' : empty('Инструменты не найдены.'));
   }
   function renderSettings(d) {
     var s = d.settings || {};

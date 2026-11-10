@@ -19,13 +19,13 @@
 
 ```
 Test Files  15 passed (15)
-Tests       59 passed (59)
+Tests       67 passed (67)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (36 инструментов).
+contract (39 инструментов).
 
 ### Sync server
 
@@ -49,9 +49,9 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.17.0**.
+- HMR загрузил AI Factory **v0.18.0**.
 - `factory.started`: schema **4**, agents 7, tools **35**.
-- SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
+- SQLite v5: `tool_health`/`tool_health_history`; также v3 `sync_outbox`/`sync_state`/`sync_apply_guard`/triggers
   `memory_sync_insert/update`.
 - Схемы `factory_sync`, `factory_review`, `factory_workflow_run` доставлены в
   Web GUI-сессию.
@@ -61,7 +61,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.17.0, schema 4, 10 профилей (7 builtin + 3 test), 36 инструментов.
+- `factory_status` → 0.18.0, schema 5, 10 профилей (7 builtin + 3 test), 39 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -76,6 +76,19 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Tool Health Check v0.18.0 (live)
+
+- Migration v5 applied live; `factory_status` HEALTHY 1–2 ms through
+  `ctx.tools.execute`.
+- `factory_tool_health`: 36 factory tools; R1 `REGISTERED` source=schema
+  dependenciesChecked=false; R2 `NOT_TESTABLE`.
+- `factory_tool_health_check` full sweep: 44 action checks; 11 HEALTHY,
+  16 REGISTERED, 3 NOT_TESTABLE, 6 UNKNOWN; dangerous actions not called.
+- Mixed `factory_sync`: status HEALTHY, push/pull/sync NOT_TESTABLE
+  (aggregate HEALTHY, tool kept).
+- `factory_tool_health_history` returns rows; dashboard Tool Registry
+  includes status/risk/checked/latency.
 
 ### Browser and factory-sync boundaries (v0.17.0)
 
@@ -122,7 +135,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 ### Scoped allowlist v0.8.0 (live)
 
-- Схема **v4**, `agent_profiles.allowed_tools`; 7 профилей имеют явные списки.
+- Схема **v5**, `agent_profiles.allowed_tools` + `tool_health`/history; 7 профилей имеют явные списки.
 - RESEARCHER-задача `tsk_84b3e2c0…`, child `ses_a7143044…`:
   `factory_memory_forget` → `TOOL_NOT_ALLOWED: factory_memory_forget не входит
   в allowlist профиля ребёнка`; запись памяти осталась активной.
@@ -189,12 +202,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.17.0.tgz`: **152 022 байт**.
-- SHA256: `04b7781cb76461fdf8cc1507284aacaeede749b5dab15843f28130b66d4ba99f`.
+- `dist/dsh-ai-factory-0.18.0.tgz`: **169 144 байт**.
+- SHA256: `41398296b940dd5604eb2634eef790be10f5e15e234eb5008c434460e5249843`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.18.0.md` (2 184 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.19.0.md` (1 940 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -206,7 +219,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.17.0; schema 4, 36 инструментов.
+- `portable-test` обновлён с 0.15.0 на 0.18.0; schema 5, 39 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

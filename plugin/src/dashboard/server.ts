@@ -4,10 +4,18 @@ import type { AddressInfo } from 'node:net'
 import { FactoryError } from '../core/errors.js'
 import { FACTORY_VERSION, type FactoryRuntime } from '../runtime.js'
 import { DASHBOARD_HTML } from './html.js'
+import type { ToolHealthSummary } from '../health/types.js'
 
 export interface DashboardTool {
   readonly name: string
   readonly description: string
+  readonly risk?: string
+  readonly healthStatus?: string
+  readonly healthSource?: string
+  readonly healthCheckedAt?: number | null
+  readonly latencyMs?: number | null
+  readonly errorKind?: string | null
+  readonly dependenciesChecked?: boolean
 }
 
 export interface DashboardStart {
@@ -79,12 +87,14 @@ export class DashboardServer {
   private readonly tokenValue = randomBytes(24).toString('hex')
   private actualPort = 0
   private readonly port: number
+  private readonly getToolHealth: () => readonly ToolHealthSummary[]
 
   constructor(
     private readonly runtime: FactoryRuntime,
     private readonly getTools: () => readonly DashboardTool[],
-    options: { port?: number } = {},
+    options: { port?: number; getToolHealth?: () => readonly ToolHealthSummary[] } = {},
   ) {
+    this.getToolHealth = options.getToolHealth ?? (() => [])
     const port = options.port ?? 0
     if (!Number.isInteger(port) || port < 0 || port > 65_535) {
       throw new FactoryError('INVALID_INPUT', 'port должен быть целым числом 0..65535')
@@ -301,7 +311,24 @@ export class DashboardServer {
       tasks,
       memory,
       audit,
-      tools: this.getTools().slice(0, 200),
+      tools: (() => {
+        const health = new Map(this.getToolHealth().map((entry) => [entry.toolName, entry]))
+        return this.getTools().slice(0, 200).map((tool) => {
+          const entry = health.get(tool.name)
+          return entry === undefined
+            ? tool
+            : {
+                ...tool,
+                risk: entry.risk,
+                healthStatus: entry.status,
+                healthSource: entry.source,
+                healthCheckedAt: entry.lastCheckedAt,
+                latencyMs: entry.latencyMs,
+                errorKind: entry.errorKind,
+                dependenciesChecked: entry.dependenciesChecked,
+              }
+        })
+      })(),
       models: {
         enabled: runtime.config.modelRouterEnabled,
         fallbacks: runtime.config.modelFallbacks

@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### BLOCK 1 Tool Health v0.18.0
+
+- Migration v5, risk registry, R0 pipeline probes, R1/R2 statuses.
+- 3 health tools, effective allowlist, dashboard, 67 tests.
+- First live `factory_status` via ctx.tools.execute → HEALTHY.
+
 ### Browser + sync boundaries + live sync v0.17.0
 
 - BROWSER_TOOL_NAMES in host guard; NOFILE browser unknown; unit denials.

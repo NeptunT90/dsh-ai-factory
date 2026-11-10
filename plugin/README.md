@@ -18,7 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 Из релизного tarball:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dist\dsh-ai-factory-0.17.0.tgz
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dist\dsh-ai-factory-0.18.0.tgz
 ```
 
 ## Проверка
@@ -28,7 +28,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 > Вызови `factory_status` и покажи сырые поля.
 
 Ожидаемо: `status: ready`, `driver: node:sqlite`, `schemaVersion: 4`,
-`agents: 7`, 36 инструментов.
+`agents: 7`, 39 инструментов.
 
 ## Возможности
 

@@ -69,7 +69,7 @@ export class ScopedChildRunner implements ChildRunner {
     if (!agents) {
       throw new FactoryError('UNAVAILABLE', 'ctx.agents недоступен; кастомный scoped runner не может создать ребёнка')
     }
-    const allowed = input.profile.allowedTools
+    const allowed = this.runtime.health?.effectiveAllowedTools(input.profile.allowedTools) ?? input.profile.allowedTools
     if (allowed.length === 0) {
       throw new FactoryError('FORBIDDEN', `Профиль ${input.profile.name} не имеет allowedTools; запуск запрещён`)
     }

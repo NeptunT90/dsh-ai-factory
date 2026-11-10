@@ -85,8 +85,9 @@ export class DispatchService {
     }
     const agent = runtime.agents.require(agentId)
     if (!agent.enabled) throw new FactoryError('FORBIDDEN', `Профиль агента отключён: ${agent.name}`)
-    if (agent.allowedTools.length === 0) {
-      throw new FactoryError('FORBIDDEN', `Профиль ${agent.name} не имеет allowedTools; запуск запрещён`)
+    const effectiveAllowed = runtime.health?.effectiveAllowedTools(agent.allowedTools) ?? agent.allowedTools
+    if (effectiveAllowed.length === 0) {
+      throw new FactoryError('FORBIDDEN', `Профиль ${agent.name} не имеет доступных allowedTools; запуск запрещён`)
     }
 
     const parent = exec.agent
@@ -124,7 +125,7 @@ export class DispatchService {
       actor: parent.id,
       projectId: task.projectId,
       sessionId: parent.id,
-      data: { taskId: task.id, agentId: agent.id, allowedTools: agent.allowedTools.length },
+      data: { taskId: task.id, agentId: agent.id, allowedTools: effectiveAllowed.length },
     })
 
     const controller = new AbortController()

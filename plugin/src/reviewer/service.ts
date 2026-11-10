@@ -93,8 +93,9 @@ export class ReviewerService {
       : runtime.agents.findByRole('reviewer')
     if (!reviewer) throw new FactoryError('NOT_FOUND', 'Профиль REVIEWER не найден')
     if (!reviewer.enabled) throw new FactoryError('FORBIDDEN', 'Профиль REVIEWER отключён')
-    if (reviewer.allowedTools.length === 0) {
-      throw new FactoryError('FORBIDDEN', 'Профиль REVIEWER не имеет allowedTools')
+    const effectiveAllowed = runtime.health?.effectiveAllowedTools(reviewer.allowedTools) ?? reviewer.allowedTools
+    if (effectiveAllowed.length === 0) {
+      throw new FactoryError('FORBIDDEN', 'Профиль REVIEWER не имеет доступных allowedTools')
     }
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_review требует вызывающего агента')
@@ -121,7 +122,7 @@ export class ReviewerService {
       actor: parent.id,
       projectId: task.projectId,
       sessionId: parent.id,
-      data: { taskId: task.id, reviewerAgentId: reviewer.id, allowedTools: reviewer.allowedTools.length },
+      data: { taskId: task.id, reviewerAgentId: reviewer.id, allowedTools: effectiveAllowed.length },
     })
 
     try {

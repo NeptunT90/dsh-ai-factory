@@ -15,9 +15,10 @@ import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
 import { ModelRouter } from './models/router.js'
 import { AutoWorkflowService } from './workflow/auto.js'
+import type { ToolHealthService } from './health/service.js'
 import { isHostCapability } from './agents/allowlists.js'
 
-export const FACTORY_VERSION = '0.17.0'
+export const FACTORY_VERSION = '0.18.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -57,6 +58,7 @@ export class FactoryRuntime {
   readonly sync: SyncService
   readonly models: ModelRouter
   autoWorkflow?: AutoWorkflowService
+  health?: ToolHealthService
   private readonly childToolAllowlist = new Map<string, ReadonlySet<string>>()
   readonly startedAt = Date.now()
   private expiredOnStart = 0
