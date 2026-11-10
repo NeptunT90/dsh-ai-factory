@@ -108,6 +108,14 @@
   `vector: true`, обновление памяти дошло до второй БД.
 - Standalone PostgreSQL/Ubuntu и TLS proxy ещё не развёрнуты.
 
+### Reviewer v0.6.0
+
+- `factory_review`: REVIEW-задача → реальный child REVIEWER через
+  `ctx.subagents.startActivation` + structured output.
+- PASS/PASS_WITH_WARNINGS закрывают задачу; FAIL → FAILED + READY fix-задача
+  с `metadata.fixFor`.
+- Audit review.*, 33 инструмента, 41 plugin-тест.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,

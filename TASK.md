@@ -23,7 +23,9 @@
   `factory_dispatch`; `factory_dashboard`; `factory_sync`.
 - Настроить GitHub remote/tag/Release.
 - Установка на второй физический ПК; upgrade.
-- Scoped-ограничение host-tools; Model Router; REVIEWER/Workflow.
+- Автоматический цикл fix → re-review.
+- Scoped-ограничение host-tools; Model Router.
+- Standalone PostgreSQL/TLS; GitHub Release; второй ПК.
 
 ## Запреты
 

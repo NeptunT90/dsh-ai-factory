@@ -253,6 +253,17 @@ capabilities. UI на русском, адаптивный, обновление
 Неподдерживаемые разделы (Workflows/KB/Models/Scheduler/Security/Server/
 GitHub) показаны как `plan`, а не имитируются.
 
+### 7.5a. Reviewer
+
+`factory_review` требует задачу в `REVIEW`, выбирает профиль REVIEWER и
+запускает **отдельного child-агента** (`spawn`) с `outputSchema`:
+`{verdict: PASS|PASS_WITH_WARNINGS|FAIL, summary, issues[]}`. Ребёнок имеет
+собственный контекст и host-tools, поэтому проверяет артефакты сам.
+
+- PASS / PASS_WITH_WARNINGS → task COMPLETED, review-текст в result;
+- FAIL → task FAILED + новая READY-задача «Исправить: …» с `metadata.fixFor`;
+- audit `review.*`, child id, fix id; при ошибке child задача остаётся REVIEW.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
@@ -287,6 +298,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Sync client + SQLite outbox + LWW pull | реализовано |
 | Sync server: PGlite PostgreSQL + pgvector + HTTP/auth | реализовано и проверено e2e |
 | Standalone PostgreSQL/Ubuntu deployment + TLS proxy | Phase 4b |
+| Независимый REVIEWER через child-агент + structured verdict | реализовано |
+| Автоматический fix → re-review цикл | Phase 6b |
 | Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |

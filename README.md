@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.5.0 регистрирует **32 инструмента**.
+- Загружается Cordis-загрузчиком DSH; в v0.6.0 регистрирует **33 инструмента**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v2**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -48,10 +48,10 @@
   LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
   развёрнут; локальный режим полностью автономен.
 - Аудит действий без записи содержимого памяти.
-- 38 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 41 автотест Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, tool contract); отдельно 5 тестов sync-сервера;
   строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема **v3**, 7 агентов, 32
+- Проверено в реальном Electron-процессе DSH: схема **v3**, 7 агентов, 33
   инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
@@ -103,6 +103,7 @@
 | `factory_dispatch` | Запустить дочернего агента через `ctx.subagents` и завершить задачу |
 | `factory_dashboard` | Запустить/остановить локальную read-only панель и получить URL |
 | `factory_sync` | status/push/pull памяти через outbox и sync-сервер |
+| `factory_review` | Независимое ревью задачи child-агентом REVIEWER; FAIL создаёт fix-задачу |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
 Профили агентов — durable-конфигурация ролей. `factory_dispatch` реально
@@ -166,7 +167,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.5.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.6.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -273,7 +274,7 @@ config/                 примеры конфигурации
   профиля пока не enforced, а Model Router/fallback не реализованы (Phase 2c).
 - Dashboard v1 — read-only и не содержит Workflows/KB/Models/Scheduler/
   Security/Server/GitHub разделов; они честно помечены как `plan`.
-- Нет автономного workflow-цикла, автоматического REVIEWER, GitHub и
+- Нет автономного workflow-цикла, GitHub и
   серверной синхронизации (Phase 3b+).
 - `node:sqlite` помечен в Node 24 как experimental. Плагин проверяет драйвер и
   сообщает об ошибке; в DSH 0.2.2-rc.1 он проверен и работает.

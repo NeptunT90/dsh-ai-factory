@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0] — 2026-11-10
+
+### Added
+
+- `factory_review`: независимое ревью задачи в REVIEW реальным дочерним
+  агентом REVIEWER через `ctx.subagents.startActivation`.
+- Structured output schema: `verdict` (PASS/PASS_WITH_WARNINGS/FAIL),
+  `summary`, `issues`; fallback по тексту `VERDICT:`.
+- PASS/PASS_WITH_WARNINGS закрывают задачу; FAIL переводит её в FAILED и
+  создаёт READY-задачу на исправление с `metadata.fixFor`.
+- Audit `review.started/completed/failed/error`, child id и fix task.
+- 3 reviewer-теста (всего 41), 33 инструмента.
+- Версия плагина и sync-сервера 0.6.0.
+
 ## [0.5.0] — 2026-11-10
 
 ### Added

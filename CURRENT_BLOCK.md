@@ -1,6 +1,21 @@
 # Текущий блок
 
-**Phase 4b — sync-сервер на PostgreSQL/PGlite + pgvector.**
+**Phase 6a — независимый REVIEWER.**
+
+Сделано:
+
+1. `factory_review` запускает реального child REVIEWER с structured output
+   (PASS/PASS_WITH_WARNINGS/FAIL).
+2. PASS/PASS_WITH_WARNINGS закрывают задачу; FAIL создаёт fix-задачу.
+3. 3 reviewer-теста; всего 41 plugin-тест, 33 инструмента.
+4. Версия 0.6.0.
+
+Осталось: автоматический цикл fix → re-review, scoped tools/Model Router,
+standalone PostgreSQL/TLS, GitHub Release, второй ПК.
+
+---
+
+## Предыдущий блок: Phase 4b — sync-сервер
 
 Сделано:
 
@@ -15,7 +30,7 @@
 4. End-to-end: A SQLite → HTTP → PGlite → B SQLite; update дошёл;
    health `vector: true`.
 5. Auto-sync по таймеру и backup endpoint/скрипт.
-6. Plugin 0.5.0: schema 3, 32 инструмента; 38 plugin-тестов, 5 server-тестов.
+6. Plugin 0.6.0: schema 3, 33 инструмента; 41 plugin-тест, 5 server-тестов.
 
 Осталось:
 

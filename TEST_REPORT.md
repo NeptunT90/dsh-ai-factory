@@ -18,13 +18,13 @@
 ### Plugin
 
 ```
-Test Files  10 passed (10)
-Tests       38 passed (38)
+Test Files  11 passed (11)
+Tests       41 passed (41)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
-offline/backoff, auth failure, auto-sync timer, tool contract (32 инструмента).
+offline/backoff, auth failure, auto-sync timer, tool contract (33 инструмента).
 
 ### Sync server
 
@@ -39,8 +39,8 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.5.0**.
-- `factory.started`: schema **3**, agents 7, tools **32**.
+- HMR загрузил AI Factory **v0.6.0**.
+- `factory.started`: schema **3**, agents 7, tools **33**.
 - SQLite v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
 - Схема `factory_sync` доставлена в Web GUI-сессию.
@@ -80,10 +80,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.5.0.tgz`: **123 562 байт**.
-- SHA256: `f3f8e888f108acfe1b751147801803c3ec7f8f2ff4da9adf84e172abd28088b6`.
+- `dist/dsh-ai-factory-0.6.0.tgz`: **128 486 байт**.
+- SHA256: `de4982770a83f00f121a26bb992136434d0b42ca75b5e3f71e003d94ea949b64`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.4.0 на 0.5.0; schema 3, 32 инструмента.
+- `portable-test` обновлён с 0.5.0 на 0.6.0; schema 3, 33 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -96,9 +96,9 @@ Read-only auth/405 проверены автотестами.
 - Нет автоматического flush outbox по таймеру.
 - Live tool-calls из модели в Web GUI не выполнены (текущий клиент не
   инициирует tool-call; схемы доставлены).
-- Scoped tool allowlist, Model Router, auto REVIEWER/Workflow не реализованы.
+- Scoped tool allowlist, Model Router и автоматический fix → re-review не реализованы.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.5.0 не выполнен.
+- Полный restart DSH после 0.6.0 не выполнен.
 
 ## 8. Повтор
 

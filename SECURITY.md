@@ -94,6 +94,16 @@ Phase 1 использует только:
   `factory_sync`; ошибки повторяются с backoff.
 - Standalone PostgreSQL/Ubuntu и TLS-терминация ещё не развёрнуты.
 
+## Reviewer / child-агенты
+
+- REVIEWER запускается как отдельный child (`spawn`, `maxDepth:1`) и inherits
+  host-tools; строгий allowlist пока не enforced (Phase 2c).
+- Ответ ребёнка валидируется по явной схеме; неизвестный verdict → FAIL, а не
+  автоматический PASS.
+- `factory_review` не принимает задачу вне REVIEW; FAIL создаёт fix-задачу,
+  но не переисполняет её автоматически.
+- Child получает project root и инструкцию, но не секреты конфигурации.
+
 ## Сообщение об уязвимости
 
 Не публикуйте секреты и персональные данные в issue. Для приватного отчёта
