@@ -60,6 +60,9 @@ jobs:
         shell: pwsh
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package-server.ps1
 
+      - name: Generate release notes
+        run: node scripts/release-notes.mjs
+
       - name: Verify package
         shell: pwsh
         run: |
@@ -73,6 +76,7 @@ jobs:
           path: |
             dist/*.tgz
             dist/SHA256SUMS
+            dist/RELEASE_NOTES-*.md
           if-no-files-found: error
 
       - name: Publish GitHub Release
@@ -82,4 +86,6 @@ jobs:
           files: |
             dist/*.tgz
             dist/SHA256SUMS
-          generate_release_notes: true
+            dist/RELEASE_NOTES-*.md
+          body_path: dist/RELEASE_NOTES-${{ github.ref_name }}.md
+          generate_release_notes: false

@@ -93,6 +93,9 @@ pnpm server:build
 ```text
 dist/dsh-ai-factory-sync-server-0.17.0.tgz — 17 189 байт
 SHA256: 8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5
+
+Release notes: `dist/RELEASE_NOTES-v0.17.0.md` (генерирует `scripts/release-notes.mjs`,
+используется GitHub Actions как `body_path`).
 ```
 
 Внутри: `dist/`, `scripts/restore.mjs`, `package.json`, `Dockerfile`,

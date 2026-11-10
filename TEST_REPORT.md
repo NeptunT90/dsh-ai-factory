@@ -166,6 +166,8 @@ Read-only auth/405 проверены автотестами.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
+- Release notes: `dist/RELEASE_NOTES-v0.17.0.md` (1 831 байт), генерируются
+  из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
 
