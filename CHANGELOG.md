@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.18.0] — 2026-11-10
+
+### Fixed
+
+- Host capability allowlist (HOST_TOOL_NAMES/aliases): read/write/edit/pwsh,
+  run_code and file aliases are denied by the runtime guard; RESEARCHER loses
+  file-tools. Live probe: read → unknown tool "read", write → TOOL_NOT_ALLOWED;
+  no direct bypass reproduced.
+- AutoWorkflowService.stop() waits an active tick up to 5 s, aborts it on
+  timeout and only then disposes the coordinator; audit stop_timeout.
+- Fallback is suppressed after the first successful tool result
+  (model.fallback_suppressed: tool_side_effect), preventing repeated side effects.
+- Original FAILED task becomes COMPLETED after its fix task passes review
+  (completeFixed, event completed_after_fix).
+- Plugin 0.17.0: 58 tests, 36 tools; server 0.17.0.
+
 ## [0.17.0] — 2026-11-10
 
 ### Fixed

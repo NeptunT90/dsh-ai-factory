@@ -15,8 +15,9 @@ import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
 import { ModelRouter } from './models/router.js'
 import { AutoWorkflowService } from './workflow/auto.js'
+import { isHostCapability } from './agents/allowlists.js'
 
-export const FACTORY_VERSION = '0.16.0'
+export const FACTORY_VERSION = '0.17.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -188,6 +189,9 @@ export class FactoryRuntime {
   toolDenial(agentId: string, toolName: string): string | undefined {
     if (!this.hasChildAllowlist(agentId)) return undefined
     if (this.isToolAllowed(agentId, toolName)) return undefined
+    if (isHostCapability(toolName)) {
+      return `TOOL_NOT_ALLOWED: host capability ${toolName} не входит в allowlist профиля ребёнка`
+    }
     return `TOOL_NOT_ALLOWED: ${toolName} не входит в allowlist профиля ребёнка`
   }
 

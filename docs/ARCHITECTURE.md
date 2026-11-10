@@ -189,8 +189,11 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 data. `ctx.agents.create()` получает `setup(agentCtx)`, где
 `agentCtx.tools.restrict({deny: known - allowed})` скрывает лишние host-tools,
 а глобальный `ctx.tools.guard` проверяет `runtime.toolDenial(childId, name)` и
-возвращает `TOOL_NOT_ALLOWED` для любой попытки вне allowlist. Allowlist
-хранится в SQLite и виден в `factory_agent_get/save`.
+возвращает `TOOL_NOT_ALLOWED` для любой попытки вне allowlist. Для host-tools
+есть отдельный список `HOST_TOOL_NAMES`/aliases (read/write/edit/pwsh/bash,
+`run_code` и файловые aliases): отказ
+`TOOL_NOT_ALLOWED: host capability <name> ...`; `run_code` ребёнку не выдаётся.
+Allowlist хранится в SQLite и виден в `factory_agent_get/save`.
 
 Встроенные профили имеют явные списки; пользовательский профиль стартует с
 пустым allowlist (deny all) и требует явного заполнения. Дочерние профили не
@@ -207,7 +210,10 @@ data. `ctx.agents.create()` получает `setup(agentCtx)`, где
 
 `modelMaxAttempts` (1–3) ограничивает цепочку. `ScopedChildRunner` получает
 готовый `agentOptions`; dispatch/review при `stopReason:error` повторяют
-следующий route, пишут audit `model.route` и `model.fallback` без prompt/event data. Read-only
+следующий route, пишут audit `model.route` и `model.fallback` без prompt/event data.
+Fallback подавляется, если в child-сессии уже был успешный `tool/result`
+(`successfulTools > 0`): audit `model.fallback_suppressed: tool_side_effect`,
+чтобы не повторять side effect. Read-only
 `factory_model_route` показывает primary/fallbacks/chain, но не запускает
 модель. Route не проверяется по каталогу провайдеров: неверный route вернёт
 ошибку child, после чего сработает fallback или задача уйдёт в retry.
@@ -288,7 +294,9 @@ tools, поэтому проверяет артефакты сам. Ответ �
 
 - PASS / PASS_WITH_WARNINGS → task COMPLETED; executor result сохраняется и
   дополняется блоком `--- REVIEW ---`;
-- FAIL → task FAILED + новая READY-задача «Исправить: …» с `metadata.fixFor`;
+- FAIL → исходная task FAILED + новая READY-задача «Исправить: …» с
+  `metadata.fixFor`; после PASS fix исходная переходит в COMPLETED через
+  `completeFixed` (event `completed_after_fix`);
 - audit `review.*`, child id, fix id; при ошибке child задача остаётся REVIEW.
 
 ### 7.5b. Workflow
@@ -301,8 +309,9 @@ tools, поэтому проверяет артефакты сам. Ответ �
 4. PASS/PASS_WITH_WARNINGS → PASSED;
 5. лимит циклов → EXHAUSTED; ошибка child → ERROR/FAILED.
 
-История циклов и audit `workflow.*` сохраняются; исходная задача после FAIL
-остаётся FAILED, успешная fix-задача — COMPLETED.
+История циклов и audit `workflow.*` сохраняются; после PASS успешной
+fix-задачи исходная FAILED-задача тоже становится COMPLETED
+(`completed_after_fix`), fix-задача остаётся COMPLETED.
 
 ### 7.5c. Autonomous workflow
 
@@ -316,7 +325,9 @@ tools, поэтому проверяет артефакты сам. Ответ �
 - audit `auto_workflow.started/tick/failed`;
 - `factory_auto_workflow` даёт status/run/start/stop; `run` выполняет один tick
   без включённого таймера;
-- `stop()` снимает таймер и dispose-ит coordinator.
+- `stop()` снимает таймер, ждёт активный tick до `stopTimeoutMs` (5 c), при
+  таймауте abort-ит signal и только затем dispose-ит coordinator; audit
+  `auto_workflow.stop_timeout`.
 
 Auto workflow не является daemon: живёт только пока загружен плагин.
 

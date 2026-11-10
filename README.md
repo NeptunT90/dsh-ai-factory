@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.16.0 регистрирует **36 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.17.0 регистрирует **36 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -38,7 +38,9 @@
 - **Реальный dispatch + scoped allowlist**: `factory_dispatch` создаёт ребёнка
   через `ctx.agents.create` с `setup(restrict)` и runtime guard; ребёнок
   получает отдельную сессию, cwd проекта и только `allowedTools` профиля.
-  Попытка вызвать запрещённый инструмент возвращает `TOOL_NOT_ALLOWED`.
+  `read`/`write`/`pwsh`/`run_code` дополнительно проверяются host-capability
+  guard; RESEARCHER не имеет file-tools. Запрещённый вызов возвращает
+  `TOOL_NOT_ALLOWED`.
 - **Model Router**: маршрут профиль → родитель → `modelFallbacks`; fallback при ошибке child; audit `model.route`/`model.fallback`.
 - **Autonomous workflow**: при `autoWorkflowEnabled` таймер находит READY-задачи и запускает bounded dispatch → review → fix через coordinator Agent; по умолчанию выключен.
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
@@ -54,7 +56,7 @@
   Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
   автономен.
 - Аудит действий без записи содержимого памяти.
-- 56 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 58 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
 - Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 35
@@ -132,9 +134,10 @@
 triggers), при ошибке остаются там и повторяются с backoff. Pull использует
 LWW по `updatedAt` и не создаёт обратный outbox.
 
-Сервер: [server/README.md](server/README.md) (релизный архив
-`dist/dsh-ai-factory-sync-server-0.17.0.tgz`) (PGlite или standalone PostgreSQL + pgvector,
-Bearer auth, Docker Compose, backup endpoint, restore CLI, scheduled backups).
+Сервер: [server/README.md](server/README.md) — релизный архив
+`dist/dsh-ai-factory-sync-server-0.17.0.tgz`; PGlite или standalone PostgreSQL
++ pgvector, Bearer auth, Docker Compose, backup endpoint, restore CLI,
+scheduled backups.
 Контракт:
 [docs/sync-protocol.md](docs/sync-protocol.md).
 
@@ -180,7 +183,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.16.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.17.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и

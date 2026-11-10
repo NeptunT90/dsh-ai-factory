@@ -55,34 +55,59 @@ approvals/sandbox продолжают действовать.
 2. В `setup(agentCtx)` до публикации агента вызывается
    `agentCtx.tools.restrict({deny: known - allowed})`; незаявленные
    host-инструменты скрываются из схемы.
-3. `ctx.tools.guard` получает `runtime.toolDenial(childId, name)` до выполнения
-   любого tool call. Вызов вне allowlist возвращает
-   `TOOL_NOT_ALLOWED: <name> не входит в allowlist профиля ребёнка`; тело
-   инструмента не выполняется.
+3. Отдельный **host capability allowlist** (`HOST_TOOL_NAMES` + aliases:
+   read/write/edit/apply_patch/grep/glob/working_directory/bash/pwsh/terminal,
+   `run_code` и файловые aliases) проверяется тем же `ctx.tools.guard` до
+   выполнения любого tool call. Вызов вне allowlist возвращает
+   `TOOL_NOT_ALLOWED: host capability <name> ...`; тело не выполняется.
+   `run_code` — reserved PTC transport — никогда не выдаётся ребёнку.
 4. Allowlist привязывается к child session id **до** первого хода и снимается в
    `finally` после `dispose()`.
 
 Дочерние профили не содержат `factory_dispatch`, `factory_review` и
 `factory_workflow_run` — внуки и рекурсивная оркестрация невозможны.
 REVIEWER не имеет `factory_sync`, `factory_dashboard`,
-`factory_memory_forget`, `factory_task_cancel`; RESEARCHER — тех же
-destructive-инструментов; SYSADMIN получает только admin/ssh/file-tools.
+`factory_memory_forget`, `factory_task_cancel`; RESEARCHER больше не имеет
+file-tools (`read`/`write`/`edit`) — только web/grep/glob/working_directory;
+SYSADMIN получает admin/ssh/file-tools.
 
-Live-проверка: RESEARCHER вызвал `factory_memory_forget` и получил
-`TOOL_NOT_ALLOWED`; память осталась нетронутой. Scoped REVIEWER прошёл PASS.
+**Live-проверка host capabilities (v0.17.0):**
 
-Граница: guard стоит на исполнении инструментов через `ctx.tools`. Любая
-host-возможность, которая обходит этот реестр, вне данной модели и требует
-отдельного аудита; DSH approvals/sandbox продолжают действовать независимо.
+- NOFILE (allowlist только `factory_status`) вызвал `read` → `unknown tool
+  "read"`; `pwsh`, `office_read`, `run_code` не смонтированы в child-сессии.
+- READONLY (`read` разрешён) вызвал `write` → `TOOL_NOT_ALLOWED: write ...`;
+  файл не создан.
+- RESEARCHER (без file-tools) вызвал `read` → `unknown tool "read"`;
+  содержимое файла не получено.
+- Прямого обхода allowlist через read/write/pwsh **не воспроизведено**:
+  DSH не монтирует эти host-инструменты в дочернюю сессию, а guard отбивает
+  их по имени, если модель всё же отправит такой вызов.
+
+Граница: guard стоит на исполнении инструментов через `ctx.tools`. Если
+host-возможность когда-либо появится вне этого реестра (например, новый
+executor), её нужно покрыть отдельным host-capability hook; DSH
+approvals/sandbox продолжают действовать независимо.
 
 ## Model Router
 
 - Маршруты и fallback-и задаются оператором (`modelFallbacks`), не моделью.
 - Audit `model.route`/`model.fallback` хранит только provider/model и причину
   (`child_error`); без prompt, system prompt, event data и секретов.
-- Fallback повторяет child только после `stopReason:error`, не после
-  содержательного FAIL от REVIEWER.
+- Fallback повторяет child только после `stopReason:error` и **только если
+  успешных tool-вызовов не было** (`successfulTools === 0`). После первого
+  успешного tool/result fallback подавляется с audit
+  `model.fallback_suppressed: tool_side_effect`; это защищает от повторного
+  side effect.
 - `factory_model_route` read-only; не переключает модель и не запускает child.
+
+## Auto workflow (v0.17.0)
+
+- `autoWorkflowEnabled` — явный opt-in; default false.
+- `stop()` сначала снимает таймер, затем ждёт активный tick до
+  `stopTimeoutMs` (5 c), при таймауте abort-ит `AbortSignal` и только потом
+  dispose-ит coordinator; audit `auto_workflow.stop_timeout`.
+- `factory_auto_workflow run` использует тот же bounded workflow; tick не
+  накладывается сам на себя.
 
 ## Dashboard (v0.4.0)
 
@@ -133,6 +158,9 @@ host-возможность, которая обходит этот реестр
 
 ## Reviewer / child-агенты
 
+- После успешной fix-задачи исходная FAILED-задача переходит в COMPLETED через
+  `completeFixed`; fix-задача остаётся COMPLETED. Переход пишется в event
+  `completed_after_fix`, исходный result сохраняется.
 - REVIEWER запускается через scoped runner с allowlist; в нём нет
   `factory_dispatch`, `factory_review`, `factory_workflow_run`, `factory_sync`,
   `factory_dashboard`, `factory_memory_forget`, `factory_task_cancel`.

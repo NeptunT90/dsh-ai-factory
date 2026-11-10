@@ -119,6 +119,35 @@ describe('DispatchService', () => {
     expect(runtime.tasks.require(task.id).result).toContain('fallback ok')
   })
 
+  it('does not repeat fallback after a successful tool call side effect', async () => {
+    const { runtime, projectId } = track(
+      createTestRuntime({ modelFallbacks: 'fb/one', modelMaxAttempts: 2 }),
+    )
+    const task = runtime.tasks.create({ projectId, title: 'Side effect fallback' })
+    const calls: string[] = []
+    const sideEffectRunner: ChildRunner = {
+      async run(input) {
+        calls.push(String(input.agentOptions?.provider) + '/' + String(input.agentOptions?.model))
+        return {
+          childId: 'ses_side_effect',
+          output: '',
+          stopReason: 'error',
+          diagnostic: 'child failed after writing',
+          toolCalls: 1,
+          successfulTools: 1,
+        }
+      },
+    }
+    const output = await new DispatchService(fakeContext(), runtime, sideEffectRunner).dispatch(
+      { taskId: task.id },
+      fakeExec(),
+    )
+    expect(calls).toHaveLength(1)
+    expect(output.stopReason).toBe('error')
+    expect(output.taskStatus).toBe('READY')
+    expect(runtime.audit.recent(50).some((entry) => entry.event === 'model.fallback_suppressed')).toBe(true)
+  })
+
   it('fails without claiming when ctx.agents is unavailable', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Без agents' })

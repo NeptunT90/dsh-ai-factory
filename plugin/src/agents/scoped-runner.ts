@@ -6,6 +6,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from './types.js'
+import { HOST_TOOL_NAMES } from './allowlists.js'
 
 export interface ScopedRunInput {
   readonly parent: Agent
@@ -28,6 +29,10 @@ export interface ScopedRunResult {
   readonly output: string
   readonly stopReason: 'completed' | 'error' | 'aborted'
   readonly diagnostic: string
+  /** Number of tool calls observed in the child session. */
+  readonly toolCalls?: number
+  /** Number of non-error tool results (a successful tool execution). */
+  readonly successfulTools?: number
 }
 
 function textFromBlocks(blocks: readonly ContentBlock[]): string {
@@ -95,10 +100,30 @@ export class ScopedChildRunner implements ChildRunner {
         setup: (agentCtx) => {
           const known = agentCtx.tools.definitions().map((definition) => definition.name)
           // Factory tools stay visible so a forbidden call reaches the guard and
-          // returns the explicit TOOL_NOT_ALLOWED error; non-factory host tools
-          // are hidden from the schema as well.
-          const deny = known.filter((name) => !allowed.includes(name) && !name.startsWith('factory_'))
-          if (deny.length > 0) agentCtx.tools.restrict({ deny })
+          // returns the explicit TOOL_NOT_ALLOWED error. Host capabilities are
+          // hidden when possible and are additionally denied by name at
+          // execution time (including aliases and the reserved run_code
+          // transport) by the runtime guard.
+          const deny = new Set(
+            known.filter((name) => !allowed.includes(name) && !name.startsWith('factory_')),
+          )
+          for (const name of HOST_TOOL_NAMES) {
+            if (!allowed.includes(name)) deny.add(name)
+          }
+          const restrictable = new Set(known)
+          const denyKnown = [...deny].filter((name) => restrictable.has(name))
+          if (denyKnown.length > 0) agentCtx.tools.restrict({ deny: denyKnown })
+          this.runtime.audit.record({
+            event: 'child.host_capabilities',
+            level: 'info',
+            data: {
+              sessionId,
+              profile: input.profile.name,
+              allowedHost: HOST_TOOL_NAMES.filter((name) => allowed.includes(name)),
+              deniedHost: HOST_TOOL_NAMES.filter((name) => !allowed.includes(name)),
+              knownHost: known.filter((name) => (HOST_TOOL_NAMES as readonly string[]).includes(name)),
+            },
+          })
         },
       })
       childId = handle.agent.id
@@ -147,6 +172,15 @@ export class ScopedChildRunner implements ChildRunner {
       }
 
       const events = handle.agent.session.snapshotEvents()
+      let toolCalls = 0
+      let successfulTools = 0
+      for (const event of events) {
+        if (event.type === 'tool/call') toolCalls += 1
+        if (event.type === 'tool/result') {
+          const message = (event.data as { message?: { isError?: boolean } }).message
+          if (message?.isError !== true) successfulTools += 1
+        }
+      }
       let output = ''
       for (let index = events.length - 1; index >= 0; index -= 1) {
         const event = events[index]
@@ -163,9 +197,11 @@ export class ScopedChildRunner implements ChildRunner {
           diagnostic: timedOut
             ? 'child timeout'
             : `ребёнок завершил ход без текстового ответа; events: ${tail}`,
+          toolCalls,
+          successfulTools,
         }
       }
-      return { childId, output, stopReason: 'completed', diagnostic: '' }
+      return { childId, output, stopReason: 'completed', diagnostic: '', toolCalls, successfulTools }
     } catch (error) {
       return {
         childId,

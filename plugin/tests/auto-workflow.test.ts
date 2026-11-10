@@ -74,6 +74,38 @@ describe('AutoWorkflowService', () => {
     expect(disposed.count).toBe(1)
   })
 
+  it('stop waits for an active tick with a timeout, aborts it, then disposes the coordinator', async () => {
+    const { runtime, projectId } = track(
+      createTestRuntime({
+        autoWorkflowEnabled: true,
+        autoWorkflowMaxCycles: 1,
+        autoWorkflowMaxTasks: 1,
+      }),
+    )
+    runtime.tasks.create({ projectId, title: 'Hanging auto tick' })
+    const disposed = { count: 0 }
+    let started = false
+    const hanging: ChildRunner = {
+      async run(input: ScopedRunInput): Promise<ScopedRunResult> {
+        started = true
+        return new Promise((resolve) => {
+          input.signal.addEventListener(
+            'abort',
+            () => resolve({ childId: 'ses_hang', output: '', stopReason: 'error', diagnostic: 'aborted by stop' }),
+            { once: true },
+          )
+        })
+      },
+    }
+    const service = new AutoWorkflowService(fakeContext(coordinator(), disposed), runtime, hanging, 50)
+    const tick = service.tickOnce()
+    while (!started) await new Promise((resolve) => setTimeout(resolve, 5))
+    const stopping = service.stop()
+    await stopping
+    await tick
+    expect(disposed.count).toBe(1)
+  })
+
   it('does nothing when autonomous workflow is disabled', async () => {
     const { runtime } = track(createTestRuntime({ autoWorkflowEnabled: false }))
     const disposed = { count: 0 }

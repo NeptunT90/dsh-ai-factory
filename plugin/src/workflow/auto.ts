@@ -19,6 +19,7 @@ export class AutoWorkflowService {
   private handle: Awaited<ReturnType<AgentRegistry['create']>> | undefined
   private coordinator: Agent | undefined
   private active: Promise<void> | undefined
+  private activeController: AbortController | undefined
   private ticking = false
   private stopped = false
 
@@ -26,6 +27,7 @@ export class AutoWorkflowService {
     private readonly ctx: Context,
     private readonly runtime: FactoryRuntime,
     private readonly runner?: ChildRunner,
+    private readonly stopTimeoutMs = 5_000,
   ) {}
 
   get enabled(): boolean {
@@ -55,18 +57,13 @@ export class AutoWorkflowService {
     }
     const interval = Math.max(30_000, this.runtime.config.autoWorkflowIntervalSeconds * 1000)
     this.timer = setInterval(() => {
-      this.active = this.tickOnce()
-        .then(() => undefined)
-        .catch((error: unknown) => {
-          this.runtime.audit.record({
-            event: 'auto_workflow.failed',
-            level: 'warn',
-            data: { error: errorMessage(error).slice(0, 500) },
-          })
+      void this.tickOnce().catch((error: unknown) => {
+        this.runtime.audit.record({
+          event: 'auto_workflow.failed',
+          level: 'warn',
+          data: { error: errorMessage(error).slice(0, 500) },
         })
-        .finally(() => {
-          this.active = undefined
-        })
+      })
     }, interval)
     this.timer.unref?.()
     this.runtime.audit.record({ event: 'auto_workflow.started', level: 'info', data: { intervalMs: interval } })
@@ -78,7 +75,25 @@ export class AutoWorkflowService {
       clearInterval(this.timer)
       this.timer = undefined
     }
-    if (this.active) await this.active.catch(() => undefined)
+    const active = this.active
+    if (active) {
+      const timedOut = await Promise.race([
+        active.then(() => false).catch(() => false),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(true), this.stopTimeoutMs)),
+      ])
+      if (timedOut) {
+        this.runtime.audit.record({
+          event: 'auto_workflow.stop_timeout',
+          level: 'warn',
+          data: { timeoutMs: this.stopTimeoutMs },
+        })
+        this.activeController?.abort()
+        await Promise.race([
+          active.catch(() => undefined),
+          new Promise<void>((resolve) => setTimeout(resolve, Math.min(1_000, this.stopTimeoutMs))),
+        ])
+      }
+    }
     const handle = this.handle
     this.handle = undefined
     this.coordinator = undefined
@@ -90,14 +105,20 @@ export class AutoWorkflowService {
     if (this.stopped) return []
     if (this.ticking) return []
     this.ticking = true
+    const controller = new AbortController()
+    this.activeController = controller
+    const promise = this.tickOnceInner(controller.signal)
+    this.active = promise.then(() => undefined).catch(() => undefined)
     try {
-      return await this.tickOnceInner()
+      return await promise
     } finally {
       this.ticking = false
+      if (this.activeController === controller) this.activeController = undefined
+      this.active = undefined
     }
   }
 
-  private async tickOnceInner(): Promise<WorkflowResult[]> {
+  private async tickOnceInner(signal: AbortSignal): Promise<WorkflowResult[]> {
     const tasks = this.runtime.tasks
       .listAll(200)
       .filter((task) => task.status === 'READY')
@@ -105,16 +126,16 @@ export class AutoWorkflowService {
       .slice(0, Math.max(1, Math.min(5, this.runtime.config.autoWorkflowMaxTasks)))
     if (tasks.length === 0) return []
     const coordinator = await this.ensureCoordinator()
-    const controller = new AbortController()
     const exec = {
       callId: `auto_${randomUUID()}`,
       name: 'auto_workflow',
       arguments: {},
-      signal: controller.signal,
+      signal,
       agent: coordinator,
     } as unknown as ToolRunContext
     const results: WorkflowResult[] = []
     for (const task of tasks) {
+      if (signal.aborted) break
       try {
         const service = new WorkflowService(this.ctx, this.runtime, this.runner)
         const result = await service.run(

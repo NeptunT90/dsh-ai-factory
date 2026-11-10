@@ -146,7 +146,7 @@ describe('plugin mount', () => {
         goal: 'Проверить оркестрацию',
         steps: [
           { key: 'research', title: 'Исследовать', role: 'researcher' },
-          { key: 'build', title: 'РЎРѕР±СЂР°С‚СЊ', role: 'developer', dependsOn: ['research'] },
+          { key: 'build', title: 'Собрать', role: 'developer', dependsOn: ['research'] },
         ],
       },
       exec,

@@ -454,6 +454,29 @@ export class TaskEngine {
     return this.require(id)
   }
 
+  /**
+   * Close the original FAILED task after its fix task passed review.
+   * Ordinary complete() intentionally refuses FAILED; this explicit transition
+   * keeps the original task's history while marking the outcome COMPLETED.
+   */
+  completeFixed(id: string, actor: string, result: string | null = null): TaskRecord {
+    const task = this.require(id)
+    if (task.status !== 'FAILED') {
+      throw new FactoryError('CONFLICT', `Завершить после fix можно только FAILED, сейчас ${task.status}`)
+    }
+    const ts = now()
+    this.db.transaction(() => {
+      this.db.run(
+        `UPDATE tasks SET status = 'COMPLETED', result = ?, error = NULL, finished_at = ?,
+         lease_owner = NULL, lease_until = NULL, version = version + 1, updated_at = ? WHERE id = ?`,
+        [result?.slice(0, 100_000) ?? null, ts, ts, id],
+      )
+      this.event(id, 'completed_after_fix', actor, 'FAILED', 'COMPLETED', {})
+      this.promoteLocked(task.projectId)
+    })
+    return this.require(id)
+  }
+
   fail(id: string, actor: string, error: string, retryable = true): TaskRecord {
     const task = this.require(id)
     if (!['RUNNING', 'REVIEW', 'WAITING'].includes(task.status)) {

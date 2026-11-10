@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent, AgentRegistry } from '@deepseek-ai/dsh-agent'
 import type { ToolRestriction } from '@deepseek-ai/dsh-tools'
@@ -95,7 +95,7 @@ describe('ScopedChildRunner', () => {
     const deny = captured.restrictions?.[0]?.deny ?? []
     expect(deny).not.toContain('factory_memory_forget')
     expect(deny).not.toContain('factory_memory_search')
-    expect(deny).not.toContain('read')
+    expect(deny).toContain('read')
     expect(runtime.hasChildAllowlist('ses_child')).toBe(false)
   })
 
@@ -125,6 +125,11 @@ describe('tool allowlist', () => {
     expect(runtime.toolDenial('ses_child', 'factory_sync')).toContain('TOOL_NOT_ALLOWED')
     expect(runtime.toolDenial('ses_child', 'factory_dashboard')).toContain('TOOL_NOT_ALLOWED')
     expect(runtime.toolDenial('ses_child', 'factory_memory_search')).toBeUndefined()
+    expect(runtime.toolDenial('ses_child', 'read')).toContain('host capability read')
+    expect(runtime.toolDenial('ses_child', 'write')).toContain('host capability write')
+    expect(runtime.toolDenial('ses_child', 'pwsh')).toContain('host capability pwsh')
+    expect(runtime.toolDenial('ses_child', 'run_code')).toContain('host capability run_code')
+    expect(runtime.toolDenial('ses_child', 'read_file')).toContain('host capability read_file')
     runtime.releaseChildTools('ses_child')
   })
 

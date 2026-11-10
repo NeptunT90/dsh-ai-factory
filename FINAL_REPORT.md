@@ -1,6 +1,6 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-10. Плагин **dsh-ai-factory 0.16.0**, sync-сервер **0.17.0**,
+Дата: 2026-11-10. Плагин **dsh-ai-factory 0.17.0**, sync-сервер **0.17.0**,
 DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструментов.
 
 ## Что внедрено
@@ -21,14 +21,13 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструмен�
 | Sync client | готово | outbox, push/pull, LWW, conflict, auto-sync |
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
-| Tests | готово | 56 plugin + 10 server |
-| Install desktop | готово | live 0.16.0, 36 tools, schema 4 |
-| Portable profile | готово | `portable-test` 0.16.0 |
+| Tests | готово | 58 plugin + 10 server |
+| Install desktop | готово | live 0.17.0, 36 tools, schema 4 |
+| Portable profile | готово | `portable-test` 0.17.0 |
 
 ## Live-доказательства
 
-- `factory_status`: 0.16.0, schema 4, 8 профилей (7 builtin + disabled
-  `BADROUTE`), 18 задач, 1 активная память.
+- `factory_status`: 0.17.0, schema 4, 10 профилей (7 builtin + 3 test; `BADROUTE` disabled), 24 задач, 1 активная память.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -40,12 +39,24 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструмен�
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
 
+## Четыре внутренних долга (v0.17.0)
+
+- **Host capabilities:** отдельный `HOST_TOOL_NAMES`/aliases guard; RESEARCHER без
+  file-tools. Live: read → `unknown tool "read"`, write → `TOOL_NOT_ALLOWED`;
+  прямой обход read/write/pwsh не воспроизведён, `run_code` ребёнку не выдаётся.
+- **Auto stop:** `stop()` ждёт tick до 5 c, при таймауте abort и только затем
+  dispose; тест с зависшим child.
+- **Fallback:** повтор подавляется после `successfulTools > 0`
+  (`model.fallback_suppressed`), чтобы не повторять side effect.
+- **FAIL → fix → PASS:** исходная задача становится COMPLETED
+  (`completed_after_fix`), fix-задача остаётся COMPLETED.
+
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-0.16.0.tgz
-  149 113 байт
-  c4002271f6eb7151c18474ad9a9426157316a7b29c16b09e45ee4657d85102d4
+dist/dsh-ai-factory-0.17.0.tgz
+  151 694 байт
+  f2e473b7bc86626eb3204375882a82f3dba9b9b8bd1f253ac00de797f51dec37
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -79,7 +90,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.16.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.17.0.tgz
 ```
 
 Проверка в DSH:

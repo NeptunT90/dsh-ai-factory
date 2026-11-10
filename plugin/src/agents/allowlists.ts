@@ -1,6 +1,40 @@
 import type { AgentRole } from './types.js'
 
 /**
+ * Host capabilities are registered by DSH outside the factory tool set. They
+ * are still checked by the same execution guard: a child may only call a host
+ * capability whose exact tool name is in its profile allowlist.
+ *
+ * `run_code` is the reserved PTC transport; it is never granted to a child.
+ */
+export const HOST_TOOL_NAMES = [
+  'read',
+  'write',
+  'edit',
+  'apply_patch',
+  'grep',
+  'glob',
+  'working_directory',
+  'bash',
+  'pwsh',
+  'terminal',
+  'run_code',
+] as const
+
+export const HOST_TOOL_ALIASES = [
+  'read_file',
+  'write_file',
+  'fs_read',
+  'fs_write',
+  'shell',
+] as const
+
+export function isHostCapability(name: string): boolean {
+  return (HOST_TOOL_NAMES as readonly string[]).includes(name) ||
+    (HOST_TOOL_ALIASES as readonly string[]).includes(name)
+}
+
+/**
  * Explicit model-facing tool allowlists. These are enforcement data: dispatch
  * and review pass them to the child runner, and the tool guard rejects any call
  * outside the set with TOOL_NOT_ALLOWED.
@@ -21,7 +55,7 @@ export const ALLOWLISTS: Readonly<Record<AgentRole, readonly string[]>> = {
     'factory_director_brief',
   ],
   researcher: [
-    'read', 'write', 'edit', 'grep', 'glob', 'working_directory',
+    'grep', 'glob', 'working_directory',
     'web_search', 'web_fetch',
     'browser_open', 'browser_navigate', 'browser_snapshot', 'browser_wait', 'browser_screenshot', 'browser_tabs',
     'office_read', 'office_query',

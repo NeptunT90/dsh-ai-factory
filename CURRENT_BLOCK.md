@@ -1,6 +1,17 @@
 # Текущий блок
 
-**Release — server artifact.**
+**Финальные четыре долга.**
+
+Сделано:
+
+1. Host-capability allowlist: read/write/pwsh/run_code/aliases; RESEARCHER без file-tools.
+2. Live: read → unknown tool, write → TOOL_NOT_ALLOWED; bypass не воспроизведён.
+3. stop() ждёт tick до 5 c, abort, затем dispose.
+4. Fallback подавляется после successfulTools>0.
+5. FAIL → fix PASS → исходная COMPLETED (completed_after_fix).
+6. 58 тестов, plugin 0.17.0, server 0.17.0.
+
+## Предыдущий блок: release artifact
 
 Сделано:
 

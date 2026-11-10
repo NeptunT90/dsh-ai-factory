@@ -139,6 +139,22 @@ export class ReviewerService {
           agentOptions: route.options,
         })
         if (result.stopReason === 'completed') break
+        if ((result.successfulTools ?? 0) > 0) {
+          runtime.audit.record({
+            event: 'model.fallback_suppressed',
+            level: 'warn',
+            actor: parent.id,
+            projectId: task.projectId,
+            sessionId: parent.id,
+            data: {
+              taskId: task.id,
+              reason: 'tool_side_effect',
+              successfulTools: result.successfulTools ?? 0,
+              toolCalls: result.toolCalls ?? 0,
+            },
+          })
+          break
+        }
         if (attempt + 1 < routePlan.attempts.length) {
           runtime.audit.record({
             event: 'model.fallback',

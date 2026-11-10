@@ -19,7 +19,7 @@
 
 ```
 Test Files  15 passed (15)
-Tests       56 passed (56)
+Tests       58 passed (58)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
@@ -49,7 +49,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.16.0**.
+- HMR загрузил AI Factory **v0.17.0**.
 - `factory.started`: schema **4**, agents 7, tools **35**.
 - SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
@@ -61,7 +61,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.16.0, schema 4, 8 профилей, 36 инструментов.
+- `factory_status` → 0.17.0, schema 4, 10 профилей (7 builtin + 3 test), 36 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -77,7 +77,20 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
-### Auto workflow tool v0.16.0 (live)
+### Four internal debts v0.17.0
+
+- **Host capabilities:** NOFILE `read` → `unknown tool "read"`; READONLY
+  `write` → `TOOL_NOT_ALLOWED: write ...`; RESEARCHER `read` →
+  `unknown tool "read"`. Прямого обхода read/write/pwsh не воспроизведено;
+  добавлен `HOST_TOOL_NAMES`/aliases guard и тест `RESEARCHER` host denial.
+- **Auto stop:** тест stop во время зависшего tick: timeout 50 мс, abort,
+  coordinator dispose, без ошибок.
+- **Fallback side effect:** тест child error с `successfulTools=1` → fallback
+  не вызывается, audit `model.fallback_suppressed`.
+- **FAIL → fix → PASS:** тест подтверждает исходную COMPLETED
+  (`completed_after_fix`) и fix COMPLETED.
+
+### Auto workflow tool v0.17.0 (live)
 
 - `factory_auto_workflow status`: enabled=false, timer=false.
 - Создана READY-задача `tsk_eda508af…`; `factory_auto_workflow run` →
@@ -161,12 +174,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.16.0.tgz`: **149 113 байт**.
-- SHA256: `c4002271f6eb7151c18474ad9a9426157316a7b29c16b09e45ee4657d85102d4`.
+- `dist/dsh-ai-factory-0.17.0.tgz`: **151 694 байт**.
+- SHA256: `f2e473b7bc86626eb3204375882a82f3dba9b9b8bd1f253ac00de797f51dec37`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.17.0.md` (1 831 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.18.0.md` (1 831 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -178,7 +191,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.16.0; schema 4, 36 инструментов.
+- `portable-test` обновлён с 0.15.0 на 0.17.0; schema 4, 36 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

@@ -110,6 +110,16 @@ export class WorkflowService {
         })
         lastFix = review.fixTaskId || lastFix
         if (review.verdict !== 'FAIL') {
+          if (currentId !== input.taskId) {
+            const original = runtime.tasks.require(input.taskId)
+            if (original.status === 'FAILED') {
+              runtime.tasks.completeFixed(
+                input.taskId,
+                exec.agent?.id ?? 'workflow',
+                `Fixed by ${currentId}: ${review.verdict}`,
+              )
+            }
+          }
           return this.finish(
             'PASSED',
             cycles,

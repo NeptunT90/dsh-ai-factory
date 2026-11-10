@@ -125,6 +125,14 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Four internal debts v0.17.0
+
+- Host capability guard; RESEARCHER no file-tools; live probes.
+- Auto stop timeout/abort.
+- Fallback side-effect suppression.
+- Original FAILED → COMPLETED after fix.
+- 58 tests.
+
 ### Server clean-room install
 
 - Extracted tarball, npm install --omit=dev (16 packages).
