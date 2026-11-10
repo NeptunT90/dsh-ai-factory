@@ -108,6 +108,16 @@
 - [ ] REVIEWER: независимые проверки.
 - [ ] Tool Registry и проверки доступности.
 
+## Phase 2c — Scoped tools
+
+- [x] `allowed_tools` в профиле (schema v4), deny-by-default для custom.
+- [x] `ctx.agents.create` + `setup(restrict)` для dispatch/review.
+- [x] Runtime `ctx.tools.guard` → `TOOL_NOT_ALLOWED`.
+- [x] DEVELOPER без dispatch; REVIEWER/RESEARCHER без destructive-tools;
+      SYSADMIN только admin.
+- [x] Live: RESEARCHER пытается `factory_memory_forget` → отказ, память цела.
+- [x] 50 plugin-тестов, docs/ARCHITECTURE/SECURITY.
+
 ## Phase 6 — Autonomy and Review
 
 - [ ] SAFE / AUTONOMOUS / TRUSTED.

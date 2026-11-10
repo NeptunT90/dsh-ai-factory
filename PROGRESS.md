@@ -125,6 +125,13 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Phase 2c — scoped allowlist v0.8.0
+
+- Schema v4: `agent_profiles.allowed_tools`, UI tools `allowedTools`.
+- `ctx.agents.create` + setup restrict + global tool guard.
+- RESEARCHER live: `factory_memory_forget` → `TOOL_NOT_ALLOWED`, память цела.
+- Scoped REVIEWER live PASS; 50 plugin-тестов.
+
 ### Fixed v0.7.1
 
 - REVIEWER PASS сохраняет executor result (раньше перезаписывал review-текстом);

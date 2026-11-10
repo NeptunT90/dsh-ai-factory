@@ -27,6 +27,7 @@ interface AgentRow {
   model: string | null
   reasoning_effort: string | null
   tools: string
+  allowed_tools: string
   access_level: AccessLevel
   memory_scope: AgentMemoryScope
   limits: string
@@ -84,6 +85,7 @@ function mapAgent(row: AgentRow): AgentProfile {
     model: row.model,
     reasoningEffort: row.reasoning_effort,
     tools: parseTools(row.tools),
+    allowedTools: parseTools(row.allowed_tools),
     accessLevel: row.access_level,
     memoryScope: row.memory_scope,
     limits: normalizeLimits(JSON.parse(row.limits) as Partial<AgentLimits>),
@@ -97,7 +99,7 @@ function mapAgent(row: AgentRow): AgentProfile {
 
 const SELECT = `
   SELECT id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at
   FROM agent_profiles`
 
@@ -112,9 +114,9 @@ export class AgentRegistry {
       this.db.run(
         `INSERT OR IGNORE INTO agent_profiles
           (id, name, role, title, description, system_instruction, model_provider, model,
-           reasoning_effort, tools, access_level, memory_scope, limits, enabled, is_builtin,
+           reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
            version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
         [
           agent.id,
           agent.name,
@@ -123,6 +125,7 @@ export class AgentRegistry {
           agent.description ?? '',
           agent.systemInstruction ?? '',
           JSON.stringify(normalizeTools(agent.tools)),
+          JSON.stringify(normalizeTools(agent.allowedTools)),
           agent.accessLevel ?? 'workspace',
           agent.memoryScope ?? 'project',
           JSON.stringify(normalizeLimits(agent.limits)),
@@ -130,6 +133,10 @@ export class AgentRegistry {
           ts,
           ts,
         ],
+      )
+      this.db.run(
+        "UPDATE agent_profiles SET allowed_tools = ? WHERE id = ? AND is_builtin = 1 AND (allowed_tools IS NULL OR allowed_tools = '[]')",
+        [JSON.stringify(normalizeTools(agent.allowedTools)), agent.id],
       )
     }
   }
@@ -179,9 +186,9 @@ export class AgentRegistry {
     this.db.run(
       `INSERT INTO agent_profiles
         (id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
       [
         id,
         name,
@@ -193,6 +200,7 @@ export class AgentRegistry {
         input.model?.trim() || null,
         input.reasoningEffort?.trim() || null,
         JSON.stringify(normalizeTools(input.tools)),
+        JSON.stringify(normalizeTools(input.allowedTools)),
         accessLevel,
         memoryScope,
         JSON.stringify(normalizeLimits(input.limits)),
@@ -229,7 +237,7 @@ export class AgentRegistry {
     this.db.run(
       `UPDATE agent_profiles
        SET name = ?, role = ?, title = ?, description = ?, system_instruction = ?,
-           model_provider = ?, model = ?, reasoning_effort = ?, tools = ?, access_level = ?,
+           model_provider = ?, model = ?, reasoning_effort = ?, tools = ?, allowed_tools = ?, access_level = ?,
            memory_scope = ?, limits = ?, enabled = ?, version = version + 1, updated_at = ?
        WHERE id = ?`,
       [
@@ -242,6 +250,7 @@ export class AgentRegistry {
         input.model === undefined ? current.model : input.model?.trim() || null,
         input.reasoningEffort === undefined ? current.reasoningEffort : input.reasoningEffort?.trim() || null,
         JSON.stringify(input.tools === undefined ? current.tools : normalizeTools(input.tools)),
+        JSON.stringify(input.allowedTools === undefined ? current.allowedTools : normalizeTools(input.allowedTools)),
         accessLevel,
         memoryScope,
         JSON.stringify(limits),

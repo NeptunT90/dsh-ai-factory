@@ -28,6 +28,7 @@ const AGENT_OUTPUT = {
     model: { type: 'string', required: true },
     reasoningEffort: { type: 'string', required: true },
     tools: { type: 'array', items: { type: 'string' }, required: true },
+    allowedTools: { type: 'array', items: { type: 'string' }, required: true },
     accessLevel: { type: 'string', required: true },
     memoryScope: { type: 'string', required: true },
     limits: { type: 'json', required: true },
@@ -51,6 +52,7 @@ function view(agent: AgentProfile): AgentView {
     model: agent.model ?? '',
     reasoningEffort: agent.reasoningEffort ?? '',
     tools: [...agent.tools],
+    allowedTools: [...agent.allowedTools],
     accessLevel: agent.accessLevel,
     memoryScope: agent.memoryScope,
     limits: asJsonValue(agent.limits),
@@ -73,6 +75,7 @@ interface AgentView {
   model: string
   reasoningEffort: string
   tools: string[]
+  allowedTools: string[]
   accessLevel: string
   memoryScope: string
   limits: JsonValue
@@ -95,6 +98,7 @@ function formatAgent(agent: AgentView): string {
     agent.model ? `модель: ${agent.modelProvider ?? 'default'}/${agent.model}` : 'модель: по умолчанию',
     `лимиты: ${JSON.stringify(agent.limits)}`,
     `инструменты: ${agent.tools.join(', ') || '—'}`,
+    `allowlist: ${agent.allowedTools.join(', ') || '—'}`,
     '',
     agent.description,
     '',
@@ -204,6 +208,7 @@ export function registerAgentTools(
           model: { type: 'string', description: 'id модели (пусто — default)' },
           reasoningEffort: { type: 'string', description: 'Уровень reasoning' },
           tools: { type: 'array', items: { type: 'string' }, description: 'Рекомендуемые инструменты/паттерны' },
+          allowedTools: { type: 'array', items: { type: 'string' }, description: 'Точный allowlist инструментов ребёнка' },
           accessLevel: { type: 'string', enum: ACCESS_LEVELS, description: 'Уровень доступа' },
           memoryScope: { type: 'string', enum: MEMORY_SCOPES, description: 'Доступ к памяти' },
           limits: { type: 'json', description: 'Лимиты: maxConcurrentTasks, maxAttempts, timeoutMs, autonomy' },
@@ -228,6 +233,7 @@ export function registerAgentTools(
                 model: args.model,
                 reasoningEffort: args.reasoningEffort,
                 tools: args.tools,
+                allowedTools: args.allowedTools,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,
@@ -244,6 +250,7 @@ export function registerAgentTools(
                 model: args.model,
                 reasoningEffort: args.reasoningEffort,
                 tools: args.tools,
+                allowedTools: args.allowedTools,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,

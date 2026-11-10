@@ -37,8 +37,10 @@ export interface AgentProfile {
   readonly modelProvider: string | null
   readonly model: string | null
   readonly reasoningEffort: string | null
-  /** Recommended tool names or glob patterns. Enforcement belongs to a later phase. */
+  /** Recommended tool names or glob patterns (advisory). */
   readonly tools: readonly string[]
+  /** Exact model-facing tool allowlist enforced for child agents. */
+  readonly allowedTools: readonly string[]
   readonly accessLevel: AccessLevel
   readonly memoryScope: AgentMemoryScope
   readonly limits: AgentLimits
@@ -59,6 +61,7 @@ export interface AgentCreateInput {
   readonly model?: string | null
   readonly reasoningEffort?: string | null
   readonly tools?: readonly string[]
+  readonly allowedTools?: readonly string[]
   readonly accessLevel?: AccessLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>
@@ -75,6 +78,7 @@ export interface AgentUpdateInput {
   readonly model?: string | null
   readonly reasoningEffort?: string | null
   readonly tools?: readonly string[]
+  readonly allowedTools?: readonly string[]
   readonly accessLevel?: AccessLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>

@@ -4,6 +4,7 @@ import { errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import { DispatchService } from '../dispatch/service.js'
 import { ReviewerService } from '../reviewer/service.js'
+import type { ChildRunner } from '../agents/scoped-runner.js'
 
 export interface WorkflowInput {
   readonly taskId: string
@@ -39,6 +40,7 @@ export class WorkflowService {
   constructor(
     private readonly ctx: Context,
     private readonly runtime: FactoryRuntime,
+    private readonly runner?: ChildRunner,
   ) {}
 
   async run(input: WorkflowInput, exec: ToolRunContext): Promise<WorkflowResult> {
@@ -61,7 +63,7 @@ export class WorkflowService {
           return this.finish('PASSED', cycles, currentId, lastFix, 'Задача уже завершена.')
         }
         if (task.status === 'READY') {
-          const dispatch = await new DispatchService(this.ctx, runtime).dispatch(
+          const dispatch = await new DispatchService(this.ctx, runtime, this.runner).dispatch(
             { taskId: currentId, review: true },
             exec,
           )
@@ -89,7 +91,7 @@ export class WorkflowService {
           return result
         }
 
-        const review = await new ReviewerService(this.ctx, runtime).review(
+        const review = await new ReviewerService(this.ctx, runtime, this.runner).review(
           {
             taskId: currentId,
             ...(input.reviewerAgentId ? { reviewerAgentId: input.reviewerAgentId } : {}),

@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
-import type {
-  SubagentActivation,
-  SubagentActivationSpec,
-  SubagentRuntime,
-} from '@deepseek-ai/dsh-subagent'
+import type { ChildRunner, ScopedRunInput, ScopedRunResult } from '../src/agents/scoped-runner.js'
 import { WorkflowService } from '../src/workflow/service.js'
 import { createTestRuntime, track } from './helpers.js'
 
@@ -22,47 +18,41 @@ function fakeExec(): ToolRunContext {
   } as unknown as ToolRunContext
 }
 
-function fakeContext(service: unknown): Context {
+function fakeContext(): Context {
   return {
-    get(name: string) {
-      return name === 'subagents' ? service : undefined
+    get() {
+      return undefined
     },
   } as unknown as Context
 }
 
-function activation(childId: string, result: unknown): SubagentActivation {
-  return {
-    childId: childId as never,
-    result: Promise.resolve(result) as SubagentActivation['result'],
-    dispose: async () => {},
-  }
-}
-
-function scriptedSubagents(verdicts: Array<'FAIL' | 'PASS'>) {
+function scriptedRunner(verdicts: Array<'FAIL' | 'PASS'>): ChildRunner {
   let executors = 0
   let reviewers = 0
   return {
-    startActivation: async (spec: SubagentActivationSpec) => {
-      if (spec.request.outputSchema) {
+    async run(input: ScopedRunInput): Promise<ScopedRunResult> {
+      if (input.profile.role === 'reviewer') {
         const verdict = verdicts[reviewers] ?? 'PASS'
         reviewers += 1
-        return activation(`ses_reviewer_${reviewers}`, {
-          output: [],
-          structured: {
-            verdict,
-            summary: verdict === 'PASS' ? 'Проверено.' : 'Нужны исправления.',
-            issues: verdict === 'PASS' ? [] : ['Недостаточно доказательств'],
-          },
+        return {
+          childId: `ses_reviewer_${reviewers}`,
+          output:
+            verdict === 'PASS'
+              ? 'VERDICT: PASS\nПроверено.'
+              : 'VERDICT: FAIL\nНужны исправления.\n- Недостаточно доказательств',
           stopReason: 'completed',
-        })
+          diagnostic: '',
+        }
       }
       executors += 1
-      return activation(`ses_executor_${executors}`, {
-        output: [{ type: 'text', text: `Результат исполнителя ${executors}.` }],
+      return {
+        childId: `ses_executor_${executors}`,
+        output: `Результат исполнителя ${executors}.`,
         stopReason: 'completed',
-      })
+        diagnostic: '',
+      }
     },
-  } as unknown as SubagentRuntime
+  }
 }
 
 describe('WorkflowService', () => {
@@ -70,12 +60,9 @@ describe('WorkflowService', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const developer = runtime.agents.findByRole('developer')!
     const task = runtime.tasks.create({ projectId, title: 'Автономная задача', assignedAgentId: developer.id })
-    const fake = scriptedSubagents(['FAIL', 'PASS'])
+    const service = new WorkflowService(fakeContext(), runtime, scriptedRunner(['FAIL', 'PASS']))
 
-    const result = await new WorkflowService(fakeContext(fake), runtime).run(
-      { taskId: task.id, maxCycles: 3 },
-      fakeExec(),
-    )
+    const result = await service.run({ taskId: task.id, maxCycles: 3 }, fakeExec())
 
     expect(result.status).toBe('PASSED')
     expect(result.cycles).toHaveLength(2)
@@ -89,12 +76,9 @@ describe('WorkflowService', () => {
   it('stops as EXHAUSTED when maxCycles is spent', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Бесконечный FAIL' })
-    const fake = scriptedSubagents(['FAIL', 'FAIL'])
+    const service = new WorkflowService(fakeContext(), runtime, scriptedRunner(['FAIL', 'FAIL']))
 
-    const result = await new WorkflowService(fakeContext(fake), runtime).run(
-      { taskId: task.id, maxCycles: 1 },
-      fakeExec(),
-    )
+    const result = await service.run({ taskId: task.id, maxCycles: 1 }, fakeExec())
 
     expect(result.status).toBe('EXHAUSTED')
     expect(result.cycles).toHaveLength(1)
@@ -102,15 +86,15 @@ describe('WorkflowService', () => {
     expect(fix.status).toBe('READY')
   })
 
-  it('returns ERROR without claiming when ctx.subagents is missing', async () => {
+  it('returns ERROR without claiming when ctx.agents is missing', async () => {
     const { runtime, projectId } = track(createTestRuntime())
-    const task = runtime.tasks.create({ projectId, title: 'Без subagents' })
-    const result = await new WorkflowService(fakeContext(undefined), runtime).run(
+    const task = runtime.tasks.create({ projectId, title: 'Без agents' })
+    const result = await new WorkflowService(fakeContext(), runtime).run(
       { taskId: task.id, maxCycles: 1 },
       fakeExec(),
     )
     expect(result.status).toBe('ERROR')
-    expect(result.message).toContain('ctx.subagents')
+    expect(result.message).toContain('ctx.agents')
     expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
 })

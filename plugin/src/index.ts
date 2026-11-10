@@ -62,6 +62,12 @@ export function apply(ctx: Context, config: FactoryConfig): void {
   }
 
   try {
+    disposers.push(
+      ctx.tools.guard((execution) => {
+        if (!runtime || !execution.agent) return undefined
+        return runtime.toolDenial(execution.agent.id, execution.name)
+      }),
+    )
     disposers.push(registerStatusTool(ctx, () => runtime, () => startupError))
     if (runtime) {
       disposers.push(...registerMemoryTools(ctx, () => runtime, () => startupError))
@@ -77,7 +83,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
         event: 'factory.tools_registered',
         level: 'info',
         data: {
-          count: disposers.length,
+          count: disposers.length - 1, // exclude the tool guard
           groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow'],
         },
       })

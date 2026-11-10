@@ -1,11 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { AgentOptions } from '@deepseek-ai/dsh-agent'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { SubagentActivation, SubagentResult, SubagentRuntime } from '@deepseek-ai/dsh-subagent'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
+import { ScopedChildRunner, type ChildRunner } from '../agents/scoped-runner.js'
 import type { TaskRecord } from '../tasks/types.js'
 
 export interface DispatchInput {
@@ -26,22 +24,6 @@ export interface DispatchOutput {
   readonly output: string
   readonly diagnostic: string
   readonly taskStatus: string
-}
-
-function textFromBlocks(blocks: readonly ContentBlock[]): string {
-  return blocks
-    .map((block) => (block.type === 'text' ? block.text : ''))
-    .filter((text) => text !== '')
-    .join('\n')
-}
-
-function modelOptions(agent: AgentProfile): AgentOptions | undefined {
-  if (!agent.modelProvider || !agent.model) return undefined
-  const options: AgentOptions = { provider: agent.modelProvider, model: agent.model }
-  if (agent.reasoningEffort) {
-    options.reasoningEffort = agent.reasoningEffort as AgentOptions['reasoningEffort']
-  }
-  return options
 }
 
 function composePrompt(runtime: FactoryRuntime, task: TaskRecord, agent: AgentProfile, extra?: string): string {
@@ -78,18 +60,21 @@ function composePrompt(runtime: FactoryRuntime, task: TaskRecord, agent: AgentPr
 }
 
 /**
- * Start one real in-process child agent through the official dsh-subagent
- * service, wait for its result, and settle the linked durable task.
- *
- * This is deliberately synchronous: the calling tool waits for the child and
- * returns its output. The child runs in its own session and context; the
- * subagent service owns admission, cancellation, persistence and cleanup.
+ * Start one scoped child agent, wait for its result, and settle the linked
+ * durable task. The child is created through ctx.agents.create with setup()
+ * restricting its tools to the profile allowlist; the runtime guard rejects
+ * any call outside that list.
  */
 export class DispatchService {
+  private readonly runner: ChildRunner
+
   constructor(
-    private readonly ctx: Context,
+    ctx: Context,
     private readonly runtime: FactoryRuntime,
-  ) {}
+    runner?: ChildRunner,
+  ) {
+    this.runner = runner ?? new ScopedChildRunner(ctx, runtime)
+  }
 
   async dispatch(input: DispatchInput, exec: ToolRunContext): Promise<DispatchOutput> {
     const runtime = this.runtime
@@ -100,21 +85,14 @@ export class DispatchService {
     }
     const agent = runtime.agents.require(agentId)
     if (!agent.enabled) throw new FactoryError('FORBIDDEN', `Профиль агента отключён: ${agent.name}`)
+    if (agent.allowedTools.length === 0) {
+      throw new FactoryError('FORBIDDEN', `Профиль ${agent.name} не имеет allowedTools; запуск запрещён`)
+    }
 
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_dispatch требует вызывающего агента')
-    const subagents = this.ctx.get('subagents') as SubagentRuntime | undefined
-    if (!subagents) {
-      throw new FactoryError(
-        'UNAVAILABLE',
-        'Сервис ctx.subagents недоступен. В профиле должен быть смонтирован @deepseek-ai/dsh-subagent и провайдер spawn.',
-      )
-    }
-
     const project = runtime.projects.require(task.projectId)
     const prompt = composePrompt(runtime, task, agent, input.prompt)
-    const childOptions = modelOptions(agent)
-    const provider = input.provider?.trim() || 'spawn'
     const leaseMs = Math.max(
       60_000,
       Math.min(24 * 60 * 60 * 1000, Math.floor((input.leaseMinutes ?? 30) * 60_000)),
@@ -127,7 +105,7 @@ export class DispatchService {
       actor: parent.id,
       projectId: task.projectId,
       sessionId: parent.id,
-      data: { taskId: task.id, agentId: agent.id, provider },
+      data: { taskId: task.id, agentId: agent.id, allowedTools: agent.allowedTools.length },
     })
 
     const controller = new AbortController()
@@ -149,24 +127,18 @@ export class DispatchService {
     }, Math.max(15_000, Math.min(60_000, Math.floor(leaseMs / 2))))
     heartbeat.unref?.()
 
-    let activation: SubagentActivation | undefined
     try {
-      activation = await subagents.startActivation({
-        provider,
-        label: task.title.slice(0, 80),
-        request: {
-          prompt: [{ type: 'text', text: prompt }],
-          parent,
-          cwd: project.rootPath,
-          maxDepth: 1,
-          ...(childOptions === undefined ? {} : { agentOptions: childOptions }),
-        },
+      const result = await this.runner.run({
+        parent,
+        cwd: project.rootPath,
+        prompt,
+        profile: agent,
         signal: controller.signal,
-        delivery: 'caller',
+        label: task.title,
+        timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
       })
-      const result = await activation.result
-      const output = textFromBlocks(result.output).trim().slice(0, 100_000)
-      const diagnostic = result.diagnostic?.trim() ?? ''
+      const output = result.output.slice(0, 100_000)
+      const diagnostic = result.diagnostic.trim()
       if (result.stopReason === 'completed') {
         const completed = input.review
           ? runtime.tasks.submitForReview(task.id, parent.id, output || '(дочерний агент не вернул текст)')
@@ -177,11 +149,17 @@ export class DispatchService {
           actor: parent.id,
           projectId: task.projectId,
           sessionId: parent.id,
-          data: { taskId: task.id, childId: activation.childId, agentId: agent.id, stopReason: result.stopReason, review: input.review === true },
+          data: {
+            taskId: task.id,
+            childId: result.childId,
+            agentId: agent.id,
+            stopReason: result.stopReason,
+            review: input.review === true,
+          },
         })
         return {
           taskId: task.id,
-          childId: activation.childId,
+          childId: result.childId,
           agentId: agent.id,
           stopReason: result.stopReason,
           output,
@@ -201,11 +179,11 @@ export class DispatchService {
         actor: parent.id,
         projectId: task.projectId,
         sessionId: parent.id,
-        data: { taskId: task.id, childId: activation.childId, agentId: agent.id, stopReason: result.stopReason },
+        data: { taskId: task.id, childId: result.childId, agentId: agent.id, stopReason: result.stopReason },
       })
       return {
         taskId: task.id,
-        childId: activation.childId,
+        childId: result.childId,
         agentId: agent.id,
         stopReason: result.stopReason,
         output,
@@ -226,20 +204,13 @@ export class DispatchService {
         actor: parent.id,
         projectId: task.projectId,
         sessionId: parent.id,
-        data: { taskId: task.id, agentId: agent.id, provider, error: message.slice(0, 500) },
+        data: { taskId: task.id, agentId: agent.id, error: message.slice(0, 500) },
       })
       throw error
     } finally {
       clearInterval(heartbeat)
       if (timeout) clearTimeout(timeout)
       exec.signal.removeEventListener('abort', onParentAbort)
-      if (activation) {
-        try {
-          await activation.dispose()
-        } catch {
-          // the result, when captured, remains authoritative
-        }
-      }
     }
   }
 }

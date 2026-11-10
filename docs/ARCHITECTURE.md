@@ -72,7 +72,7 @@
 - Соединение синхронное; все операции одного процесса сериализованы. Для
   будущего фонового scheduler этого достаточно, пока один writer.
 
-### Схема (v1 + v2)
+### Схема (v1–v4)
 
 | Таблица | Версия | Назначение |
 |---|---|---|
@@ -89,6 +89,7 @@
 | `sync_state` | v3 | deviceId и cursor |
 | `sync_apply_guard` | v3 | Подавление outbox при pull |
 | `memory_sync_insert/update` | v3 | Триггеры автоматического outbox |
+| `agent_profiles.allowed_tools` | v4 | Явный allowlist инструментов ребёнка |
 
 Ключевые инварианты:
 
@@ -161,7 +162,7 @@ apply(ctx, config)
   │    └─ recoverStale() для задач с истёкшим lease
   ├─ registerStatusTool (всегда)
   ├─ registerMemoryTools / AgentTools / TaskTools / OrchestrationTools
-  ├─ registerDispatchTool (ctx.subagents, optional)
+  ├─ registerDispatchTool (ctx.agents scoped runner)
   ├─ registerDashboardTool (loopback HTTP, opt-in)
   └─ ctx.effect(async () => stop dashboard → dispose tools → close DB)
 ```
@@ -176,17 +177,25 @@ apply(ctx, config)
 
 Таблица `agent_profiles` хранит durable-профили:
 `role`, `title`, `system_instruction`, `model_provider/model`,
-`tools` (рекомендуемые имена/glob-паттерны), `access_level`,
-`memory_scope`, `limits`, `enabled`, `is_builtin`, `version`.
+`tools` (рекомендуемые имена/glob-паттерны), **`allowed_tools`** (точный
+enforcement allowlist), `access_level`, `memory_scope`, `limits`, `enabled`,
+`is_builtin`, `version`.
 
 Семь встроенных профилей: DIRECTOR, RESEARCHER, DEVELOPER, SYSADMIN, ANALYST,
 EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существующие профили и
 пользовательские правки не перезаписываются.
 
-**Важно:** профиль — это конфигурация роли, а не запущенный LLM-агент.
-Фактическое создание дочернего агента через `ctx.agents.create()` и передача
-ему scoped-инструментов — Phase 2b. До этого `tools` — рекомендации для
-будущего ограничения, а не enforcement.
+**Scoped tools (Phase 2c).** `allowedTools` — не рекомендация, а enforcement
+data. `ctx.agents.create()` получает `setup(agentCtx)`, где
+`agentCtx.tools.restrict({deny: known - allowed})` скрывает лишние host-tools,
+а глобальный `ctx.tools.guard` проверяет `runtime.toolDenial(childId, name)` и
+возвращает `TOOL_NOT_ALLOWED` для любой попытки вне allowlist. Allowlist
+хранится в SQLite и виден в `factory_agent_get/save`.
+
+Встроенные профили имеют явные списки; пользовательский профиль стартует с
+пустым allowlist (deny all) и требует явного заполнения. Дочерние профили не
+содержат `factory_dispatch`, `factory_review`, `factory_workflow_run` —
+оркестрация остаётся у корневого агента.
 
 ### 7.2. Task Engine
 
@@ -221,20 +230,19 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 
 `factory_dispatch` — синхронный исполнитель:
 
-1. Проверяет профиль, `ctx.subagents` и родительского Agent.
+1. Проверяет профиль, непустой `allowedTools`, `ctx.agents` и родителя.
 2. Захватывает READY-задачу (`claim`, lease 30 минут по умолчанию).
 3. Собирает prompt: роль и инструкция профиля, задача/цель/план, последние
    записи памяти (как недоверенный справочный контекст).
-4. Вызывает официальный `ctx.subagents.startActivation({provider:'spawn',
-   delivery:'caller'})`; ребёнок получает собственную сессию, cwd проекта и
-   `agentOptions` модели профиля (если provider+model заданы).
-5. Ждёт `activation.result`, продлевая lease; `stopReason:'completed'` →
-   задача COMPLETED с output; иначе fail с retry/backoff.
-6. Освобождает активацию и таймеры в `finally`.
+4. Вызывает `ScopedChildRunner` → `ctx.agents.create()` с
+   `setup(agentCtx => agentCtx.tools.restrict(...))`; ребёнок получает
+   собственную сессию, cwd проекта, модель профиля (или модель родителя) и
+   `allowedTools` в runtime guard **до** первого хода.
+5. Ждёт `whenIdle()`, продлевая lease; `completed` → COMPLETED/REVIEW
+   (`review=true`), иначе fail с retry/backoff.
+6. Освобождает child, allowlist-запись и таймеры в `finally`.
 
-Инструменты профиля пока **не enforced**: spawn наследует composition
-родителя; allowlist — Phase 2c. Dispatch синхронный; автоматический цикл
-DIRECTOR/REVIEWER — следующие фазы.
+Dispatch синхронный; автоматический цикл DIRECTOR/REVIEWER — следующие фазы.
 
 ### 7.5. Dashboard v1
 
@@ -256,11 +264,13 @@ GitHub) показаны как `plan`, а не имитируются.
 ### 7.5a. Reviewer
 
 `factory_review` требует задачу в `REVIEW`, выбирает профиль REVIEWER и
-запускает **отдельного child-агента** (`spawn`) с `outputSchema`:
-`{verdict: PASS|PASS_WITH_WARNINGS|FAIL, summary, issues[]}`. Ребёнок имеет
-собственный контекст и host-tools, поэтому проверяет артефакты сам.
+запускает **отдельного child-агента** через `ScopedChildRunner` с allowlist
+REVIEWER. Ребёнок имеет собственный контекст и только разрешённые read-only
+tools, поэтому проверяет артефакты сам. Ответ содержит строку
+`VERDICT: PASS|PASS_WITH_WARNINGS|FAIL`, summary и issues.
 
-- PASS / PASS_WITH_WARNINGS → task COMPLETED, review-текст в result;
+- PASS / PASS_WITH_WARNINGS → task COMPLETED; executor result сохраняется и
+  дополняется блоком `--- REVIEW ---`;
 - FAIL → task FAILED + новая READY-задача «Исправить: …» с `metadata.fixFor`;
 - audit `review.*`, child id, fix id; при ошибке child задача остаётся REVIEW.
 
@@ -306,7 +316,7 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Task Engine: зависимости, lease, retry, recovery, events | реализовано и проверено |
 | Planner DAG + `factory_plan_create` | реализовано и проверено |
 | DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
-| Реальный дочерний агент через `ctx.subagents` (`factory_dispatch`) | реализовано |
+| Реальный дочерний агент через `ctx.agents.create` + setup allowlist | реализовано и проверено live |
 | Read-only dashboard на 127.0.0.1 | реализовано |
 | Sync client + SQLite outbox + LWW pull | реализовано |
 | Sync server: PGlite PostgreSQL + pgvector + HTTP/auth | реализовано и проверено e2e |
@@ -314,7 +324,7 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Независимый REVIEWER через child-агент + structured verdict | реализовано |
 | Bounded workflow dispatch → review → fix (maxCycles 1–5) | реализовано |
 | Фоновый/неограниченный автономный цикл | Phase 6c |
-| Scoped tool restrictions по allowlist профиля | Phase 2c |
+| Scoped tool restrictions по allowlist профиля | реализовано (Phase 2c) |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |
 
@@ -347,10 +357,10 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 
 - Один процесс-писатель; межпроцессная синхронизация не реализована.
 - Нет фонового scheduler; TTL и recovery запускаются при старте и явно.
-- `factory_dispatch` реально запускает ребёнка, но host-tools не ограничены
-  allowlist-ом профиля; это Phase 2c.
+- `factory_dispatch` запускает ребёнка с allowlist; guard стоит на
+  `ctx.tools`. Host-возможности вне этого реестра требуют отдельного аудита.
 - Task Engine не запускает исполнителей автоматически; dispatch вызывается
-  явно, полный DIRECTOR/REVIEWER-цикл — Phase 3b+.
+  явно. Bounded workflow доступен, фонового autonomous loop нет.
 - Dashboard v1 read-only; мутации из UI и остальные разделы — позже.
 - Dashboard работает, пока жив host-процесс DSH; фонового демона нет.
 - Sync server работает на embedded PGlite (single writer); standalone

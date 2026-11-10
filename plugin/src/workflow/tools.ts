@@ -23,8 +23,8 @@ export function registerWorkflowTool(
       description:
         'Автономный ограниченный цикл: dispatch исполнителя (review=true) → независимый REVIEWER → fix-задача → повтор. ' +
         'PASS/PASS_WITH_WARNINGS завершает цикл; FAIL создаёт fix-задачу, которая запускается следующим циклом. ' +
-        'Ограничение maxCycles 1–5. Все дочерние агенты реальные, через ctx.subagents; ошибка ребёнка останавливает цикл. ' +
-        'Возвращает статус PASSED/FAILED/EXHAUSTED/ERROR и историю циклов.',
+        'Ограничение maxCycles 1–5. Все дочерние агенты реальные, через ctx.agents со scoped allowlist; ' +
+        'ошибка ребёнка останавливает цикл. Возвращает статус PASSED/FAILED/EXHAUSTED/ERROR и историю циклов.',
       parameters: {
         taskId: { type: 'string', required: true, description: 'ID READY/REVIEW-задачи' },
         maxCycles: { type: 'number', description: 'Максимум циклов dispatch+review (1–5, по умолчанию 3)' },

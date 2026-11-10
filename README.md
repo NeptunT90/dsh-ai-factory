@@ -6,20 +6,19 @@
 регистрирует инструменты через официальный `ctx.tools`, хранит данные в
 локальном SQLite и переживает перезапуск приложения.
 
-> Статус: **Phase 1–2b и локальный dashboard v1 проверены на DSH**. Работают
-> память, профили специалистов, Task Engine, Planner, DIRECTOR brief,
-> `factory_dispatch` через официальный `ctx.subagents` (spawn) и read-only
-> панель управления на 127.0.0.1 с токеном. Model Router и принудительное
-> ограничение инструментов профиля ещё не реализованы; независимый REVIEWER и
-> bounded workflow (dispatch → review → fix, до 5 циклов) работают. Полный
-> план — в [PLAN.md](PLAN.md).
+> Статус: **Phase 1–2c, dashboard v1, sync, REVIEWER и bounded workflow
+> проверены на DSH**. Работают память, профили, Task Engine, Planner, DIRECTOR
+> brief, реальный dispatch через `ctx.agents.create` с **enforced
+> allowlist**, read-only dashboard, sync-сервер, независимый REVIEWER и цикл
+> dispatch → review → fix (до 5 циклов). Model Router ещё не реализован.
+> Полный план — в [PLAN.md](PLAN.md).
 
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.7.1 регистрирует **34 инструмента**.
+- Загружается Cordis-загрузчиком DSH; в v0.8.0 регистрирует **34 инструмента**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
-  `PRAGMA user_version` (схема **v3**), FTS5-поиск с поддержкой русского текста.
+  `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
 - Проектная привязка по рабочему каталогу агента; глобальная пользовательская
   память.
@@ -36,10 +35,13 @@
   следующие действия для главного агента.
 - **Tool Registry**: `factory_tools_list` читает реальный реестр инструментов
   DSH, видимых текущему агенту.
-- **Реальный dispatch**: `factory_dispatch` запускает дочернего агента через
-  `ctx.subagents.startActivation` (spawn), ждёт его результат и завершает
-  связанную задачу. Ребёнок получает отдельную сессию, роль/инструкцию профиля,
-  проектный cwd и справочный контекст памяти.
+- **Реальный dispatch + scoped allowlist**: `factory_dispatch` создаёт ребёнка
+  через `ctx.agents.create` с `setup(restrict)` и runtime guard; ребёнок
+  получает отдельную сессию, cwd проекта и только `allowedTools` профиля.
+  Попытка вызвать запрещённый инструмент возвращает `TOOL_NOT_ALLOWED`.
+- **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
+  имеет `factory_dispatch`, REVIEWER/RESEARCHER не имеют destructive-tools,
+  SYSADMIN ограничен администрированием.
 - **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory,
   Audit, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
   внешних ассетов и без мутаций.
@@ -49,10 +51,10 @@
   LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
   развёрнут; локальный режим полностью автономен.
 - Аудит действий без записи содержимого памяти.
-- 45 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 50 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема **v3**, 7 агентов, 34
+- Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 34
   инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
@@ -101,16 +103,18 @@
 | `factory_plan_create` | DAG-план из шагов, ролей и зависимостей |
 | `factory_director_brief` | Фактический брифинг для DIRECTOR |
 | `factory_tools_list` | Реальные инструменты DSH, видимые агенту |
-| `factory_dispatch` | Запустить дочернего агента через `ctx.subagents` и завершить задачу |
+| `factory_dispatch` | Запустить дочернего агента через `ctx.agents` с allowlist и завершить задачу |
 | `factory_dashboard` | Запустить/остановить локальную read-only панель и получить URL |
 | `factory_sync` | status/push/pull памяти через outbox и sync-сервер |
 | `factory_review` | Независимое ревью задачи child-агентом REVIEWER; FAIL создаёт fix-задачу |
 | `factory_workflow_run` | Bounded-цикл dispatch → review → fix (до 5 циклов) |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
-Профили агентов — durable-конфигурация ролей. `factory_dispatch` реально
-создаёт дочернюю сессию через официальный сервис, но пока не ограничивает её
-host-инструменты по allowlist профиля; это Phase 2c.
+Профили агентов — durable-конфигурация ролей. `factory_dispatch` создаёт
+дочернюю сессию через `ctx.agents.create`; `setup` применяет allowlist профиля,
+а глобальный tool guard возвращает `TOOL_NOT_ALLOWED` для любого вызова вне
+списка. Оркестрационные инструменты (`factory_dispatch`, `factory_review`,
+`factory_workflow_run`) дочерним профилям не выдаются.
 
 ### Dashboard
 
@@ -169,7 +173,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.7.1.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.8.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -182,7 +186,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 > Вызови `factory_status` и покажи сырые поля.
 
 Ожидаемый ответ: `status: ready`, `driver: node:sqlite`,
-`schemaVersion: 3`, `agents: 7`.
+`schemaVersion: 4`, `agents: 7`.
 
 ### Установка на второй компьютер
 
@@ -257,7 +261,8 @@ plugin/                 устанавливаемый npm-пакет
   src/tasks/            Task Engine, статусы, lease, recovery
   src/planner/          DAG-планировщик
   src/orchestration/    DIRECTOR brief и реестр инструментов
-  src/dispatch/         запуск дочернего агента через ctx.subagents
+  src/agents/scoped-runner.ts  ctx.agents.create + allowlist setup
+src/dispatch/         запуск дочернего агента через scoped runner
   src/dashboard/        локальный read-only HTTP dashboard
   src/projects/         проектный реестр
   src/tools/            диагностика
@@ -272,8 +277,10 @@ config/                 примеры конфигурации
 - Нет семантического поиска на embeddings: сейчас честный FTS5/BM25;
   векторный поиск появится вместе с pgvector (Phase 4).
 - Нет автоматической инъекции памяти в промпт: инструменты вызываются моделью.
-- `factory_dispatch` запускает ребёнка реально, но allowlist инструментов
-  профиля пока не enforced, а Model Router/fallback не реализованы (Phase 2c).
+- Allowlist enforced для child-агентов; Model Router/fallback пока не
+  реализованы.
+- Guard проверяет вызовы через `ctx.tools`; host-возможности вне этого реестра
+  требуют отдельного аудита.
 - Dashboard v1 — read-only и не содержит Workflows/KB/Models/Scheduler/
   Security/Server/GitHub разделов; они честно помечены как `plan`.
 - Workflow ограничен `maxCycles` 1–5; неограниченного автономного цикла и
@@ -294,6 +301,7 @@ config/                 примеры конфигурации
 - [release.md](docs/release.md) — сборка, tarball, GitHub Release.
 - [portability.md](docs/portability.md) — установка на второй ПК.
 - [sync-protocol.md](docs/sync-protocol.md) — контракт sync-сервера и outbox.
+- [SCOPED_TOOLS.md](docs/SCOPED_TOOLS.md)
 - [LIVE_SMOKE.md](docs/LIVE_SMOKE.md) — живой smoke v0.7.0 в Web GUI.
 - [server/README.md](server/README.md) — запуск sync-сервера.
 

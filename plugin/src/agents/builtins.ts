@@ -1,3 +1,4 @@
+import { ALLOWLISTS } from './allowlists.js'
 import type { AgentCreateInput } from './types.js'
 
 /**
@@ -11,6 +12,7 @@ import type { AgentCreateInput } from './types.js'
 export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string })[] = [
   {
     id: 'agt_director',
+    allowedTools: ALLOWLISTS.director,
     name: 'DIRECTOR',
     role: 'director',
     title: 'Главный управляющий',
@@ -41,6 +43,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_researcher',
+    allowedTools: ALLOWLISTS.researcher,
     name: 'RESEARCHER',
     role: 'researcher',
     title: 'Исследователь',
@@ -59,6 +62,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_developer',
+    allowedTools: ALLOWLISTS.developer,
     name: 'DEVELOPER',
     role: 'developer',
     title: 'Разработчик',
@@ -77,6 +81,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_sysadmin',
+    allowedTools: ALLOWLISTS.sysadmin,
     name: 'SYSADMIN',
     role: 'sysadmin',
     title: 'Системный администратор',
@@ -94,6 +99,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_analyst',
+    allowedTools: ALLOWLISTS.analyst,
     name: 'ANALYST',
     role: 'analyst',
     title: 'Аналитик',
@@ -111,6 +117,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_executor',
+    allowedTools: ALLOWLISTS.executor,
     name: 'EXECUTOR',
     role: 'executor',
     title: 'Исполнитель операций',
@@ -128,6 +135,7 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
   },
   {
     id: 'agt_reviewer',
+    allowedTools: ALLOWLISTS.reviewer,
     name: 'REVIEWER',
     role: 'reviewer',
     title: 'Независимый контролёр',

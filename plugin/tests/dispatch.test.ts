@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Context } from '@deepseek-ai/cordis'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
-import type { SubagentActivation, SubagentActivationSpec, SubagentRuntime } from '@deepseek-ai/dsh-subagent'
+import type { ChildRunner, ScopedRunInput, ScopedRunResult } from '../src/agents/scoped-runner.js'
 import { DispatchService } from '../src/dispatch/service.js'
 import { createTestRuntime, track } from './helpers.js'
 
@@ -18,71 +18,60 @@ function fakeExec(): ToolRunContext {
   } as unknown as ToolRunContext
 }
 
-function fakeContext(service: unknown): Context {
+function fakeContext(): Context {
   return {
-    get(name: string) {
-      return name === 'subagents' ? service : undefined
+    get() {
+      return undefined
     },
   } as unknown as Context
 }
 
-function activation(result: Promise<unknown>): SubagentActivation {
+function runner(result: ScopedRunResult, captured?: { input?: ScopedRunInput }): ChildRunner {
   return {
-    childId: 'ses_child' as never,
-    result: result as SubagentActivation['result'],
-    dispose: async () => {},
+    async run(input) {
+      if (captured) captured.input = input
+      return result
+    },
   }
 }
 
 describe('DispatchService', () => {
-  it('spawns a child through ctx.subagents and completes the task', async () => {
+  it('runs the scoped child and completes the task', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const developer = runtime.agents.findByRole('developer')!
     const task = runtime.tasks.create({ projectId, title: 'Написать отчёт', assignedAgentId: developer.id })
-    let captured: SubagentActivationSpec | undefined
-    const fake = {
-      startActivation: async (spec: SubagentActivationSpec) => {
-        captured = spec
-        return activation(
-          Promise.resolve({
-            output: [{ type: 'text', text: 'Отчёт готов. Проверено тестом.' }],
-            stopReason: 'completed',
-          }),
-        )
-      },
-    } as unknown as SubagentRuntime
+    const captured: { input?: ScopedRunInput } = {}
+    const service = new DispatchService(
+      fakeContext(),
+      runtime,
+      runner({ childId: 'ses_child', output: 'Отчёт готов. Проверено тестом.', stopReason: 'completed', diagnostic: '' }, captured),
+    )
 
-    const output = await new DispatchService(fakeContext(fake), runtime).dispatch({ taskId: task.id }, fakeExec())
+    const output = await service.dispatch({ taskId: task.id }, fakeExec())
 
     expect(output.stopReason).toBe('completed')
     expect(output.childId).toBe('ses_child')
     expect(output.taskStatus).toBe('COMPLETED')
     expect(runtime.tasks.require(task.id).status).toBe('COMPLETED')
     expect(runtime.tasks.require(task.id).result).toContain('Отчёт готов')
-    expect(captured?.provider).toBe('spawn')
-    expect(captured?.delivery).toBe('caller')
-    expect(captured?.request.cwd).toBe(runtime.projects.require(projectId).rootPath)
-    expect(captured?.request.prompt[0]).toMatchObject({ type: 'text' })
-    expect((captured?.request.prompt[0] as { text: string }).text).toContain('DEVELOPER')
+    expect(captured.input?.profile.id).toBe(developer.id)
+    expect(captured.input?.profile.allowedTools).toContain('read')
+    expect(captured.input?.profile.allowedTools).not.toContain('factory_dispatch')
+    expect(captured.input?.cwd).toBe(runtime.projects.require(projectId).rootPath)
+    expect(captured.input?.prompt).toContain('DEVELOPER')
   })
 
   it('leaves the task in REVIEW when review=true', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Подготовить ревью' })
-    const fake = {
-      startActivation: async () =>
-        activation(
-          Promise.resolve({
-            output: [{ type: 'text', text: 'Результат для ревью.' }],
-            stopReason: 'completed',
-          }),
-        ),
-    } as unknown as SubagentRuntime
-
-    const output = await new DispatchService(fakeContext(fake), runtime).dispatch(
-      { taskId: task.id, review: true },
-      fakeExec(),
+    const service = new DispatchService(
+      fakeContext(),
+      runtime,
+      runner({ childId: 'ses_child', output: 'Результат для ревью.', stopReason: 'completed', diagnostic: '' }),
     )
+
+    const output = await service.dispatch({ taskId: task.id, review: true }, fakeExec())
+
     expect(output.taskStatus).toBe('REVIEW')
     expect(runtime.tasks.require(task.id).status).toBe('REVIEW')
     expect(runtime.tasks.require(task.id).result).toContain('Результат для ревью')
@@ -91,18 +80,13 @@ describe('DispatchService', () => {
   it('marks the task for retry when the child fails', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Падающая задача', maxAttempts: 2 })
-    const fake = {
-      startActivation: async () =>
-        activation(
-          Promise.resolve({
-            output: [],
-            stopReason: 'error',
-            diagnostic: 'child failed',
-          }),
-        ),
-    } as unknown as SubagentRuntime
+    const service = new DispatchService(
+      fakeContext(),
+      runtime,
+      runner({ childId: 'ses_child', output: '', stopReason: 'error', diagnostic: 'child failed' }),
+    )
 
-    const output = await new DispatchService(fakeContext(fake), runtime).dispatch({ taskId: task.id }, fakeExec())
+    const output = await service.dispatch({ taskId: task.id }, fakeExec())
 
     expect(output.stopReason).toBe('error')
     expect(output.taskStatus).toBe('READY')
@@ -110,12 +94,25 @@ describe('DispatchService', () => {
     expect(runtime.tasks.require(task.id).error).toContain('child failed')
   })
 
-  it('fails without claiming the task when ctx.subagents is unavailable', async () => {
+  it('fails without claiming when ctx.agents is unavailable', async () => {
     const { runtime, projectId } = track(createTestRuntime())
-    const task = runtime.tasks.create({ projectId, title: 'Без subagents' })
+    const task = runtime.tasks.create({ projectId, title: 'Без agents' })
     await expect(
-      new DispatchService(fakeContext(undefined), runtime).dispatch({ taskId: task.id }, fakeExec()),
-    ).rejects.toThrowError(/ctx\.subagents/)
+      new DispatchService(fakeContext(), runtime).dispatch({ taskId: task.id }, fakeExec()),
+    ).rejects.toThrowError(/ctx\.agents/)
+    expect(runtime.tasks.require(task.id).status).toBe('READY')
+  })
+
+  it('refuses a profile with an empty allowlist', async () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const agent = runtime.agents.create({ name: 'EMPTY', role: 'custom', allowedTools: [] })
+    const task = runtime.tasks.create({ projectId, title: 'Без allowlist', assignedAgentId: agent.id })
+    await expect(
+      new DispatchService(fakeContext(), runtime, runner({ childId: 'x', output: 'x', stopReason: 'completed', diagnostic: '' })).dispatch(
+        { taskId: task.id },
+        fakeExec(),
+      ),
+    ).rejects.toThrowError(/allowedTools/)
     expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
 })

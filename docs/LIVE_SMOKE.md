@@ -113,7 +113,28 @@ result и добавляет review через разделитель `--- REVIE
 
 Скриншот: [assets/dashboard-live-v0.7.0.png](assets/dashboard-live-v0.7.0.png).
 
-## 7. Ограничения smoke
+## 7. Scoped allowlist (v0.8.0)
+
+RESEARCHER-задача `tsk_84b3e2c0…` запустила child `ses_a7143044…`; попытка
+`factory_memory_forget` вернула:
+
+```
+TOOL_NOT_ALLOWED: factory_memory_forget не входит в allowlist профиля ребёнка
+```
+
+Запись `mem_b0e45f25…` осталась активной. Scoped REVIEWER
+`tsk_7804a5a0…` завершился PASS.
+
+DEVELOPER child `ses_ef302b7a…` попытался вызвать `factory_dispatch`:
+
+```
+Error: TOOL_NOT_ALLOWED: factory_dispatch не входит в allowlist профиля ребёнка
+```
+
+Внук не создан. Scoped workflow `tsk_fd7a9724…` завершился PASSED.
+Полная модель — [SCOPED_TOOLS.md](SCOPED_TOOLS.md).
+
+## 8. Ограничения smoke
 
 - Live workflow полностью проверен: REVIEW→PASS и FAIL→fix→PASS.
 - Сервер синхронизации в live-режиме не подключался; e2e PGlite проверен

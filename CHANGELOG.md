@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0] — 2026-11-10
+
+### Added
+
+- Phase 2c: `agent_profiles.allowed_tools` (schema v4), явный allowlist каждого
+  профиля.
+- `ScopedChildRunner` через `ctx.agents.create` + `setup(restrict)`;
+  `factory_dispatch`/`factory_review` больше не используют неограниченный spawn.
+- Глобальный `ctx.tools.guard`: вызов вне allowlist возвращает
+  `TOOL_NOT_ALLOWED` до выполнения тела инструмента.
+- Разделение рекомендаций `tools` и enforcement-поля `allowedTools` в
+  `factory_agent_get/save`.
+- 5 новых allowlist/scoped-тестов (всего 50), включая RESEARCHER →
+  `factory_memory_forget` → `TOOL_NOT_ALLOWED`.
+- Live-проверка scoped allowlist и scoped REVIEWER; documentation
+  `docs/SCOPED_TOOLS.md`.
+
 ## [0.7.1] — 2026-11-10
 
 ### Fixed

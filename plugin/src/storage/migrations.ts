@@ -318,4 +318,11 @@ export const MIGRATIONS: readonly Migration[] = [
       END;
     `,
   },
+  {
+    version: 4,
+    name: 'agent scoped tool allowlists',
+    sql: `
+      ALTER TABLE agent_profiles ADD COLUMN allowed_tools TEXT NOT NULL DEFAULT '[]';
+    `,
+  },
 ]

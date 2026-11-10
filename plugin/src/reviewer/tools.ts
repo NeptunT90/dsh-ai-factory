@@ -21,10 +21,10 @@ export function registerReviewerTool(
     defineTool({
       name: 'factory_review',
       description:
-        'Провести независимое ревью задачи в статусе REVIEW реальным дочерним агентом REVIEWER. ' +
-        'REVIEWER получает собственный контекст, проверяет артефакты/тесты и возвращает structured verdict ' +
+        'Провести независимое ревью задачи в статусе REVIEW реальным дочерним агентом REVIEWER с allowlist профиля. ' +
+        'REVIEWER получает собственный контекст, проверяет артефакты/тесты и возвращает verdict ' +
         '(PASS/PASS_WITH_WARNINGS/FAIL). PASS закрывает задачу; FAIL переводит её в FAILED и создаёт задачу на исправление. ' +
-        'Требует @deepseek-ai/dsh-subagent с provider spawn.',
+        'Требует ctx.agents; дочерний tool allowlist enforced.',
       parameters: {
         taskId: { type: 'string', required: true, description: 'ID задачи в статусе REVIEW' },
         reviewerAgentId: { type: 'string', description: 'Профиль REVIEWER; по умолчанию первый reviewer' },

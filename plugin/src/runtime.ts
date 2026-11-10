@@ -14,7 +14,7 @@ import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
 
-export const FACTORY_VERSION = '0.7.1'
+export const FACTORY_VERSION = '0.8.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -52,6 +52,7 @@ export class FactoryRuntime {
   readonly tasks: TaskEngine
   readonly planner: PlannerService
   readonly sync: SyncService
+  private readonly childToolAllowlist = new Map<string, ReadonlySet<string>>()
   readonly startedAt = Date.now()
   private expiredOnStart = 0
   private recoveredOnStart = 0
@@ -157,6 +158,32 @@ export class FactoryRuntime {
       sessionId: exec.agent?.id ?? null,
       data,
     })
+  }
+
+  /** Register the exact allowlist for one child agent session. */
+  allowToolsForChild(agentId: string, tools: readonly string[]): void {
+    this.childToolAllowlist.set(agentId, new Set(tools))
+  }
+
+  releaseChildTools(agentId: string): void {
+    this.childToolAllowlist.delete(agentId)
+  }
+
+  /** True when the agent has an enforced child allowlist (root agents do not). */
+  hasChildAllowlist(agentId: string): boolean {
+    return this.childToolAllowlist.has(agentId)
+  }
+
+  isToolAllowed(agentId: string, toolName: string): boolean {
+    const allowlist = this.childToolAllowlist.get(agentId)
+    return allowlist === undefined ? true : allowlist.has(toolName)
+  }
+
+  /** Guard reason for a child call outside its profile allowlist. */
+  toolDenial(agentId: string, toolName: string): string | undefined {
+    if (!this.hasChildAllowlist(agentId)) return undefined
+    if (this.isToolAllowed(agentId, toolName)) return undefined
+    return `TOOL_NOT_ALLOWED: ${toolName} не входит в allowlist профиля ребёнка`
   }
 
   close(): void {

@@ -18,8 +18,8 @@
 ### Plugin
 
 ```
-Test Files  12 passed (12)
-Tests       45 passed (45)
+Test Files  13 passed (13)
+Tests       50 passed (50)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
@@ -40,9 +40,9 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.7.1**.
-- `factory.started`: schema **3**, agents 7, tools **34**.
-- SQLite v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
+- HMR загрузил AI Factory **v0.8.0**.
+- `factory.started`: schema **4**, agents 7, tools **34**.
+- SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
 - Схемы `factory_sync`, `factory_review`, `factory_workflow_run` доставлены в
   Web GUI-сессию.
@@ -52,7 +52,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.7.0, schema 3, 7 агентов, 34 инструмента.
+- `factory_status` → 0.8.0, schema 4, 7 агентов, 34 инструмента.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -67,6 +67,19 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Scoped allowlist v0.8.0 (live)
+
+- Схема **v4**, `agent_profiles.allowed_tools`; 7 профилей имеют явные списки.
+- RESEARCHER-задача `tsk_84b3e2c0…`, child `ses_a7143044…`:
+  `factory_memory_forget` → `TOOL_NOT_ALLOWED: factory_memory_forget не входит
+  в allowlist профиля ребёнка`; запись памяти осталась активной.
+- Scoped REVIEWER `tsk_7804a5a0…` → `VERDICT: PASS`, COMPLETED.
+- DEVELOPER child `ses_ef302b7a…` попытался `factory_dispatch` →
+  `Error: TOOL_NOT_ALLOWED: factory_dispatch не входит в allowlist профиля
+  ребёнка`; внук не создан.
+- Scoped workflow `tsk_fd7a9724…` → PASSED, 1 цикл.
+- 4 allowlist-теста + live-проверка; всего **50** plugin-тестов.
 
 ### Reviewer / workflow
 
@@ -110,10 +123,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.7.1.tgz`: **132 342 байт**.
-- SHA256: `23be3ca8ce1c094ee48ffe7fea67483aa7f3101cdd489257a59ba350df35ac92`.
+- `dist/dsh-ai-factory-0.8.0.tgz`: **137 654 байт**.
+- SHA256: `5cab59cfef9a14a4be0932667c2541dcbe087af3469a15ece8707a07c47dd15b`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.6.0 на 0.7.1; schema 3, 34 инструмента.
+- `portable-test` обновлён с 0.7.1 на 0.8.0; schema 4, 34 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -126,9 +139,9 @@ Read-only auth/405 проверены автотестами.
 - Auto-sync реализован; live-сервер к desktop-профилю не подключался.
 - `factory_workflow_run` live полностью проверен: REVIEW→PASS и
   FAIL→fix→PASS.
-- Scoped tool allowlist, Model Router, фоновый автономный цикл не реализованы.
+- Model Router и фоновый автономный цикл не реализованы; scoped allowlist закрыт.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.7.1 не выполнен.
+- Полный restart DSH после 0.8.0 не выполнен.
 
 ## 8. Повтор
 

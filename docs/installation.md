@@ -28,7 +28,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 
 - `status: ready`
 - `driver: node:sqlite`
-- `schemaVersion: 3`
+- `schemaVersion: 4`
 - `agents: 7`
 
 Для `factory_dispatch` в профиле должны быть активны `dsh-subagent` и

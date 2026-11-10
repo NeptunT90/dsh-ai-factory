@@ -1,11 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type { AgentOptions } from '@deepseek-ai/dsh-agent'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { SubagentActivation, SubagentRuntime } from '@deepseek-ai/dsh-subagent'
-import type { ObjectJsonSchema, ToolRunContext } from '@deepseek-ai/dsh-tools'
+import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
+import { ScopedChildRunner, type ChildRunner } from '../agents/scoped-runner.js'
 import type { TaskRecord } from '../tasks/types.js'
 
 export const REVIEW_VERDICTS = ['PASS', 'PASS_WITH_WARNINGS', 'FAIL'] as const
@@ -28,47 +26,7 @@ export interface ReviewResult {
   readonly fixTaskId: string
 }
 
-const REVIEW_SCHEMA: ObjectJsonSchema = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    verdict: { type: 'string', enum: [...REVIEW_VERDICTS] },
-    summary: { type: 'string' },
-    issues: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['verdict', 'summary', 'issues'],
-}
-
-function textFromBlocks(blocks: readonly ContentBlock[]): string {
-  return blocks
-    .map((block) => (block.type === 'text' ? block.text : ''))
-    .filter((text) => text !== '')
-    .join('\n')
-}
-
-function modelOptions(agent: AgentProfile): AgentOptions | undefined {
-  if (!agent.modelProvider || !agent.model) return undefined
-  return {
-    provider: agent.modelProvider,
-    model: agent.model,
-    ...(agent.reasoningEffort
-      ? { reasoningEffort: agent.reasoningEffort as AgentOptions['reasoningEffort'] }
-      : {}),
-  }
-}
-
-function parseVerdict(value: unknown): { verdict: ReviewVerdict; summary: string; issues: string[] } | null {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null
-  const record = value as Record<string, unknown>
-  if (record.verdict !== 'PASS' && record.verdict !== 'PASS_WITH_WARNINGS' && record.verdict !== 'FAIL') return null
-  const summary = typeof record.summary === 'string' ? record.summary.trim() : ''
-  const issues = Array.isArray(record.issues)
-    ? record.issues.filter((issue): issue is string => typeof issue === 'string').slice(0, 50)
-    : []
-  return { verdict: record.verdict, summary: summary || 'Вердикт без summary.', issues }
-}
-
-function parseTextVerdict(text: string): { verdict: ReviewVerdict; summary: string; issues: string[] } | null {
+function parseVerdict(text: string): { verdict: ReviewVerdict; summary: string; issues: string[] } | null {
   const match = /\bVERDICT\s*:\s*(PASS_WITH_WARNINGS|PASS|FAIL)\b/i.exec(text)
   if (!match?.[1]) return null
   const verdict = match[1].toUpperCase() as ReviewVerdict
@@ -88,8 +46,10 @@ function composePrompt(runtime: FactoryRuntime, task: TaskRecord, reviewer: Agen
     reviewer.systemInstruction,
     '',
     'Ты независимый REVIEWER. Не доверяй отчёту исполнителя: проверяй фактические артефакты, код, тесты и сборку.',
-    'Верни результат только через structured_output с полями: verdict (PASS|PASS_WITH_WARNINGS|FAIL), summary, issues.',
+    'Твой единственный доступный инструментарий — allowlist профиля; не пытайся вызывать запрещённые инструменты.',
+    'Верни ПЕРВОЙ СТРОКОЙ ровно один вердикт: VERDICT: PASS, VERDICT: PASS_WITH_WARNINGS или VERDICT: FAIL.',
     'PASS — критерии выполнены и проверены; PASS_WITH_WARNINGS — работает, но есть некритичные замечания; FAIL — есть блокирующие проблемы.',
+    'После вердикта дай summary и список issues строками, начинающимися с "- ".',
     '',
     `Задача: ${task.title}`,
     `ID: ${task.id}`,
@@ -107,15 +67,20 @@ function composePrompt(runtime: FactoryRuntime, task: TaskRecord, reviewer: Agen
 }
 
 /**
- * Independent review through a real child agent (REVIEWER profile).
- * The reviewer gets its own session and host tools, inspects the artifacts and
- * returns a structured verdict; the task is completed or failed accordingly.
+ * Independent review through a scoped child agent (REVIEWER profile).
+ * The reviewer gets its own session and only the profile allowlist, inspects
+ * the artifacts and returns a text verdict; the task is completed or failed.
  */
 export class ReviewerService {
+  private readonly runner: ChildRunner
+
   constructor(
-    private readonly ctx: Context,
+    ctx: Context,
     private readonly runtime: FactoryRuntime,
-  ) {}
+    runner?: ChildRunner,
+  ) {
+    this.runner = runner ?? new ScopedChildRunner(ctx, runtime)
+  }
 
   async review(input: ReviewInput, exec: ToolRunContext): Promise<ReviewResult> {
     const runtime = this.runtime
@@ -128,12 +93,11 @@ export class ReviewerService {
       : runtime.agents.findByRole('reviewer')
     if (!reviewer) throw new FactoryError('NOT_FOUND', 'Профиль REVIEWER не найден')
     if (!reviewer.enabled) throw new FactoryError('FORBIDDEN', 'Профиль REVIEWER отключён')
+    if (reviewer.allowedTools.length === 0) {
+      throw new FactoryError('FORBIDDEN', 'Профиль REVIEWER не имеет allowedTools')
+    }
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_review требует вызывающего агента')
-    const subagents = this.ctx.get('subagents') as SubagentRuntime | undefined
-    if (!subagents) {
-      throw new FactoryError('UNAVAILABLE', 'ctx.subagents недоступен; нужен @deepseek-ai/dsh-subagent + spawn')
-    }
     const project = runtime.projects.require(task.projectId)
     runtime.audit.record({
       event: 'review.started',
@@ -141,36 +105,30 @@ export class ReviewerService {
       actor: parent.id,
       projectId: task.projectId,
       sessionId: parent.id,
-      data: { taskId: task.id, reviewerAgentId: reviewer.id },
+      data: { taskId: task.id, reviewerAgentId: reviewer.id, allowedTools: reviewer.allowedTools.length },
     })
 
-    let activation: SubagentActivation | undefined
     try {
-      activation = await subagents.startActivation({
-        provider: 'spawn',
-        label: `review: ${task.title}`.slice(0, 80),
-        request: {
-          prompt: [{ type: 'text', text: composePrompt(runtime, task, reviewer, input.instructions) }],
-          parent,
-          cwd: project.rootPath,
-          maxDepth: 1,
-          outputSchema: REVIEW_SCHEMA,
-          ...(modelOptions(reviewer) === undefined ? {} : { agentOptions: modelOptions(reviewer) }),
-        },
+      const result = await this.runner.run({
+        parent,
+        cwd: project.rootPath,
+        prompt: composePrompt(runtime, task, reviewer, input.instructions),
+        profile: reviewer,
         signal: exec.signal,
-        delivery: 'caller',
+        label: `review: ${task.title}`,
+        timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
       })
-      const result = await activation.result
       if (result.stopReason !== 'completed') {
         throw new FactoryError(
           'UNAVAILABLE',
           `REVIEWER остановлен: ${result.stopReason}${result.diagnostic ? ` (${result.diagnostic})` : ''}`,
         )
       }
-      const parsed =
-        parseVerdict(result.structured) ??
-        parseTextVerdict(textFromBlocks(result.output)) ??
-        ({ verdict: 'FAIL', summary: 'REVIEWER не вернул структурированный вердикт.', issues: ['verdict missing'] } as const)
+      const parsed = parseVerdict(result.output) ?? {
+        verdict: 'FAIL' as const,
+        summary: 'REVIEWER не вернул строку VERDICT.',
+        issues: ['verdict missing'],
+      }
       const reviewText = [
         `VERDICT: ${parsed.verdict}`,
         parsed.summary,
@@ -189,11 +147,11 @@ export class ReviewerService {
           actor: parent.id,
           projectId: task.projectId,
           sessionId: parent.id,
-          data: { taskId: task.id, childId: activation.childId, verdict: parsed.verdict },
+          data: { taskId: task.id, childId: result.childId, verdict: parsed.verdict },
         })
         return {
           taskId: task.id,
-          childId: activation.childId,
+          childId: result.childId,
           reviewerAgentId: reviewer.id,
           verdict: parsed.verdict,
           summary: parsed.summary,
@@ -217,7 +175,7 @@ export class ReviewerService {
         priority: Math.min(100, task.priority + 10),
         maxAttempts: task.maxAttempts,
         timeoutMs: task.timeoutMs,
-        metadata: { fixFor: task.id, reviewVerdict: parsed.verdict, reviewerChildId: activation.childId },
+        metadata: { fixFor: task.id, reviewVerdict: parsed.verdict, reviewerChildId: result.childId },
         createdBy: parent.id,
       })
       runtime.audit.record({
@@ -226,11 +184,11 @@ export class ReviewerService {
         actor: parent.id,
         projectId: task.projectId,
         sessionId: parent.id,
-        data: { taskId: task.id, childId: activation.childId, verdict: parsed.verdict, fixTaskId: fix.id },
+        data: { taskId: task.id, childId: result.childId, verdict: parsed.verdict, fixTaskId: fix.id },
       })
       return {
         taskId: task.id,
-        childId: activation.childId,
+        childId: result.childId,
         reviewerAgentId: reviewer.id,
         verdict: parsed.verdict,
         summary: parsed.summary,
@@ -248,14 +206,6 @@ export class ReviewerService {
         data: { taskId: task.id, error: errorMessage(error).slice(0, 500) },
       })
       throw error
-    } finally {
-      if (activation) {
-        try {
-          await activation.dispose()
-        } catch {
-          // result remains authoritative
-        }
-      }
     }
   }
 }

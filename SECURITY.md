@@ -41,23 +41,39 @@ Phase 1 использует только:
 - чтение рабочего каталога агента для вычисления project id;
 - SQLite.
 
-Сетевых серверов, shell-команд и SSH в Phase 1 нет.
+В Phase 1 сетевых серверов, shell-команд и SSH не было. В 0.8.0 shell/SSH
+доступны только профилям SYSADMIN/EXECUTOR и только через их allowlist; DSH
+approvals/sandbox продолжают действовать.
 
-## Дочерние агенты (v0.3.0)
+## Дочерние агенты и scoped allowlist (v0.8.0)
 
-`factory_dispatch` запускает реального дочернего агента через официальный
-`ctx.subagents` (spawn). Дочерний агент:
+`factory_dispatch` создаёт ребёнка через `ctx.agents.create()`, а не через
+неограниченный spawn. Модель защиты:
 
-- работает в отдельной сессии и в cwd проекта;
-- наследует composition и host-инструменты родителя;
-- **пока не ограничен allowlist-ом `tools` из профиля** — это Phase 2c;
-- получает текст задачи и справочные сниппеты памяти; внешние данные в памяти
-  помечены как недоверенные.
+1. В `agent_profiles` хранится **явный `allowed_tools`**; пустой список для
+   custom-профиля означает deny-all.
+2. В `setup(agentCtx)` до публикации агента вызывается
+   `agentCtx.tools.restrict({deny: known - allowed})`; незаявленные
+   host-инструменты скрываются из схемы.
+3. `ctx.tools.guard` получает `runtime.toolDenial(childId, name)` до выполнения
+   любого tool call. Вызов вне allowlist возвращает
+   `TOOL_NOT_ALLOWED: <name> не входит в allowlist профиля ребёнка`; тело
+   инструмента не выполняется.
+4. Allowlist привязывается к child session id **до** первого хода и снимается в
+   `finally` после `dispose()`.
 
-Опасность: ребёнок может вызвать инструменты, которые не предназначены его
-роли. До реализации scoped restrictions dispatch следует использовать только
-в доверенных профилях и с осторожными задачами. DSH approvals/sandbox при этом
-продолжают действовать.
+Дочерние профили не содержат `factory_dispatch`, `factory_review` и
+`factory_workflow_run` — внуки и рекурсивная оркестрация невозможны.
+REVIEWER не имеет `factory_sync`, `factory_dashboard`,
+`factory_memory_forget`, `factory_task_cancel`; RESEARCHER — тех же
+destructive-инструментов; SYSADMIN получает только admin/ssh/file-tools.
+
+Live-проверка: RESEARCHER вызвал `factory_memory_forget` и получил
+`TOOL_NOT_ALLOWED`; память осталась нетронутой. Scoped REVIEWER прошёл PASS.
+
+Граница: guard стоит на исполнении инструментов через `ctx.tools`. Любая
+host-возможность, которая обходит этот реестр, вне данной модели и требует
+отдельного аудита; DSH approvals/sandbox продолжают действовать независимо.
 
 ## Dashboard (v0.4.0)
 
@@ -96,10 +112,11 @@ Phase 1 использует только:
 
 ## Reviewer / child-агенты
 
-- REVIEWER запускается как отдельный child (`spawn`, `maxDepth:1`) и inherits
-  host-tools; строгий allowlist пока не enforced (Phase 2c).
-- Ответ ребёнка валидируется по явной схеме; неизвестный verdict → FAIL, а не
-  автоматический PASS.
+- REVIEWER запускается через scoped runner с allowlist; в нём нет
+  `factory_dispatch`, `factory_review`, `factory_workflow_run`, `factory_sync`,
+  `factory_dashboard`, `factory_memory_forget`, `factory_task_cancel`.
+- Ответ ребёнка парсится по строке `VERDICT:`; неизвестный/отсутствующий verdict
+  → FAIL, а не автоматический PASS.
 - `factory_review` не принимает задачу вне REVIEW; FAIL создаёт fix-задачу,
   но не переисполняет её автоматически.
 - Child получает project root и инструкцию, но не секреты конфигурации.

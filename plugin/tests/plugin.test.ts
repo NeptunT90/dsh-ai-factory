@@ -44,6 +44,9 @@ function createHarness(): Harness {
         tools.set(definition.name, definition)
         return () => tools.delete(definition.name)
       },
+      guard() {
+        return () => {}
+      },
     },
     effect(execute: () => () => void | Promise<void>) {
       lifecycle = execute()
