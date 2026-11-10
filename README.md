@@ -16,9 +16,9 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.19.0 регистрирует **39 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.20.0 регистрирует **46 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
-  `PRAGMA user_version` (схема **v5**), FTS5-поиск с поддержкой русского текста.
+  `PRAGMA user_version` (схема **v6**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
 - Проектная привязка по рабочему каталогу агента; глобальная пользовательская
   память.
@@ -43,6 +43,7 @@
   `TOOL_NOT_ALLOWED`.
 - **Model Router**: маршрут профиль → родитель → `modelFallbacks`; fallback при ошибке child; audit `model.route`/`model.fallback`.
 - **Autonomous workflow**: при `autoWorkflowEnabled` таймер находит READY-задачи и запускает bounded dispatch → review → fix через coordinator Agent; по умолчанию выключен.
+- **Skill Manager**: project-local `.skills/*.md`; strict frontmatter, 16 KiB/50-file limits, root-only management, `factory_skill_assign`; profile + skills are system sections (4000 / 6000+), task stays user; skills never change `allowedTools`.
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
   имеет `factory_dispatch`, REVIEWER/RESEARCHER не имеют destructive-tools,
   SYSADMIN ограничен администрированием.
@@ -56,10 +57,10 @@
   Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
   автономен.
 - Аудит действий без записи содержимого памяти.
-- 76 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 108 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
-  5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема **v5**, 7 builtin-агентов, 39
+  10 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
+- Проверено в реальном Electron-процессе DSH: схема **v6**, 7 builtin-агентов, 46
   инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
@@ -118,6 +119,11 @@
 | `factory_tool_health` | Read-only health/risk factory_* инструментов |
 | `factory_tool_health_check` | R0 probe, R1 REGISTERED, R2 NOT_TESTABLE |
 | `factory_tool_health_history` | История health-проверок |
+| `factory_skill_list` | Список project-local `.skills` |
+| `factory_skill_get` | Метаданные + body навыка |
+| `factory_skill_validate` | Валидация `.skills` без записи |
+| `factory_skill_create/update/delete` | Управление `.skills` (root-only) |
+| `factory_skill_assign` | Attach/detach навыка к профилю |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
 Профили агентов — durable-конфигурация ролей. `factory_dispatch` создаёт
@@ -186,7 +192,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.19.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.20.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -199,7 +205,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 > Вызови `factory_status` и покажи сырые поля.
 
 Ожидаемый ответ: `status: ready`, `driver: node:sqlite`,
-`schemaVersion: 5`, `agents: 7`, 39 инструментов.
+`schemaVersion: 6`, `agents: 7`, 46 инструментов.
 
 ### Установка на второй компьютер
 

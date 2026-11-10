@@ -1,17 +1,16 @@
 # Текущий блок
 
-**BLOCK 2 — Project Context Isolation.**
+**BLOCK 3 — Skill Manager закрыт.**
 
 Сделано:
 
-1. ProjectScopeService + PROJECT_MISMATCH; task/memory ID gates.
-2. Dispatch/review/workflow caller-project check до claim/child.
-3. child projectId в prompt/audit; dashboard project filter.
-4. factory_sync и factory_auto_workflow root-only; projectIdOverride audit.
-5. 76 тестов, 9 project-isolation сценариев; live A/B отказы.
-6. Plugin 0.19.0, root 0.20.0, server 0.17.0.
+1. `.skills/*.md` strict validator/store, migration v6 `agent_profiles.skills`.
+2. Fail-closed `SkillService.resolve`; profile/skills system sections (4000 / 6000+), task user prompt.
+3. 7 root-only management tools; `factory_agent_save skills`; audit skillIds/hashes.
+4. 46 tools, health 43 factory tools / 51 actions; 108 tests.
+5. Plugin 0.20.0, root 0.21.0, server 0.17.0.
 
-Осталось: BLOCK 3 — project-scoped sync; factory_agent_save security.
+Дальше: BLOCK 4 — Capability Discovery / project-scoped sync.
 
 ## Предыдущий блок: browser/sync/live sync
 

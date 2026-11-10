@@ -366,4 +366,11 @@ export const MIGRATIONS: readonly Migration[] = [
         ON tool_health_history(tool_name, action, checked_at DESC);
     `,
   },
+  {
+    version: 6,
+    name: 'agent profile skill bindings',
+    sql: `
+      ALTER TABLE agent_profiles ADD COLUMN skills TEXT NOT NULL DEFAULT '[]';
+    `,
+  },
 ]

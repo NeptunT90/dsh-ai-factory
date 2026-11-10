@@ -86,7 +86,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(39)
+    expect(harness.tools.size).toBe(46)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)
@@ -97,6 +97,8 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_workflow_run')).toBe(true)
     expect(harness.tools.has('factory_model_route')).toBe(true)
     expect(harness.tools.has('factory_auto_workflow')).toBe(true)
+    expect(harness.tools.has('factory_skill_list')).toBe(true)
+    expect(harness.tools.has('factory_skill_assign')).toBe(true)
 
     const status = await harness.tools.get('factory_status')!.execute({}, fakeExec(harness.workspace) as never)
     expect((status as { status: string }).status).toBe('ready')

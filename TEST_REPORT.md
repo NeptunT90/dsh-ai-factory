@@ -18,14 +18,14 @@
 ### Plugin
 
 ```
-Test Files  15 passed (15)
-Tests       76 passed (76)
+Test Files  21 passed (21)
+Tests       108 passed (108)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (39 инструментов).
+contract (46 инструментов).
 
 ### Sync server
 
@@ -76,6 +76,18 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Skill Manager v0.20.0 (live)
+
+- `.skills/*.md` strict frontmatter; 16 KiB body, 50 files, 64 KiB total;
+  forbidden fields/path traversal/symlink/secret detection covered.
+- Migration v6 `agent_profiles.skills`; 46 tools, health registry 43 factory
+  tools / 51 actions.
+- Live management: `factory_skill_create` demo → validate → assign NOFILE →
+  fake dispatch → system section `factory:skill:demo` (order 6010,
+  interpolate=false, complete=false); user prompt had no skill body; audit
+  `skillIds:["demo"]`; detach + delete; `.skills` removed.
+- 108 plugin tests (21 files), 10 server tests.
 
 ### Project Context Isolation v0.19.0 (live)
 
@@ -211,12 +223,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.19.0.tgz`: **173 562 байт**.
-- SHA256: `18ded1576062a6df616986d352f5c7c516bf00f54ebe5041556facd577dc06c8`.
+- `dist/dsh-ai-factory-0.20.0.tgz`: **192 171 байт**.
+- SHA256: `b0848152a61d7fcd28b581ea8e35f9f425ae95616b8b0db5a093ff0b133e9c9b`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.20.0.md` (1 732 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.21.0.md` (1 735 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -228,7 +240,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.19.0; schema 5, 39 инструментов.
+- `portable-test` обновлён с 0.15.0 на 0.20.0; schema 6, 46 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -243,7 +255,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл реализован bounded (autoWorkflow*, default off); standalone PostgreSQL/TLS реализованы, deploy не выполнен.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.19.0 не выполнен.
+- Полный restart DSH после 0.20.0 не выполнен; HMR reload выполнен.
 
 ## 8. Повтор
 

@@ -16,6 +16,7 @@ function fakeAgents(captured: {
   options?: Record<string, unknown>
   restrictions?: ToolRestriction[]
   prompt?: string
+  sections?: Array<{ name: string; order: number; text: string; interpolate?: boolean }>
 }) {
   let releaseIdle: () => void = () => {}
   const idle = new Promise<void>((resolve) => {
@@ -39,6 +40,12 @@ function fakeAgents(captured: {
     },
   }
   const agentCtx = {
+    systemPrompt: {
+      section(section: { name: string; order: number; text: string; interpolate?: boolean }) {
+        captured.sections?.push(section)
+        return () => {}
+      },
+    },
     tools: {
       definitions: () => [
         { name: 'factory_status' },
@@ -73,8 +80,9 @@ function fakeContext(registry: AgentRegistry | undefined): Context {
 describe('ScopedChildRunner', () => {
   it('creates a child with setup restrictions and returns its last text', async () => {
     const { runtime } = track(createTestRuntime())
-    const captured: { options?: Record<string, unknown>; restrictions?: ToolRestriction[]; prompt?: string } = {
+    const captured: { options?: Record<string, unknown>; restrictions?: ToolRestriction[]; prompt?: string; sections?: Array<{ name: string; order: number; text: string; interpolate?: boolean }> } = {
       restrictions: [],
+      sections: [],
     }
     const researcher = runtime.agents.findByRole('researcher')!
     const runner = new ScopedChildRunner(fakeContext(fakeAgents(captured)), runtime)
@@ -97,6 +105,52 @@ describe('ScopedChildRunner', () => {
     expect(deny).not.toContain('factory_memory_search')
     expect(deny).toContain('read')
     expect(runtime.hasChildAllowlist('ses_child')).toBe(false)
+  })
+
+  it('registers profile and skill sections in the child system prompt', async () => {
+    const { runtime } = track(createTestRuntime())
+    const captured: { sections?: Array<{ name: string; order: number; text: string; interpolate?: boolean }>; prompt?: string } = {
+      sections: [],
+    }
+    const researcher = runtime.agents.findByRole('researcher')!
+    const skill = {
+      apiVersion: 'factory.skill/v1' as const,
+      id: 'alpha',
+      name: 'Alpha',
+      description: 'Alpha skill',
+      version: 3,
+      roles: ['researcher'] as const,
+      priority: 7,
+      enabled: true,
+      body: 'SKILL BODY ALPHA',
+      filePath: 'C:/workspace/.skills/alpha.md',
+      relativePath: '.skills/alpha.md',
+      hash: 'a'.repeat(64),
+      bodyBytes: 16,
+      fileBytes: 300,
+    }
+    const runner = new ScopedChildRunner(fakeContext(fakeAgents(captured)), runtime)
+    const result = await runner.run({
+      parent: parentAgent(),
+      cwd: 'C:/workspace',
+      prompt: 'TASK USER PROMPT',
+      profile: researcher,
+      skills: [skill],
+      signal: new AbortController().signal,
+    })
+
+    expect(result.stopReason).toBe('completed')
+    expect(captured.prompt).toBe('TASK USER PROMPT')
+    const profile = captured.sections?.find((section) => section.name === `factory:profile:${researcher.id}`)
+    const skillSection = captured.sections?.find((section) => section.name === 'factory:skill:alpha')
+    expect(profile?.order).toBe(4000)
+    expect(profile?.text).toBe(researcher.systemInstruction)
+    expect(profile?.interpolate).toBe(false)
+    expect(skillSection?.order).toBe(6007)
+    expect(skillSection?.text).toContain('SKILL BODY ALPHA')
+    expect(skillSection?.interpolate).toBe(false)
+    expect(captured.sections?.some((section) => Object.prototype.hasOwnProperty.call(section, 'complete'))).toBe(false)
+    expect(captured.prompt).not.toContain('SKILL BODY ALPHA')
   })
 
   it('returns an error when ctx.agents is unavailable', async () => {

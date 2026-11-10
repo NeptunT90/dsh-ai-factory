@@ -41,6 +41,8 @@ export interface AgentProfile {
   readonly tools: readonly string[]
   /** Exact model-facing tool allowlist enforced for child agents. */
   readonly allowedTools: readonly string[]
+  /** Project-local .skills ids assigned to this profile. */
+  readonly skills: readonly string[]
   readonly accessLevel: AccessLevel
   readonly memoryScope: AgentMemoryScope
   readonly limits: AgentLimits
@@ -62,6 +64,7 @@ export interface AgentCreateInput {
   readonly reasoningEffort?: string | null
   readonly tools?: readonly string[]
   readonly allowedTools?: readonly string[]
+  readonly skills?: readonly string[]
   readonly accessLevel?: AccessLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>
@@ -79,6 +82,7 @@ export interface AgentUpdateInput {
   readonly reasoningEffort?: string | null
   readonly tools?: readonly string[]
   readonly allowedTools?: readonly string[]
+  readonly skills?: readonly string[]
   readonly accessLevel?: AccessLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>

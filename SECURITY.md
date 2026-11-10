@@ -105,6 +105,16 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Skills (v0.20.0 / BLOCK 3)
+
+- Skills are instructions, not permissions. They never add or remove tools from `allowedTools`; tool access remains profile/runtime-enforced.
+- All skill management tools are root-only and absent from child allowlists.
+- `.skills` is project-scoped: strict frontmatter, 1–16 KiB body, max 50 files / 64 KiB total, no unknown/forbidden fields, no `complete`, `interpolate:false`.
+- Paths are restricted to `<project.rootPath>/.skills`; symlinks, traversal and absolute ids are rejected. `detectSecrets()` rejects secret-looking body.
+- `factory_agent_save` with `skills` validates current-project existence and never changes `allowedTools`; built-in profiles and higher-access profiles are protected.
+- A child cannot use skill management even if a custom allowlist lists it; `factory_sync` remains global/root-only.
+- Child writes to `.skills` are governed by the DSH sandbox, not by a plugin path guard. Audit `agent.skills_changed` and `child.host_capabilities.skillHashes` provide traceability.
+
 ## Project context (v0.19.0 / BLOCK 2)
 
 - `ProjectScopeService` проверяет caller project для task/memory ID-операций, dispatch, review и workflow; ошибка `PROJECT_MISMATCH`.

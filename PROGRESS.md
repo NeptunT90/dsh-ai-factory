@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### BLOCK 3 Skill Manager v0.20.0
+
+- `.skills` validator/store, migration v6, fail-closed resolve.
+- Profile/skills system prompt sections; 7 root-only tools; 46 tools, 108 tests.
+- Live demo create/assign/fake dispatch/delete; health 43/51.
+
 ### BLOCK 2 Project Context Isolation v0.19.0
 
 - ProjectScopeService, PROJECT_MISMATCH, task/memory gates.

@@ -71,6 +71,7 @@ describe('ReviewerService', () => {
     expect(captured.input?.profile.allowedTools).not.toContain('factory_review')
     expect(captured.input?.prompt).toContain('Проверить релиз')
     expect(captured.input?.prompt).toContain('VERDICT')
+    expect(captured.input?.prompt).not.toContain(runtime.agents.findByRole('reviewer')!.systemInstruction)
   })
 
   it('fails the reviewed task and creates a fix task on FAIL', async () => {

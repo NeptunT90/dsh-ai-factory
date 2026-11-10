@@ -28,6 +28,7 @@ interface AgentRow {
   reasoning_effort: string | null
   tools: string
   allowed_tools: string
+  skills: string
   access_level: AccessLevel
   memory_scope: AgentMemoryScope
   limits: string
@@ -86,6 +87,7 @@ function mapAgent(row: AgentRow): AgentProfile {
     reasoningEffort: row.reasoning_effort,
     tools: parseTools(row.tools),
     allowedTools: parseTools(row.allowed_tools),
+    skills: parseTools(row.skills),
     accessLevel: row.access_level,
     memoryScope: row.memory_scope,
     limits: normalizeLimits(JSON.parse(row.limits) as Partial<AgentLimits>),
@@ -99,7 +101,7 @@ function mapAgent(row: AgentRow): AgentProfile {
 
 const SELECT = `
   SELECT id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, skills, access_level, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at
   FROM agent_profiles`
 
@@ -186,9 +188,9 @@ export class AgentRegistry {
     this.db.run(
       `INSERT INTO agent_profiles
         (id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, skills, access_level, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
       [
         id,
         name,
@@ -201,6 +203,7 @@ export class AgentRegistry {
         input.reasoningEffort?.trim() || null,
         JSON.stringify(normalizeTools(input.tools)),
         JSON.stringify(normalizeTools(input.allowedTools)),
+        JSON.stringify(normalizeTools(input.skills)),
         accessLevel,
         memoryScope,
         JSON.stringify(normalizeLimits(input.limits)),
@@ -237,7 +240,7 @@ export class AgentRegistry {
     this.db.run(
       `UPDATE agent_profiles
        SET name = ?, role = ?, title = ?, description = ?, system_instruction = ?,
-           model_provider = ?, model = ?, reasoning_effort = ?, tools = ?, allowed_tools = ?, access_level = ?,
+           model_provider = ?, model = ?, reasoning_effort = ?, tools = ?, allowed_tools = ?, skills = ?, access_level = ?,
            memory_scope = ?, limits = ?, enabled = ?, version = version + 1, updated_at = ?
        WHERE id = ?`,
       [
@@ -251,6 +254,7 @@ export class AgentRegistry {
         input.reasoningEffort === undefined ? current.reasoningEffort : input.reasoningEffort?.trim() || null,
         JSON.stringify(input.tools === undefined ? current.tools : normalizeTools(input.tools)),
         JSON.stringify(input.allowedTools === undefined ? current.allowedTools : normalizeTools(input.allowedTools)),
+        JSON.stringify(input.skills === undefined ? current.skills : normalizeTools(input.skills)),
         accessLevel,
         memoryScope,
         JSON.stringify(limits),

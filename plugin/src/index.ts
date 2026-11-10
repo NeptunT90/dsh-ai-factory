@@ -17,6 +17,7 @@ import { AutoWorkflowService } from './workflow/auto.js'
 import { registerAutoWorkflowTool } from './workflow/auto-tools.js'
 import { ToolHealthService } from './health/service.js'
 import { registerHealthTools } from './health/tools.js'
+import { registerSkillTools } from './skills/tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -81,6 +82,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
     if (runtime) {
       disposers.push(...registerMemoryTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerAgentTools(ctx, () => runtime, () => startupError))
+      disposers.push(...registerSkillTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerTaskTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       disposers.push(registerDispatchTool(ctx, () => runtime, () => startupError))
@@ -96,7 +98,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
         level: 'info',
         data: {
           count: disposers.length - 1, // exclude the tool guard
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto', 'health'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto', 'skills', 'health'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)

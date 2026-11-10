@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.21.0] — 2026-11-10
+
+### Added
+
+- BLOCK 3 Skill Manager: project-local `.skills/*.md`, strict frontmatter,
+  validator/store, fail-closed resolve, profile/skill systemPrompt sections,
+  7 root-only management tools, `factory_agent_save` skills parameter.
+- Skills never change `allowedTools`; profile instruction moved to system prompt.
+- `agent_profiles.skills` schema v6; 43 factory tools / 51 health actions.
+- Plugin 0.20.0: 46 tools, 108 tests; server 0.17.0.
+
 ## [0.20.0] — 2026-11-10
 
 ### Added

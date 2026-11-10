@@ -72,7 +72,7 @@
 - Соединение синхронное; все операции одного процесса сериализованы. Для
   будущего фонового scheduler этого достаточно, пока один writer.
 
-### Схема (v1–v5)
+### Схема (v1–v6)
 
 | Таблица | Версия | Назначение |
 |---|---|---|
@@ -92,6 +92,7 @@
 | `agent_profiles.allowed_tools` | v4 | Явный allowlist инструментов ребёнка |
 | `tool_health` | v5 | Health-overlay `(tool_name, action)` для factory_* |
 | `tool_health_history` | v5 | История health-проверок |
+| `agent_profiles.skills` | v6 | Project-local skill ids профиля |
 
 Ключевые инварианты:
 
@@ -357,6 +358,17 @@ ID-addressed операций. Project id — workspace identity, не поль�
   границей остаётся cwd;
 - `factory_sync` — global capability, root-only; project-scoped sync — отдельный этап;
 - `projectIdOverride` задокументирован и аудируется как `project.override_active`.
+
+### 7.5f. Skill Manager (v0.20.0 / BLOCK 3)
+
+Skills are project-local `.skills/<id>.md` files validated by strict frontmatter.
+
+- `SkillService.resolve(profileId, projectId)` is fail-closed: missing, invalid or disabled skill → `SKILL_NOT_FOUND` before claim/child;
+- `SkillStore` is restricted to `<project.rootPath>/.skills`, rejects symlinks/traversal and uses temp+rename with SHA-256 optimistic updates;
+- `ScopedChildRunner.setup` registers `factory:profile:<id>` at order 4000 and `factory:skill:<id>` at 6000+priority, all with `interpolate:false`; never `complete:true`;
+- authority: Harness → Profile (system) → Skills (system) → Task (user); `composePrompt` carries task data only;
+- management tools are root-only; skills never alter `allowedTools`;
+- `factory_sync` remains a global capability; managed separately.
 
 ### 7.6. Sync client / outbox
 

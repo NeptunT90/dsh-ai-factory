@@ -17,9 +17,11 @@ import { ModelRouter } from './models/router.js'
 import { AutoWorkflowService } from './workflow/auto.js'
 import type { ToolHealthService } from './health/service.js'
 import { ProjectScopeService } from './projects/policy.js'
+import { SkillService } from './skills/service.js'
 import { isHostCapability } from './agents/allowlists.js'
+import type { AccessLevel } from './agents/types.js'
 
-export const FACTORY_VERSION = '0.19.0'
+export const FACTORY_VERSION = '0.20.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -57,11 +59,13 @@ export class FactoryRuntime {
   readonly tasks: TaskEngine
   readonly planner: PlannerService
   readonly scope: ProjectScopeService
+  readonly skills: SkillService
   readonly sync: SyncService
   readonly models: ModelRouter
   autoWorkflow?: AutoWorkflowService
   health?: ToolHealthService
   private readonly childToolAllowlist = new Map<string, ReadonlySet<string>>()
+  private readonly childAccessLevels = new Map<string, AccessLevel>()
   readonly startedAt = Date.now()
   private expiredOnStart = 0
   private recoveredOnStart = 0
@@ -77,6 +81,7 @@ export class FactoryRuntime {
     this.tasks = new TaskEngine(db, this.projects, this.agents, config)
     this.planner = new PlannerService(this.tasks, this.agents)
     this.scope = new ProjectScopeService(this.projects, config.allowGlobalMemory)
+    this.skills = new SkillService(this.projects, this.agents)
     this.sync = new SyncService(db, this.memory, this.audit, config)
     this.models = new ModelRouter(config)
     if (config.syncAuto) this.sync.startAuto()
@@ -186,12 +191,23 @@ export class FactoryRuntime {
   }
 
   /** Register the exact allowlist for one child agent session. */
-  allowToolsForChild(agentId: string, tools: readonly string[]): void {
+  allowToolsForChild(agentId: string, tools: readonly string[], accessLevel: AccessLevel = 'workspace'): void {
     this.childToolAllowlist.set(agentId, new Set(tools))
+    this.childAccessLevels.set(agentId, accessLevel)
+  }
+
+  /** Effective caller access: child profile level, trusted for the root operator. */
+  agentAccessLevel(agentId: string | undefined): AccessLevel {
+    if (agentId !== undefined) {
+      const child = this.childAccessLevels.get(agentId)
+      if (child !== undefined) return child
+    }
+    return 'trusted'
   }
 
   releaseChildTools(agentId: string): void {
     this.childToolAllowlist.delete(agentId)
+    this.childAccessLevels.delete(agentId)
   }
 
   /** True when the agent has an enforced child allowlist (root agents do not). */

@@ -1,5 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
+import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
+import { SkillStore } from '../skills/store.js'
 import { FactoryError } from '../core/errors.js'
 import { asJsonValue, type JsonValue } from '../core/json.js'
 import type { FactoryRuntime } from '../runtime.js'
@@ -29,6 +31,7 @@ const AGENT_OUTPUT = {
     reasoningEffort: { type: 'string', required: true },
     tools: { type: 'array', items: { type: 'string' }, required: true },
     allowedTools: { type: 'array', items: { type: 'string' }, required: true },
+    skills: { type: 'array', items: { type: 'string' }, required: true },
     accessLevel: { type: 'string', required: true },
     memoryScope: { type: 'string', required: true },
     limits: { type: 'json', required: true },
@@ -53,6 +56,7 @@ function view(agent: AgentProfile): AgentView {
     reasoningEffort: agent.reasoningEffort ?? '',
     tools: [...agent.tools],
     allowedTools: [...agent.allowedTools],
+    skills: [...agent.skills],
     accessLevel: agent.accessLevel,
     memoryScope: agent.memoryScope,
     limits: asJsonValue(agent.limits),
@@ -76,6 +80,7 @@ interface AgentView {
   reasoningEffort: string
   tools: string[]
   allowedTools: string[]
+  skills: string[]
   accessLevel: string
   memoryScope: string
   limits: JsonValue
@@ -106,6 +111,130 @@ function formatAgent(agent: AgentView): string {
   ]
     .filter((line) => line !== '')
     .join('\n')
+}
+
+function callerToolNames(ctx: Context, exec: ToolRunContext): Set<string> {
+  if (!exec.agent) throw new FactoryError('FORBIDDEN', 'factory_agent_save требует вызывающего агента')
+  const definitions = ctx.tools.definitions(exec.agent)
+  return new Set(definitions.map((definition) => definition.name))
+}
+
+function accessRank(level: string): number {
+  const index = (ACCESS_LEVELS as readonly string[]).indexOf(level)
+  return index < 0 ? -1 : index
+}
+
+function denyAgentChange(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  reason: 'child_forbidden' | 'builtin_protected' | 'access_level_higher' | 'caller_subset',
+  args: { id?: string; requestedAllowedTools?: string[]; missingAllowedTools?: string[]; callerAccessLevel?: string; targetAccessLevel?: string },
+): never {
+  runtime.auditTool('agent.grant_denied', null, exec, {
+    agentId: args.id ?? null,
+    reason,
+    ...(args.requestedAllowedTools === undefined ? {} : { requestedAllowedTools: args.requestedAllowedTools }),
+    ...(args.missingAllowedTools === undefined ? {} : { missingAllowedTools: args.missingAllowedTools }),
+    ...(args.callerAccessLevel === undefined ? {} : { callerAccessLevel: args.callerAccessLevel }),
+    ...(args.targetAccessLevel === undefined ? {} : { targetAccessLevel: args.targetAccessLevel }),
+  })
+  if (reason === 'child_forbidden') {
+    throw new FactoryError('FORBIDDEN', 'Изменение профилей доступно только root/DIRECTOR; дочерний агент не может менять профили')
+  }
+  if (reason === 'builtin_protected') {
+    throw new FactoryError('FORBIDDEN', 'Встроенный профиль защищён от изменения и отключения', { agentId: args.id })
+  }
+  if (reason === 'access_level_higher') {
+    throw new FactoryError(
+      'FORBIDDEN',
+      'Нельзя изменить профиль с уровнем доступа выше уровня вызывающего агента',
+      { callerAccessLevel: args.callerAccessLevel, targetAccessLevel: args.targetAccessLevel },
+    )
+  }
+  throw new FactoryError(
+    'FORBIDDEN',
+    'Нельзя выдать агенту инструменты, которых нет у вызывающего агента',
+    { requestedAllowedTools: args.requestedAllowedTools, missingAllowedTools: args.missingAllowedTools },
+  )
+}
+
+export function assertAgentTargetMutable(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  args: { id?: string; accessLevel?: AccessLevel },
+): void {
+  if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+    denyAgentChange(runtime, exec, 'child_forbidden', { id: args.id })
+  }
+  const target = args.id ? runtime.agents.get(args.id) : undefined
+  if (target?.isBuiltin === true) {
+    denyAgentChange(runtime, exec, 'builtin_protected', {
+      id: target.id,
+      targetAccessLevel: target.accessLevel,
+    })
+  }
+  const callerAccessLevel = runtime.agentAccessLevel(exec.agent?.id)
+  const requestedAccessLevel = args.accessLevel ?? target?.accessLevel ?? 'workspace'
+  if (accessRank(callerAccessLevel) < accessRank(requestedAccessLevel)) {
+    denyAgentChange(runtime, exec, 'access_level_higher', {
+      id: args.id,
+      callerAccessLevel,
+      targetAccessLevel: requestedAccessLevel,
+    })
+  }
+}
+
+function assertAgentSaveAllowed(
+  ctx: Context,
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  args: { id?: string; name?: string; allowedTools?: string[]; accessLevel?: AccessLevel },
+): void {
+  assertAgentTargetMutable(runtime, exec, args)
+  if (args.allowedTools === undefined) return
+  const requested = [...new Set(args.allowedTools.map((tool) => tool.trim()).filter((tool) => tool !== ''))]
+  const callerTools = callerToolNames(ctx, exec)
+  const missing = requested.filter((tool) => !callerTools.has(tool))
+  if (missing.length > 0) {
+    denyAgentChange(runtime, exec, 'caller_subset', {
+      id: args.id,
+      requestedAllowedTools: requested,
+      missingAllowedTools: missing,
+    })
+  }
+}
+
+function assertAgentToggleAllowed(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  args: { id: string },
+): void {
+  assertAgentTargetMutable(runtime, exec, args)
+}
+
+function assertSkillsExist(
+  runtime: FactoryRuntime,
+  exec: ToolRunContext,
+  skills: readonly string[] | undefined,
+): void {
+  if (skills === undefined) return
+  const store = new SkillStore(runtime.projectFor(exec).rootPath)
+  for (const id of [...new Set(skills.map((skill) => skill.trim()).filter((skill) => skill !== ''))]) {
+    try {
+      const skill = store.get(id)
+      if (!skill.enabled) {
+        throw new FactoryError('SKILL_NOT_FOUND', `Навык ${id} отключён`, { skillId: id, reason: 'disabled' })
+      }
+    } catch (error) {
+      if (error instanceof FactoryError) {
+        throw new FactoryError('SKILL_NOT_FOUND', `Навык ${id} не найден в текущем проекте`, {
+          skillId: id,
+          reason: error.code,
+        })
+      }
+      throw error
+    }
+  }
 }
 
 function runtimeOf(getRuntime: () => FactoryRuntime | undefined, getStartupError: () => string | undefined): FactoryRuntime {
@@ -209,6 +338,7 @@ export function registerAgentTools(
           reasoningEffort: { type: 'string', description: 'Уровень reasoning' },
           tools: { type: 'array', items: { type: 'string' }, description: 'Рекомендуемые инструменты/паттерны' },
           allowedTools: { type: 'array', items: { type: 'string' }, description: 'Точный allowlist инструментов ребёнка' },
+          skills: { type: 'array', items: { type: 'string' }, description: 'Project-local skill ids для профиля' },
           accessLevel: { type: 'string', enum: ACCESS_LEVELS, description: 'Уровень доступа' },
           memoryScope: { type: 'string', enum: MEMORY_SCOPES, description: 'Доступ к памяти' },
           limits: { type: 'json', description: 'Лимиты: maxConcurrentTasks, maxAttempts, timeoutMs, autonomy' },
@@ -221,6 +351,9 @@ export function registerAgentTools(
         },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          assertAgentSaveAllowed(ctx, runtime, exec, args)
+          assertSkillsExist(runtime, exec, args.skills)
+          const previousSkills = args.id ? [...runtime.agents.require(args.id).skills] : []
           const limits = asLimits(args.limits)
           const agent = args.id
             ? runtime.agents.update(args.id, {
@@ -234,6 +367,7 @@ export function registerAgentTools(
                 reasoningEffort: args.reasoningEffort,
                 tools: args.tools,
                 allowedTools: args.allowedTools,
+                skills: args.skills,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,
@@ -251,16 +385,24 @@ export function registerAgentTools(
                 reasoningEffort: args.reasoningEffort,
                 tools: args.tools,
                 allowedTools: args.allowedTools,
+                skills: args.skills,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,
                 enabled: args.enabled,
               })
-          runtime.audit.record({
-            event: args.id ? 'agent.updated' : 'agent.created',
-            level: 'info',
-            actor: exec.agent?.id ?? 'agent',
-            data: { agentId: agent.id, role: agent.role, version: agent.version },
+          if (args.skills !== undefined && JSON.stringify(previousSkills) !== JSON.stringify(agent.skills)) {
+            runtime.auditTool('agent.skills_changed', null, exec, {
+              agentId: agent.id,
+              oldSkillIds: previousSkills,
+              newSkillIds: [...agent.skills],
+            })
+          }
+          runtime.auditTool(args.id ? 'agent.updated' : 'agent.created', null, exec, {
+            agentId: agent.id,
+            role: agent.role,
+            version: agent.version,
+            allowedToolsCount: agent.allowedTools.length,
           })
           return view(agent)
         },
@@ -283,13 +425,9 @@ export function registerAgentTools(
         },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
+          assertAgentToggleAllowed(runtime, exec, args)
           const agent = runtime.agents.setEnabled(args.id, args.enabled)
-          runtime.audit.record({
-            event: 'agent.toggled',
-            level: 'info',
-            actor: exec.agent?.id ?? 'agent',
-            data: { agentId: agent.id, enabled: agent.enabled },
-          })
+          runtime.auditTool('agent.toggled', null, exec, { agentId: agent.id, enabled: agent.enabled })
           return view(agent)
         },
       }),

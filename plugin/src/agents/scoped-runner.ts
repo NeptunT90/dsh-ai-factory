@@ -6,6 +6,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from './types.js'
+import type { SkillRecord } from '../skills/types.js'
 import { BROWSER_TOOL_NAMES, HOST_TOOL_NAMES } from './allowlists.js'
 
 export interface ScopedRunInput {
@@ -18,6 +19,8 @@ export interface ScopedRunInput {
   readonly timeoutMs?: number
   /** Project identity for prompt/audit; cwd remains the session boundary. */
   readonly projectId?: string
+  /** Validated project-local skill snapshots, resolved before child creation. */
+  readonly skills?: readonly SkillRecord[]
   /** Explicit route selected by the Model Router; overrides profile/parent derivation. */
   readonly agentOptions?: AgentOptions
 }
@@ -115,6 +118,30 @@ export class ScopedChildRunner implements ChildRunner {
           }
           const restrictable = new Set(known)
           const denyKnown = [...deny].filter((name) => restrictable.has(name))
+          const systemPrompt = (agentCtx as unknown as {
+            systemPrompt?: { section(section: { name: string; order: number; text: string; interpolate?: boolean }): () => void }
+          }).systemPrompt
+          if (!systemPrompt) {
+            throw new FactoryError('UNAVAILABLE', 'ctx.systemPrompt недоступен; skill/profile sections не могут быть зарегистрированы')
+          }
+          systemPrompt.section({
+            name: `factory:profile:${input.profile.id}`,
+            order: 4000,
+            text: input.profile.systemInstruction,
+            interpolate: false,
+          })
+          for (const skill of input.skills ?? []) {
+            systemPrompt.section({
+              name: `factory:skill:${skill.id}`,
+              order: 6000 + skill.priority,
+              text: [
+                `[FACTORY SKILL ${skill.id} v${skill.version}]`,
+                skill.body.trimEnd(),
+                `[/FACTORY SKILL ${skill.id}]`,
+              ].join('\n'),
+              interpolate: false,
+            })
+          }
           if (denyKnown.length > 0) agentCtx.tools.restrict({ deny: denyKnown })
           this.runtime.audit.record({
             event: 'child.host_capabilities',
@@ -123,6 +150,8 @@ export class ScopedChildRunner implements ChildRunner {
               sessionId,
               profile: input.profile.name,
               ...(input.projectId === undefined ? {} : { projectId: input.projectId }),
+              skillIds: (input.skills ?? []).map((skill) => skill.id),
+              skillHashes: Object.fromEntries((input.skills ?? []).map((skill) => [skill.id, skill.hash])),
               allowedHost: HOST_TOOL_NAMES.filter((name) => allowed.includes(name)),
               deniedHost: [...HOST_TOOL_NAMES, ...BROWSER_TOOL_NAMES].filter((name) => !allowed.includes(name)),
               knownHost: known.filter((name) => (HOST_TOOL_NAMES as readonly string[]).includes(name) || (BROWSER_TOOL_NAMES as readonly string[]).includes(name)),
@@ -131,7 +160,7 @@ export class ScopedChildRunner implements ChildRunner {
         },
       })
       childId = handle.agent.id
-      this.runtime.allowToolsForChild(childId, allowed)
+      this.runtime.allowToolsForChild(childId, allowed, input.profile.accessLevel)
 
       if (input.signal.aborted) {
         throw new FactoryError('UNAVAILABLE', 'Родительская операция отменена до запуска ребёнка')

@@ -43,7 +43,6 @@ function composePrompt(runtime: FactoryRuntime, task: TaskRecord, reviewer: Agen
   const project = runtime.projects.require(task.projectId)
   return [
     `Ты ${reviewer.name} (${reviewer.role}) — ${reviewer.title}.`,
-    reviewer.systemInstruction,
     '',
     'Ты независимый REVIEWER. Не доверяй отчёту исполнителя: проверяй фактические артефакты, код, тесты и сборку.',
     'Твой единственный доступный инструментарий — allowlist профиля; не пытайся вызывать запрещённые инструменты.',
@@ -102,6 +101,7 @@ export class ReviewerService {
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_review требует вызывающего агента')
     const project = runtime.projects.require(task.projectId)
+    const skills = runtime.skills.resolve(reviewer.id, task.projectId)
     const routePlan = runtime.models.plan(reviewer, parent)
     if (routePlan.attempts.length === 0) {
       throw new FactoryError('UNAVAILABLE', 'Нет model route для REVIEWER')
@@ -141,6 +141,7 @@ export class ReviewerService {
           parent,
           cwd: project.rootPath,
           projectId: task.projectId,
+          skills,
           prompt: composePrompt(runtime, task, reviewer, input.instructions),
           profile: reviewer,
           signal: exec.signal,

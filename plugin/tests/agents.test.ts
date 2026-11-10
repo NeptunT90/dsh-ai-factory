@@ -20,11 +20,13 @@ describe('AgentRegistry', () => {
       role: 'custom',
       title: 'Документалист',
       tools: ['read', 'write', 'factory_memory_*'],
+      skills: ['review', 'tests'],
       limits: { maxConcurrentTasks: 1, maxAttempts: 2 },
     })
     expect(agent.id).toMatch(/^agt_/)
     expect(agent.enabled).toBe(true)
     expect(agent.limits.maxConcurrentTasks).toBe(1)
+    expect(agent.skills).toEqual(['review', 'tests'])
 
     const updated = runtime.agents.update(agent.id, {
       title: 'Технический писатель',
@@ -33,6 +35,7 @@ describe('AgentRegistry', () => {
     })
     expect(updated.version).toBe(2)
     expect(updated.enabled).toBe(false)
+    expect(updated.skills).toEqual(['review', 'tests'])
     expect(runtime.agents.findByRole('custom')).toBeUndefined()
   })
 

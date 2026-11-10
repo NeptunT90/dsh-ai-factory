@@ -60,6 +60,7 @@ describe('DispatchService', () => {
     expect(captured.input?.profile.allowedTools).not.toContain('factory_dispatch')
     expect(captured.input?.cwd).toBe(runtime.projects.require(projectId).rootPath)
     expect(captured.input?.prompt).toContain('DEVELOPER')
+    expect(captured.input?.prompt).not.toContain(developer.systemInstruction)
   })
 
   it('leaves the task in REVIEW when review=true', async () => {
@@ -146,6 +147,30 @@ describe('DispatchService', () => {
     expect(output.stopReason).toBe('error')
     expect(output.taskStatus).toBe('READY')
     expect(runtime.audit.recent(50).some((entry) => entry.event === 'model.fallback_suppressed')).toBe(true)
+  })
+
+  it('fails before claim when an assigned skill is missing or invalid', async () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const agent = runtime.agents.create({
+      name: 'SKILL_MISSING',
+      role: 'custom',
+      allowedTools: ['read'],
+      skills: ['missing-skill'],
+    })
+    const task = runtime.tasks.create({ projectId, title: 'Missing skill task', assignedAgentId: agent.id })
+    let childStarted = false
+    const service = new DispatchService(fakeContext(), runtime, {
+      async run() {
+        childStarted = true
+        return { childId: 'ses_child', output: 'unexpected', stopReason: 'completed', diagnostic: '' }
+      },
+    })
+
+    await expect(
+      service.dispatch({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath)),
+    ).rejects.toMatchObject({ code: 'SKILL_NOT_FOUND' })
+    expect(childStarted).toBe(false)
+    expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
 
   it('fails without claiming when ctx.agents is unavailable', async () => {
