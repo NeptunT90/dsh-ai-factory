@@ -1,0 +1,17 @@
+services:
+  sync:
+    build: .
+    restart: unless-stopped
+    environment:
+      SYNC_TOKEN: ${SYNC_TOKEN:?set SYNC_TOKEN in .env or shell}
+      SYNC_DB_DIR: /data
+      SYNC_HOST: 0.0.0.0
+      SYNC_PORT: 8787
+    # Bind to loopback on the host; expose through an HTTPS reverse proxy.
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - sync-data:/data
+
+volumes:
+  sync-data:

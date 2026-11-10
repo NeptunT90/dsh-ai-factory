@@ -12,14 +12,17 @@
   подавление обратного outbox, FTS-обновление.
 - 3 sync-теста (всего 37): обмен памятью между двумя SQLite, offline outbox,
   отказ по токену.
+- Sync-сервер `server/`: PGlite PostgreSQL + pgvector, REST push/pull/health,
+  Bearer auth, idempotency, LWW/conflict, Dockerfile/Compose.
+- 5 серверных тестов + end-to-end HTTP между двумя SQLite.
 - Release tarball 0.5.0; upgrade `portable-test` 0.4.0 → 0.5.0 без потери
   схемы/данных.
 
 ### Known limitations
 
-- Production PostgreSQL/pgvector sync-сервер ещё не реализован; контракт
-  проверен mock-сервером.
-- Нет автоматического flush outbox по таймеру.
+- Sync-сервер использует embedded PGlite (single writer); standalone
+  PostgreSQL/Ubuntu + TLS proxy ещё не развёрнуты.
+- Нет автоматического flush outbox/backup-планировщика.
 - Second physical PC still pending.
 
 ## [0.4.0] — 2026-11-10

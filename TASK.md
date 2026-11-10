@@ -14,15 +14,16 @@
 
 ## Следующая очередь
 
-- Production sync-сервер: PostgreSQL + pgvector, REST API, Docker Compose,
-  токен, migrations, backup/restore.
-- Автоматический flush outbox по таймеру + server-side conflict log.
+- Standalone PostgreSQL/Ubuntu + TLS reverse proxy (нужен сервер/доступ;
+  локально нет psql/Docker).
+- Backup/restore планировщик сервера, multi-writer.
+- CRDT/merge и server-side conflict journal.
+- Автоматический flush outbox по таймеру.
 - Живой smoke: `factory_plan_create` → `factory_task_claim` →
-  `factory_dispatch` с моделью; `factory_dashboard`/`factory_sync`.
-- Настроить GitHub remote, tag `v0.5.0`, Release по workflow.
-- Установка на второй физический ПК; upgrade 0.4→0.5.
-- Scoped-ограничение host-tools ребёнка; Model Router.
-- Автономный DIRECTOR/REVIEWER-цикл, Workflow.
+  `factory_dispatch`; `factory_dashboard`; `factory_sync`.
+- Настроить GitHub remote/tag/Release.
+- Установка на второй физический ПК; upgrade.
+- Scoped-ограничение host-tools; Model Router; REVIEWER/Workflow.
 
 ## Запреты
 

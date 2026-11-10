@@ -43,8 +43,14 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
+      - name: Test plugin
         run: pnpm test
+
+      - name: Server typecheck
+        run: pnpm server:typecheck
+
+      - name: Test sync server
+        run: pnpm server:test
 
       - name: Build and package
         shell: pwsh

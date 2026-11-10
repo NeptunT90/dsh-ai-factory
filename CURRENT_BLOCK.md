@@ -1,28 +1,31 @@
 # Текущий блок
 
-**Phase 4a — sync client и локальный outbox.**
+**Phase 4b — sync-сервер на PostgreSQL/PGlite + pgvector.**
 
 Сделано:
 
-1. Миграция v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
-   `memory_sync_insert/update`.
-2. `factory_sync` (status/push/pull/sync).
-3. Bearer-токен только из env (`syncTokenEnv`), HTTPS или loopback HTTP,
-   cursor, идемпотентные `opId`, retry/backoff.
-4. `MemoryEngine.applyRemote`: LWW по `updatedAt`, remap проекта, подавление
-   обратного outbox, FTS.
-5. 37 тестов; два независимых SQLite-runtime обмениваются памятью через
-   mock-сервер. Offline и auth-failure сценарии проверены.
-6. Live DSH v0.5.0: schema 3, 32 инструмента, triggers установлены.
+1. Outbox, `factory_sync`, HTTPS/loopback, Bearer env-token, backoff.
+2. `server/`:
+   - PGlite (настоящий PostgreSQL/WASM) + pgvector `vector(1536)`;
+   - `POST /v1/sync/push`, `GET /v1/sync/pull`, `/health`;
+   - idempotency `sync_operations`, monotonic cursor, LWW и conflict;
+   - Bearer auth, body limit, security headers;
+   - Dockerfile, Docker Compose (loopback publish), README.
+3. Store/HTTP тесты сервера — 5 passed.
+4. End-to-end: A SQLite → HTTP → PGlite → B SQLite; update дошёл;
+   health `vector: true`.
+5. Plugin 0.5.0: schema 3, 32 инструмента; 37 plugin-тестов.
 
 Осталось:
 
-1. Production sync-сервер: PostgreSQL + pgvector, REST API, Docker Compose,
-   auth, migrations, backup/restore.
-2. Автоматический flush outbox и server-side conflict log.
-3. Второй физический ПК/сервер.
-4. Scoped-tools/Model Router (Phase 2c), REVIEWER/Workflow.
-5. Live tool-calls из модели в Web GUI.
+1. Развернуть standalone PostgreSQL/Ubuntu + TLS reverse proxy (нет psql/
+   Docker в текущем окружении).
+2. Backup/restore планировщик сервера, multi-writer.
+3. CRDT/merge и server-side conflict journal.
+4. Автоматический flush outbox по таймеру.
+5. Второй физический ПК; GitHub Release.
+6. Phase 2c scoped tools/Model Router, автономный REVIEWER/Workflow.
 
-Критерий блока: локальный outbox и push/pull проверены между двумя SQLite —
-достигнут; полноценная серверная синхронизация — нет (нужен PostgreSQL).
+Критерий блока: реальный HTTP sync-сервер с PostgreSQL-семантикой и pgvector
+обменивается памятью между двумя SQLite — достигнут локально; production
+Ubuntu deployment — нет.

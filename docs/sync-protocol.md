@@ -1,8 +1,9 @@
 # Sync protocol (v1)
 
-Статус: **клиент и локальный outbox реализованы и протестированы; production
-PostgreSQL-сервер ещё не развёрнут.** Тестовый mock-сервер реализует этот
-контракт и подтверждает push/pull между двумя SQLite-runtime.
+Статус: **клиент, outbox и сервер реализованы и проверены end-to-end.**
+Сервер использует PGlite — настоящий PostgreSQL в WASM — с расширением
+pgvector. Standalone PostgreSQL/Ubuntu-развёртывание пока не выполнено;
+PGlite подходит для одного writer-процесса.
 
 ## Транспорт и авторизация
 
@@ -88,9 +89,18 @@ SQLite triggers создают `sync_outbox` на реальные измене�
 `sent_at`, `last_error`. Сетевые ошибки оставляют операцию и включают
 экспоненциальный backoff.
 
-## Сервер (следующий шаг)
+## Сервер
 
-Планируемая реализация: Node REST API + PostgreSQL + pgvector, Docker Compose,
-migrations, healthcheck, backup. До её появления `factory_sync` можно
-проверять только с тестовым сервером, а локальный режим полностью работает без
-синхронизации.
+Реализован в `server/`:
+
+- Node HTTP API, Bearer auth, `POST /v1/sync/push`, `GET /v1/sync/pull`,
+  `GET /health`;
+- PGlite (PostgreSQL/WASM) + pgvector `vector(1536)`; idempotency table
+  `sync_operations`; monotonic `sync_change_seq`;
+- LWW upsert + явный `409`-подобный conflict в ответе push;
+- Dockerfile + Compose; данные в volume;
+- `node --test` тесты store/HTTP.
+
+Standalone PostgreSQL + `pg` adapter, TLS/reverse proxy, multi-writer,
+backup-планировщик — следующие шаги. Локальный режим плагина работает без
+сервера.

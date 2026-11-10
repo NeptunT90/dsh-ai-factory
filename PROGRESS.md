@@ -99,8 +99,11 @@
   обратного outbox, FTS-обновление.
 - 3 sync-теста: push из A → pull в B, offline outbox/backoff, отказ по токену.
 - 37 тестов; live v0.5.0, schema 3, 32 инструмента.
-- Production PostgreSQL/pgvector-сервер ещё не реализован; mock-сервер
-  подтверждает протокол.
+- Sync-сервер `server/` на PGlite (PostgreSQL/WASM) + pgvector, Bearer auth,
+  idempotency, LWW/conflict, Dockerfile/Compose и 5 node --test тестов.
+- End-to-end: два SQLite-runtime через реальный HTTP-сервер; health
+  `vector: true`, обновление памяти дошло до второй БД.
+- Standalone PostgreSQL/Ubuntu и TLS proxy ещё не развёрнуты.
 
 ### Исправлено
 

@@ -36,3 +36,8 @@ backups/
 
 # OpenWolf local brain state
 .dshwolf/
+
+# Sync server runtime data
+server/data/
+server/dist/
+server/.env

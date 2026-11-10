@@ -42,10 +42,11 @@
 - **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory,
   Audit, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
   внешних ассетов и без мутаций.
-- **Sync client/outbox**: локальный outbox и `factory_sync` (status/push/pull),
-  HTTPS/loopback, токен только из env, backoff при недоступности сервера.
-  Серверная часть PostgreSQL/pgvector пока не развёрнута; локальный режим
-  полностью автономен.
+- **Sync client/outbox + server**: локальный outbox и `factory_sync`
+  (status/push/pull), HTTPS/loopback, токен из env, backoff; сервер
+  `server/` на PGlite PostgreSQL + pgvector с Bearer auth, idempotency,
+  LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
+  развёрнут; локальный режим полностью автономен.
 - Аудит действий без записи содержимого памяти.
 - 37 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync, tool contract), строгая типизация TypeScript, сборка в `lib/`.
@@ -117,6 +118,9 @@ host-инструменты по allowlist профиля; это Phase 2c.
 Операции памяти автоматически попадают в локальный `sync_outbox` (SQLite
 triggers), при ошибке остаются там и повторяются с backoff. Pull использует
 LWW по `updatedAt` и не создаёт обратный outbox.
+
+Сервер: [server/README.md](server/README.md) (PGlite PostgreSQL + pgvector,
+Bearer auth, Docker Compose). Контракт: [docs/sync-protocol.md](docs/sync-protocol.md).
 
 `factory_dashboard` запускает сервер только на `127.0.0.1` (порт 0 — свободный).
 URL содержит одноразовый токен; после открытия токен превращается в
@@ -282,6 +286,7 @@ config/                 примеры конфигурации
 - [release.md](docs/release.md) — сборка, tarball, GitHub Release.
 - [portability.md](docs/portability.md) — установка на второй ПК.
 - [sync-protocol.md](docs/sync-protocol.md) — контракт sync-сервера и outbox.
+- [server/README.md](server/README.md) — запуск sync-сервера.
 
 ## Лицензия
 

@@ -88,12 +88,15 @@
 - [x] Sync client `factory_sync` (status/push/pull), Bearer env-token,
       HTTPS/loopback, LWW pull, cursor.
 - [x] Применение remote без обратного outbox (SQLite guard).
-- [x] Mock-сервер: две независимые SQLite-базы обмениваются памятью.
-- [ ] PostgreSQL + pgvector, REST API, production auth.
-- [ ] Docker Compose, migrations, backup/restore сервера.
-- [ ] Конфликты (CRDT/merge) и журнал синхронизации на сервере.
+- [x] Sync-сервер: PGlite PostgreSQL + pgvector, REST API, Bearer auth.
+- [x] Idempotency, LWW upsert, conflict response, Dockerfile/Compose.
+- [x] End-to-end: два SQLite-runtime через реальный HTTP-сервер.
+- [x] Store/HTTP тесты сервера (5).
+- [ ] Standalone PostgreSQL/Ubuntu + TLS reverse proxy.
+- [ ] Backup/restore планировщик сервера, multi-writer.
+- [ ] CRDT/merge и server-side conflict journal.
 - [ ] Автоматический flush outbox по таймеру.
-- [ ] Второй физический ПК и серверное развёртывание.
+- [ ] Второй физический ПК и production deployment.
 
 ## Phase 5 — Specialists and Tools
 

@@ -1,0 +1,22 @@
+{
+  "name": "@dsh-ai-factory/sync-server",
+  "version": "0.5.0",
+  "private": true,
+  "description": "Optional AI Factory memory sync server (embedded PostgreSQL/PGlite)",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "test": "node --test test/*.test.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.16",
+    "@electric-sql/pglite-pgvector": "0.0.17"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "~5.9.3"
+  }
+}

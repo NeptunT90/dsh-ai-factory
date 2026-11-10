@@ -1,5 +1,10 @@
 packages:
   - plugin
+  - server
+
+minimumReleaseAgeExclude:
+  - '@electric-sql/pglite-pgvector@0.0.17'
+  - '@electric-sql/pglite@0.5.16'
 
 onlyBuiltDependencies:
   - esbuild

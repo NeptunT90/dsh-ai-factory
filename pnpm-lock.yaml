@@ -51,6 +51,22 @@ importers:
         specifier: ^3.2.4
         version: 3.2.7(@types/node@24.19.2)
 
+  server:
+    dependencies:
+      '@electric-sql/pglite':
+        specifier: 0.5.16
+        version: 0.5.16
+      '@electric-sql/pglite-pgvector':
+        specifier: 0.0.17
+        version: 0.0.17(@electric-sql/pglite@0.5.16)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.10.0
+        version: 24.19.2
+      typescript:
+        specifier: ~5.9.3
+        version: 5.9.3
+
 packages:
 
   '@deepseek-ai/cordis@4.1.0':
@@ -251,6 +267,14 @@ packages:
 
   '@deepseek-ai/schemastery@3.19.0':
     resolution: {integrity: sha512-bDXoYQa7ghAhmdYD5VPlzKxEzJV/aKkz5l4V5h1u06z8GAPN1ROewSjvR9WiXhpa52E9fng8lpH5QdCRIQgnyQ==}
+
+  '@electric-sql/pglite-pgvector@0.0.17':
+    resolution: {integrity: sha512-tOFBigmwl+6qqZ5y2wOUeDngKeO22lLslSQjmaZri5WAh7V3bDUQaxxlT9MJLSPmdwPjR0NRHqk2V5yFtgLUYQ==}
+    peerDependencies:
+      '@electric-sql/pglite': 0.5.16
+
+  '@electric-sql/pglite@0.5.16':
+    resolution: {integrity: sha512-Nj8KcIsJL748W408U2N8q4+9IlONdpRIU8MJypIAAINMJ5nqKyqpX7Mgg/5XKkXiAib3AoZGR6hnJFlrlLBrcg==}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -1019,6 +1043,12 @@ snapshots:
     dependencies:
       '@deepseek-ai/cosmokit': 1.9.0
       '@standard-schema/spec': 1.1.0
+
+  '@electric-sql/pglite-pgvector@0.0.17(@electric-sql/pglite@0.5.16)':
+    dependencies:
+      '@electric-sql/pglite': 0.5.16
+
+  '@electric-sql/pglite@0.5.16': {}
 
   '@esbuild/aix-ppc64@0.28.2':
     optional: true

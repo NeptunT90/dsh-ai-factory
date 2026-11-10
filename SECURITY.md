@@ -84,10 +84,15 @@ Phase 1 использует только:
   использовать TLS. Outbox лежит в локальной SQLite.
 - Pull применяет данные с LWW; удалённый сервер не должен иметь возможность
   внедрять системные инструкции — payload остаётся данными.
-- Production PostgreSQL/pgvector-сервер пока не развёрнут; transport-контракт
-  протестирован mock-сервером.
+- Sync-сервер (`server/`) использует PGlite PostgreSQL + pgvector, Bearer
+  token, idempotency и не логирует payload памяти.
+- Сервер по умолчанию слушает `127.0.0.1`; для внешнего доступа обязателен
+  HTTPS reverse proxy. Docker Compose публикует порт только на loopback.
+- `SYNC_TOKEN` сервера и `DSH_AI_FACTORY_SYNC_TOKEN` клиента не хранятся в
+  репозитории.
 - Отдельного автоматического sync-таймера нет: отправка запускается
   `factory_sync`; ошибки повторяются с backoff.
+- Standalone PostgreSQL/Ubuntu и TLS-терминация ещё не развёрнуты.
 
 ## Сообщение об уязвимости
 

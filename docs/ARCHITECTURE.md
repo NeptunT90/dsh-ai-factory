@@ -269,8 +269,10 @@ SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
 - URL: HTTPS или loopback HTTP; HTTP на внешний host отклоняется;
 - сетевой сбой не удаляет операцию; локальный режим работает без сервера.
 
-Production PostgreSQL/pgvector-сервер ещё не реализован; контракт и mock-
-сервер описаны в `docs/sync-protocol.md`.
+Сервер `server/` использует PGlite (PostgreSQL/WASM) с pgvector, Bearer auth,
+идемпотентную `sync_operations`, LWW upsert и conflict-ответы. Есть
+Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
+следующий шаг; контракт в `docs/sync-protocol.md`.
 
 ### 7.7. Реализовано / ещё нет
 
@@ -282,8 +284,9 @@ Production PostgreSQL/pgvector-сервер ещё не реализован; к
 | DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
 | Реальный дочерний агент через `ctx.subagents` (`factory_dispatch`) | реализовано |
 | Read-only dashboard на 127.0.0.1 | реализовано |
-| Sync client + SQLite outbox + LWW pull | реализовано и проверено mock-сервером |
-| PostgreSQL/pgvector sync server | Phase 4b, ожидает сервер |
+| Sync client + SQLite outbox + LWW pull | реализовано |
+| Sync server: PGlite PostgreSQL + pgvector + HTTP/auth | реализовано и проверено e2e |
+| Standalone PostgreSQL/Ubuntu deployment + TLS proxy | Phase 4b |
 | Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |
@@ -323,9 +326,10 @@ Production PostgreSQL/pgvector-сервер ещё не реализован; к
   явно, полный DIRECTOR/REVIEWER-цикл — Phase 3b+.
 - Dashboard v1 read-only; мутации из UI и остальные разделы — позже.
 - Dashboard работает, пока жив host-процесс DSH; фонового демона нет.
-- Sync server отсутствует: клиент/outbox проверены mock-сервером, но реальная
-  PostgreSQL/pgvector-синхронизация и второй ПК не развёрнуты.
+- Sync server работает на embedded PGlite (single writer); standalone
+  PostgreSQL/Ubuntu, TLS proxy и второй ПК не развёрнуты.
 - Нет автоматического flush outbox по таймеру; push вызывается инструментом.
+- Нет server-side conflict journal/CRDT merge; конфликт возвращается клиенту.
 - Нет embeddings/векторного поиска.
 - Нет UI; взаимодействие через инструменты и SQLite/CLI-диагностику.
 - Нет автоматического brief в промпт; это Phase 2b.

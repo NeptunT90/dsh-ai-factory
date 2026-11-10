@@ -78,7 +78,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update.ps1 `
 3. установить предыдущий tarball или `link:`-версию;
 4. запустить `doctor.ps1`.
 
-## 6. GitHub Actions
+## 6. Sync server
+
+Сервер собирается отдельно (не входит в plugin tarball):
+
+```powershell
+pnpm server:typecheck
+pnpm server:test
+pnpm server:build
+```
+
+Docker-образ и Compose — [server/README.md](../server/README.md). Перед
+публикацией сервера задайте `SYNC_TOKEN`, TLS reverse proxy и volume для
+данных. PGlite — embedded PostgreSQL; standalone PostgreSQL/Ubuntu — следующий
+шаг.
+
+## 7. GitHub Actions
 
 `.github/workflows/release.yml` запускается на тег `v*`:
 
@@ -90,7 +105,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update.ps1 `
 Workflow не публикует секреты и не требует npm-токена. Публикация в npm не
 настроена намеренно: основной канал — GitHub Release/tarball.
 
-## 7. Ограничения
+## 8. Ограничения
 
 - GitHub Release не создан, пока не настроен remote и нет тега.
 - Установка проверена на этом же ПК в отдельном профиле, не на физически
