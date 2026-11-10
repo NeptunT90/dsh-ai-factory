@@ -9,6 +9,10 @@
 
 Оба режима используют один `SyncStore`-контракт и один HTTP API.
 
+Standalone PostgreSQL поддерживает несколько writer-процессов: `sync_operations`
+резервируется через `ON CONFLICT` до применения payload, поэтому один `opId`
+не применяется дважды. Embedded PGlite остаётся single-writer.
+
 ## Запуск без Docker
 
 Embedded PGlite:
@@ -144,7 +148,8 @@ env. Планировщик стартует только при непусто�
 
 - Standalone PostgreSQL adapter (`pg`) проверен через PostgreSQL wire protocol
   (PGlite socket); реальный Docker/Ubuntu Compose в этом окружении не запускался.
-- PGlite — embedded single-process; multi-writer требует внешнего PostgreSQL.
+- PGlite — embedded single-process; standalone PostgreSQL поддерживает
+  multi-writer idempotency (проверено двумя PgStore), но HA/leader election нет.
 - Direct TLS реализован (cert/key env), но требует управления сертификатами;
   для production можно использовать reverse proxy.
 - Backup-планировщик только для PGlite; PostgreSQL backup — через `pg_dump`.

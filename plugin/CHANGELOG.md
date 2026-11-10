@@ -1,1 +1,4 @@
-utf8
+# Changelog
+
+История версий ведётся в корневом `CHANGELOG.md` репозитория
+`dsh-ai-factory`. Installable package version: 0.16.0.

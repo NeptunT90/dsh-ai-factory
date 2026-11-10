@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.17.0] — 2026-11-10
+
+### Fixed
+
+- PgStore reserves `sync_operations.op_id` with ON CONFLICT before applying;
+  concurrent duplicate writers now accept the same operation exactly once.
+- 10th server test: two PgStore instances over one PostgreSQL, same op → one
+  memory row/one operation, both accepted.
+- Plugin unchanged (0.16.0, 56 tests, 36 tools).
+
 ## [0.16.0] — 2026-11-10
 
 ### Added

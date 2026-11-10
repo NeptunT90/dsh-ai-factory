@@ -27,8 +27,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.16.0.tgz` — 147 777 байт,
-SHA256 `4e16a85e57b0ca6eb356b861ca55b1608ea0c147674aeaff5cd6f76293fcb035`.
+Артефакт: `dist/dsh-ai-factory-0.16.0.tgz` — 149 117 байт,
+SHA256 `f2c4b1c760a404634581305e3fc8525d99d98a9a3fc1d8b3e594331931eca4eb`.
 
 ## 3. Установка из tarball
 
@@ -103,7 +103,7 @@ Restore (server остановлен, пустой target):
 node server\scripts\restore.mjs .\sync-backup.tar.gz C:\sync-restore\data
 ```
 
-Сервер версии **0.11.0**: dump→restore проверен, pgvector сохраняется,
+Сервер версии **0.17.0**: PostgreSQL multi-writer, dump→restore проверен, pgvector сохраняется,
 непустой target отклоняется. PGlite — embedded PostgreSQL; standalone
 PostgreSQL/Ubuntu — следующий шаг.
 

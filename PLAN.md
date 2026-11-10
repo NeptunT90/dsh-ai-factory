@@ -96,7 +96,7 @@
 - [ ] Фактический Ubuntu/Docker deploy + reverse proxy.
 - [x] Backup/restore сервера: dump, CLI restore, empty-target guard.
 - [x] Backup-планировщик (interval/keep, SHA256, rotation).
-- [ ] Multi-writer.
+- [x] Multi-writer для standalone PostgreSQL (idempotent opId reservation).
 - [ ] CRDT/merge и server-side conflict journal.
 - [ ] Автоматический flush outbox по таймеру.
 - [ ] Второй физический ПК и production deployment.

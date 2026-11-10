@@ -113,7 +113,9 @@ host-возможность, которая обходит этот реестр
   `DATABASE_URL` (pgvector), Bearer token, idempotency и не логирует payload.
   Пароль PostgreSQL задаётся только через env/секреты, не в репозитории.
 - Standalone adapter проверен через PostgreSQL wire protocol; реальный
-  Ubuntu/Docker deploy и TLS termination ещё не выполнены.
+  Ubuntu/Docker deploy ещё не выполнен.
+- Multi-writer: два PostgreSQL-процесса принимают один `opId` ровно один раз
+  (reservation через `ON CONFLICT`); PGlite остаётся single-writer.
 - Сервер по умолчанию слушает `127.0.0.1`; для внешнего доступа используйте
   HTTPS reverse proxy или direct TLS (`SYNC_TLS_CERT_FILE`/`KEY_FILE`).
   Docker Compose публикует порт только на loopback.

@@ -30,21 +30,22 @@ contract (36 инструментов).
 ### Sync server
 
 ```
-tests 9
-pass 9
+tests 10
+pass 10
 fail 0
 ```
 
 Покрыто: pgvector health, idempotent push, pull/cursor, LWW и conflict,
 invalid payload, HTTP Bearer auth, backup endpoint (gzip), dump→restore,
-scheduled backup rotation, PgStore over PostgreSQL wire protocol, direct HTTPS/TLS, health.
+scheduled backup rotation, PgStore over PostgreSQL wire protocol, direct HTTPS/TLS, multi-writer idempotency, health.
 
 Restore CLI проверен на реальном backup:
 `memories:1`, `operations:2`, `vector:true`; непустой target отклоняется.
 
 Standalone PostgreSQL adapter проверен через PGlite socket (pg wire):
-push/pull/idempotency/health, `vector:true`. Direct HTTPS проверен с self-signed
-cert (openssl). Docker Compose не запускался — Docker нет.
+push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
+принимают один opId ровно один раз. Direct HTTPS проверен с self-signed cert
+(openssl). Docker Compose не запускался — Docker нет.
 
 ## 3. Живой DSH
 
@@ -160,8 +161,8 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.16.0.tgz`: **147 777 байт**.
-- SHA256: `4e16a85e57b0ca6eb356b861ca55b1608ea0c147674aeaff5cd6f76293fcb035`.
+- `dist/dsh-ai-factory-0.16.0.tgz`: **149 117 байт**.
+- SHA256: `f2c4b1c760a404634581305e3fc8525d99d98a9a3fc1d8b3e594331931eca4eb`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
 - `portable-test` обновлён с 0.15.0 на 0.16.0; schema 4, 36 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).

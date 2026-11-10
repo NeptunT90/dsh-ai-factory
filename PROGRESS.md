@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### PostgreSQL multi-writer v0.17.0
+
+- opId reservation with ON CONFLICT before apply.
+- Two writers accept same op once; 10 server tests.
+
 ### Auto workflow tool v0.16.0
 
 - `factory_auto_workflow` status/run/start/stop; live run-once PASSED.

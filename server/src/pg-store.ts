@@ -155,11 +155,18 @@ export class PgStore implements SyncStore {
       const client = await this.pool.connect()
       try {
         await client.query('BEGIN')
-        const existing = await client.query<{ op_id: string }>(
-          'SELECT op_id FROM sync_operations WHERE op_id = $1',
-          [op.opId],
+        // Reserve the idempotency key first. A concurrent duplicate waits on
+        // the primary-key conflict and then sees zero rows, so it is accepted
+        // without applying the payload twice.
+        const reserved = await client.query<{ op_id: string }>(
+          `INSERT INTO sync_operations
+            (op_id, device_id, entity_id, operation, payload, applied, server_seq)
+           VALUES ($1, $2, $3, $4, $5::jsonb, FALSE, NULL)
+           ON CONFLICT (op_id) DO NOTHING
+           RETURNING op_id`,
+          [op.opId, deviceId, op.entityId, op.operation, JSON.stringify(op.payload)],
         )
-        if (existing.rows.length > 0) {
+        if (reserved.rows.length === 0) {
           await client.query('COMMIT')
           accepted.push(op.opId)
           continue
@@ -243,12 +250,12 @@ export class PgStore implements SyncStore {
           ],
         )
         const seq = applied.rows[0]?.server_seq ?? null
-        await client.query(
-          `INSERT INTO sync_operations
-            (op_id, device_id, entity_id, operation, payload, applied, server_seq)
-           VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)`,
-          [op.opId, deviceId, op.entityId, op.operation, JSON.stringify(op.payload), seq !== null, seq],
-        )
+        if (seq !== null) {
+          await client.query(
+            'UPDATE sync_operations SET applied = TRUE, server_seq = $2 WHERE op_id = $1',
+            [op.opId, seq],
+          )
+        }
         await client.query('COMMIT')
         accepted.push(op.opId)
       } catch (error) {
