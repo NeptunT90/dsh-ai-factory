@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Server clean-room install
+
+- Extracted tarball, npm install --omit=dev (16 packages).
+- Started server, /health, push/pull, memories/operations=1.
+
 ### Server release artifact
 
 - package-server.ps1; server tarball 17189 bytes, SHA256.

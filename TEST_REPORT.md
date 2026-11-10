@@ -166,6 +166,15 @@ Read-only auth/405 проверены автотестами.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
+
+### Clean-room server install
+
+- Архив распакован в пустой каталог, `npm install --omit=dev`: 16 packages.
+- Сервер запущен на 127.0.0.1:8799 с PGlite.
+- `/health`: `vector:true`.
+- `POST /v1/sync/push` → accepted; `GET /v1/sync/pull` → change;
+  `memories:1`, `operations:1`.
+- Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
 - `portable-test` обновлён с 0.15.0 на 0.16.0; schema 4, 36 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).

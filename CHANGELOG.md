@@ -10,6 +10,7 @@
   memory row/one operation, both accepted.
 - Server release tarball `dsh-ai-factory-sync-server-0.17.0.tgz` with dist,
   restore CLI, Dockerfile/Compose and env example.
+- Clean-room install: npm install --omit=dev (16 packages), health, push/pull.
 - Plugin unchanged (0.16.0, 56 tests, 36 tools).
 
 ## [0.16.0] — 2026-11-10
