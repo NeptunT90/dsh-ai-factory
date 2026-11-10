@@ -10,6 +10,7 @@ export type FactoryErrorCode =
   | 'FORBIDDEN'
   | 'STORAGE_UNAVAILABLE'
   | 'SQLITE_UNAVAILABLE'
+  | 'UNAVAILABLE'
   | 'INTERNAL'
 
 /** Error carrying a stable machine-readable code and optional safe details. */

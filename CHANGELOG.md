@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.3.0] — 2026-11-10
+
+### Added
+
+- `factory_dispatch`: реальный запуск дочернего агента через официальный
+  `ctx.subagents.startActivation` (провайдер `spawn`).
+- Дочерняя сессия получает cwd проекта, роль/системную инструкцию профиля,
+  модель профиля (если задана) и справочный контекст памяти.
+- Dispatch синхронно ждёт `activation.result`, продлевает lease, завершает
+  связанную задачу результатом или переводит её в retry/FAILED.
+- 3 теста dispatch с fake `SubagentRuntime` (всего 32).
+- Зависимость `@deepseek-ai/dsh-subagent` как optional peer и dev dependency.
+
+### Fixed
+
+- Allowlist инструментов профиля пока не enforced — это явно указано в
+  документации, не имитируется.
+- Задача не захватывается, если сервис `ctx.subagents` недоступен.
+
+### Known limitations
+
+- Нет Model Router/fallback и scoped tool restrictions.
+- Нет автоматического DIRECTOR/REVIEWER-цикла.
+- Живой dispatch с моделью требует chat-запроса в Web GUI.
+
 ## [0.2.0] — 2026-11-10
 
 ### Added
@@ -15,21 +40,13 @@
 - Planner: проверка DAG/циклов, топологическая декомпозиция, назначение ролей.
 - Инструменты `factory_plan_create`, `factory_director_brief`,
   `factory_tools_list` и 18 инструментов агентов/задач.
-- Durable-восстановление задач при старте плагина.
 - 13 новых автотестов (всего 29).
 
 ### Fixed
 
 - BOM в `package.json`, из-за которого HMR не загружал bundle.
-- Ручной retry теперь расширяет бюджет попыток, иначе задача оставалась
-  неисполняемой после FAILED.
-- План задачи хранится как произвольный JSON, а не только массив.
-
-### Known limitations
-
-- Профили агентов — конфигурация, а не запущенные LLM-процессы.
-- Нет `ctx.agents`-диспетчеризации, Model Router, workflow и автопроверки.
-- `node:sqlite` в Node 24 experimental (проверен в DSH).
+- Ручной retry расширяет бюджет попыток.
+- План задачи хранится как произвольный JSON.
 
 ## [0.1.0] — 2026-11-10
 

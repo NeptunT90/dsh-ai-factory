@@ -1,26 +1,28 @@
 # Текущий блок
 
-**Phase 2/3 core — Agent Registry, Task Engine, Planner, DIRECTOR brief.**
+**Phase 2b — реальный запуск дочернего агента через `ctx.subagents`.**
 
 Сделано:
 
-1. Миграция v2 применена на живой БД без потери данных.
-2. 7 встроенных профилей специалистов и CRUD-реестр.
-3. Task Engine с зависимостями, lease, heartbeat, retry/backoff, recovery,
-   историей событий и продвижением зависимых задач.
-4. Planner DAG и `factory_plan_create`.
-5. `factory_director_brief` и `factory_tools_list`.
-6. 29 инструментов зарегистрированы; 29 тестов проходят.
-7. HMR перезагрузил плагин в `desktop`: v0.2.0, schema 2, 7 агентов,
-   29 инструментов; схемы доставлены в Web GUI-сессию.
+1. `factory_dispatch`: старт дочернего агента через официальный
+   `ctx.subagents.startActivation` (провайдер `spawn`), ожидание результата.
+2. Ребёнок получает отдельную сессию, проектный cwd, инструкцию/модель профиля
+   и справочный контекст памяти.
+3. Связка с Task Engine: READY → RUNNING → COMPLETED или retry/FAILED;
+   heartbeat lease во время работы; запись результата в задачу.
+4. 32 автотеста; dispatch-сценарии проверены с fake SubagentRuntime.
+5. Плагин v0.3.0 загружен в живой DSH: schema 2, 7 агентов, 30 инструментов;
+   схема `factory_dispatch` доставлена в Web GUI.
 
 Осталось:
 
-1. Финальный smoke: вызвать `factory_status`/`factory_plan_create` из модели.
-2. Проверить сохранение задач после перезапуска DSH.
-3. Phase 2b: фактический запуск дочерних агентов через `ctx.agents`,
-   ограничение инструментов, Model Router.
-4. Phase 3b: workflow-ветвления и автоматический execution loop.
+1. Проверить реальный dispatch с моделью в Web GUI (нужен чат-запрос).
+2. Принудительно ограничить host-tools ребёнка по allowlist профиля.
+3. Model Router: fallback, стоимость, ограничения контекста.
+4. Автоматический DIRECTOR-цикл: claim → dispatch → review → fix.
+5. Phase 3b: workflow-ветвления и автоматический execution loop.
+6. Dashboard, server sync, GitHub — следующие фазы.
 
-Критерий выхода Phase 2/3 core: схема v2, реестр и очередь работают в DSH —
-достигнут; критерий полной Phase 2/3 (автозапуск агентов и workflow) — нет.
+Критерий выхода Phase 2b: реальный ребёнок запускается и его результат
+попадает в Task Engine — достигнут на уровне кода и fake-service теста; живой
+вызов с моделью ещё нужно подтвердить.

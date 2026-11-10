@@ -14,10 +14,11 @@
 
 ## Следующая очередь
 
-- Phase 2b: `ctx.agents.create` / subagent-диспетчеризация.
-- Ограничение инструментов агента через scoped registration/restrict.
-- Model Router и выбор модели по роли.
-- Phase 3b: workflow-ветвления, автоматический executor, REVIEWER-цикл.
+- Живой smoke: `factory_plan_create` → `factory_dispatch` с моделью.
+- Ограничение инструментов дочернего агента через scoped registration/restrict.
+- Model Router: fallback, выбор по роли, стоимость/контекст.
+- Автоматический DIRECTOR-цикл: claim → dispatch → REVIEWER → fix.
+- Phase 3b: workflow-ветвления, автоматический executor.
 - Инъекция brief/памяти в начало сессии через официальный `agent.inject`.
 - Dashboard, server sync, GitHub — после стабилизации ядра.
 

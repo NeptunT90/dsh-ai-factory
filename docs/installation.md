@@ -30,6 +30,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 - `driver: node:sqlite`
 - `schemaVersion: 2`
 - `agents: 7`
+
+Для `factory_dispatch` в профиле должны быть активны `dsh-subagent` и
+`dsh-subagent-spawn-in-process`. Если сервиса нет, инструмент возвращает
+понятную ошибку `UNAVAILABLE` и не захватывает задачу.
 - `dbPath` указывает на `%USERPROFILE%\.dsh\ai-factory\factory.db`
 
 Затем:

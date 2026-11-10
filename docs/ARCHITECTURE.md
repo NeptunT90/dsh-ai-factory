@@ -157,6 +157,7 @@ apply(ctx, config)
   │    └─ recoverStale() для задач с истёкшим lease
   ├─ registerStatusTool (всегда)
   ├─ registerMemoryTools / AgentTools / TaskTools / OrchestrationTools
+  ├─ registerDispatchTool (ctx.subagents, optional)
   └─ ctx.effect(() => dispose tools → close DB)
 ```
 
@@ -211,7 +212,26 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 и детерминированные next actions. Решение и вызовы инструментов остаются за
 главной моделью.
 
-### 7.4. Реализовано / ещё нет
+### 7.4. Dispatch дочернего агента
+
+`factory_dispatch` — синхронный исполнитель:
+
+1. Проверяет профиль, `ctx.subagents` и родительского Agent.
+2. Захватывает READY-задачу (`claim`, lease 30 минут по умолчанию).
+3. Собирает prompt: роль и инструкция профиля, задача/цель/план, последние
+   записи памяти (как недоверенный справочный контекст).
+4. Вызывает официальный `ctx.subagents.startActivation({provider:'spawn',
+   delivery:'caller'})`; ребёнок получает собственную сессию, cwd проекта и
+   `agentOptions` модели профиля (если provider+model заданы).
+5. Ждёт `activation.result`, продлевая lease; `stopReason:'completed'` →
+   задача COMPLETED с output; иначе fail с retry/backoff.
+6. Освобождает активацию и таймеры в `finally`.
+
+Инструменты профиля пока **не enforced**: spawn наследует composition
+родителя; allowlist — Phase 2c. Dispatch синхронный; автоматический цикл
+DIRECTOR/REVIEWER — следующие фазы.
+
+### 7.5. Реализовано / ещё нет
 
 | Подсистема | Статус |
 |---|---|
@@ -219,7 +239,8 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 | Task Engine: зависимости, lease, retry, recovery, events | реализовано и проверено |
 | Planner DAG + `factory_plan_create` | реализовано и проверено |
 | DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
-| Фактический запуск дочерних LLM-агентов через `ctx.agents` | Phase 2b |
+| Реальный дочерний агент через `ctx.subagents` (`factory_dispatch`) | реализовано |
+| Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, dashboard, server sync, GitHub | Phase 4/5/7 |
 
@@ -252,10 +273,10 @@ EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существу�
 
 - Один процесс-писатель; межпроцессная синхронизация не реализована.
 - Нет фонового scheduler; TTL и recovery запускаются при старте и явно.
-- Профили агентов не запускают модель и не ограничивают host-tools
-  принудительно; это Phase 2b.
-- Task Engine не запускает исполнителей автоматически — задачи берутся через
-  `claim`; автоматическая диспетчеризация появится вместе с агентами.
+- `factory_dispatch` реально запускает ребёнка, но host-tools не ограничены
+  allowlist-ом профиля; это Phase 2c.
+- Task Engine не запускает исполнителей автоматически; dispatch вызывается
+  явно, полный DIRECTOR/REVIEWER-цикл — Phase 3b+.
 - Нет embeddings/векторного поиска.
 - Нет UI; взаимодействие через инструменты и SQLite/CLI-диагностику.
 - Нет автоматического brief в промпт; это Phase 2b.

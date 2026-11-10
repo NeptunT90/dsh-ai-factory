@@ -128,15 +128,30 @@ const dispose = ctx.tools.register(defineTool({ ... }))
 
 `ctx.agents` — реестр живых агентов (`AgentRegistry`), `Agent` имеет
 `id`, `session`, `model`, `inbox`, `ctx`, `send`, `inject`, `followup`,
-`whenIdle`, `cancel`. Создание агента — через `ctx.agents.create()`, которое
-делегируется фабрике `@deepseek-ai/dsh-agent-loop`; для него обязательны
-`sessionId`, `meta.cwd` и т.п. Это мощный, но тяжёлый путь; AI Factory будет
-использовать его только после отдельного исследования жизненного цикла
-(Phase 2), а не имитировать «агентов» промптами.
+`whenIdle`, `cancel`. Прямое создание агента — через `ctx.agents.create()`,
+которое делегируется фабрике `@deepseek-ai/dsh-agent-loop`; для него обязательны
+`sessionId`, `meta.cwd` и т.п.
 
-`@deepseek-ai/dsh-session` — durable event log. Плагин может слушать
-`agent/created`, `agent/session-start` и другие события. Точный набор событий
-и допустимые источники сообщений будут проверяться в Phase 2.
+Для делегирования в DSH есть специализированный официальный seam
+`ctx.subagents` (`@deepseek-ai/dsh-subagent`):
+
+- провайдер `spawn` (`@deepseek-ai/dsh-subagent-spawn-in-process`) запускает
+  дочернего агента в отдельной сессии;
+- `startActivation({ provider, label, request, signal, delivery })` возвращает
+  `{ childId, result, dispose }`;
+- `request` содержит `prompt: ContentBlock[]`, `parent: Agent`, optional `cwd`,
+  `agentOptions`, `maxDepth`; `delivery: 'caller'` позволяет дождаться
+  результата без parent-notice;
+- `result` содержит `output`, `structured`, `diagnostic`, `stopReason`.
+
+AI Factory использует именно этот seam (`factory_dispatch`), а не имитацию
+агентов промптами. Дочерний агент реально выполняется в процессе DSH; его
+инструменты пока наследуют composition родителя, а не allowlist профиля —
+это ограничение Phase 2c.
+
+`@deepseek-ai/dsh-session` — durable event log; `agent/created` и
+`agent/session-start` доступны плагинам, но dispatch не зависит от ручного
+чтения event log: результат отдаёт `activation.result`.
 
 ## 6. Хранилище
 
@@ -195,8 +210,10 @@ fallback (не имитация).
 1. Точный публичный контракт `agent.inject()` и источник сообщений
    `plugin:<name>` для session format v4 — проверить в Phase 2 по исходникам
    `dsh-session`/`dsh-openwolf`.
-2. Как корректно создавать дочернего агента через `ctx.agents.create()` с
-   моделью и инструментами, не нарушая ownership/`AgentHandle` — Phase 2.
+2. Создание дочернего агента: **решено через `ctx.subagents.startActivation`**
+   (провайдер `spawn`), а не через прямое `ctx.agents.create()`. Открытый
+   вопрос — как принудительно ограничить host-tools ребёнка allowlist-ом
+   профиля (Phase 2c).
 3. Клиентский API dashboard (React-модуль, `dsh.client`) — Phase 7; до этого
    dashboard будет отдельным локальным HTTP-сервисом с токеном.
 4. HMR: **проверено** — новый bundle и обновления плагина применяются без
