@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.10.0] — 2026-11-10
+
+### Added
+
+- Dashboard tabs «Модели» и «Синхронизация»: read-only Model Router и sync status.
+- Capabilities: Dispatch, Model Router, REVIEWER loop, Server sync — ready.
+- Settings показывает model/sync config; agents показывают allowedTools и route.
+- Live screenshot: `docs/assets/dashboard-models-sync-v0.10.0.png`.
+- 54 plugin-теста, 35 инструментов, версия 0.10.0.
+
 ## [0.9.0] — 2026-11-10
 
 ### Added

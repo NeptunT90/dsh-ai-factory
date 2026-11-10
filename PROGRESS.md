@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Dashboard Models/Sync v0.10.0
+
+- Вкладки «Модели» и «Синхронизация»; capabilities ready.
+- Live screenshot `docs/assets/dashboard-models-sync-v0.10.0.png`.
+- 54 теста, 35 инструментов.
+
 ### Model Router v0.9.0
 
 - Route plan: профиль → родитель → `modelFallbacks`, max 3 attempts.

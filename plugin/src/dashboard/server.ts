@@ -27,11 +27,11 @@ const CAPABILITIES: readonly Capability[] = [
   { name: 'Agent Registry', status: 'ready', note: '7 профилей + пользовательские' },
   { name: 'Task Engine', status: 'ready', note: 'зависимости, lease, retry, recovery' },
   { name: 'Planner', status: 'ready', note: 'DAG-декомпозиция' },
-  { name: 'Dispatch', status: 'ready', note: 'ctx.subagents / spawn' },
+  { name: 'Dispatch', status: 'ready', note: 'ctx.agents + scoped allowlist' },
   { name: 'Dashboard', status: 'ready', note: 'локальный read-only сервер' },
-  { name: 'Model Router', status: 'planned', note: 'fallback/стоимость — Phase 2c' },
-  { name: 'REVIEWER loop', status: 'planned', note: 'автопроверка — Phase 6' },
-  { name: 'Server sync', status: 'planned', note: 'PostgreSQL/pgvector — Phase 4' },
+  { name: 'Model Router', status: 'ready', note: 'profile → parent → fallback' },
+  { name: 'REVIEWER loop', status: 'ready', note: 'PASS/FAIL + fix task' },
+  { name: 'Server sync', status: 'ready', note: 'PGlite PostgreSQL + pgvector' },
   { name: 'GitHub', status: 'planned', note: 'API/репозитории — Phase 5' },
 ]
 
@@ -256,7 +256,16 @@ export class DashboardServer {
       accessLevel: agent.accessLevel,
       memoryScope: agent.memoryScope,
       tools: [...agent.tools],
+      allowedTools: [...agent.allowedTools],
       model: agent.model ? `${agent.modelProvider ?? 'default'}/${agent.model}` : 'inherit',
+      route: (() => {
+        const plan = runtime.models.plan(agent)
+        return {
+          primary: plan.primary ? `${plan.primary.provider}/${plan.primary.model}` : 'inherit',
+          fallbacks: plan.fallbacks.map((route) => `${route.provider}/${route.model}`),
+          maxAttempts: plan.maxAttempts,
+        }
+      })(),
       limits: agent.limits,
       version: agent.version,
     }))
@@ -293,6 +302,15 @@ export class DashboardServer {
       memory,
       audit,
       tools: this.getTools().slice(0, 200),
+      models: {
+        enabled: runtime.config.modelRouterEnabled,
+        fallbacks: runtime.config.modelFallbacks
+          .split(',')
+          .map((route) => route.trim())
+          .filter((route) => route !== ''),
+        maxAttempts: runtime.config.modelMaxAttempts,
+      },
+      sync: runtime.sync.status(),
       settings: {
         dataDir: runtime.config.resolvedDataDir,
         dbFile: runtime.config.dbFile,
@@ -303,6 +321,11 @@ export class DashboardServer {
         allowGlobalMemory: runtime.config.allowGlobalMemory,
         redactLogs: runtime.config.redactLogs,
         logLevel: runtime.config.logLevel,
+        modelRouterEnabled: runtime.config.modelRouterEnabled,
+        modelFallbacks: runtime.config.modelFallbacks,
+        modelMaxAttempts: runtime.config.modelMaxAttempts,
+        syncAuto: runtime.config.syncAuto,
+        syncIntervalSeconds: runtime.config.syncIntervalSeconds,
       },
       capabilities: CAPABILITIES,
     }

@@ -271,10 +271,12 @@ Dispatch синхронный; автоматический цикл DIRECTOR/RE
   `nosniff`, `frame-ancestors 'none'`;
 - без внешних CDN/шрифтов, без мутаций.
 
-Данные `/api/state`: overview, agents, tasks, memory, audit, tools, settings,
-capabilities. UI на русском, адаптивный, обновление раз в 10 секунд.
-Неподдерживаемые разделы (Workflows/KB/Models/Scheduler/Security/Server/
-GitHub) показаны как `plan`, а не имитируются.
+Данные `/api/state`: overview, agents, tasks, memory, audit, models, sync,
+tools, settings, capabilities. UI на русском, адаптивный, обновление раз в
+10 секунд. Вкладки **Модели** (router/fallback/allowlist по профилям) и
+**Синхронизация** (configured/auto/pending/failed/cursor) — read-only.
+Неподдерживаемые разделы (Workflows/KB/Scheduler/Security/GitHub) показаны как
+`plan`, а не имитируются.
 
 ### 7.5a. Reviewer
 
@@ -342,7 +344,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Scoped tool restrictions по allowlist профиля | реализовано (Phase 2c) |
 | Model Router + fallback + `factory_model_route` | реализовано |
 | Workflow-ветвления, фоновый автономный цикл | Phase 3b/6 |
-| Scheduler, server sync, GitHub | Phase 4/5/7 |
+| Dashboard Models/Sync tabs | реализовано |
+| Scheduler, GitHub, standalone PostgreSQL/TLS | Phase 4/5/7 |
 
 | Будущая подсистема | Точка интеграции |
 |---|---|
@@ -377,7 +380,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
   `ctx.tools`. Host-возможности вне этого реестра требуют отдельного аудита.
 - Task Engine не запускает исполнителей автоматически; dispatch вызывается
   явно. Bounded workflow доступен, фонового autonomous loop нет.
-- Dashboard v1 read-only; мутации из UI и остальные разделы — позже.
+- Dashboard read-only; мутации из UI и Workflows/KB/Scheduler/Security/GitHub —
+  позже.
 - Dashboard работает, пока жив host-процесс DSH; фонового демона нет.
 - Sync server работает на embedded PGlite (single writer); standalone
   PostgreSQL/Ubuntu, TLS proxy и второй ПК не развёрнуты.

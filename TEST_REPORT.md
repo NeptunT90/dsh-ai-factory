@@ -40,7 +40,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.9.0**.
+- HMR загрузил AI Factory **v0.10.0**.
 - `factory.started`: schema **4**, agents 7, tools **35**.
 - SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
@@ -52,7 +52,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.9.0, schema 4, 7 агентов, 35 инструментов.
+- `factory_status` → 0.10.0, schema 4, 7 агентов, 35 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -122,6 +122,11 @@ GET /health
 
 ## 5. Dashboard
 
+Live v0.10.0: открыты вкладки **Модели** и **Синхронизация**.
+Модели: router ON, attempts 2, все профили inherit; allowlist 16–32 tools.
+Sync: configured=false, pending=1, failed=0, auto=OFF, token=no.
+Скриншот: [docs/assets/dashboard-models-sync-v0.10.0.png](docs/assets/dashboard-models-sync-v0.10.0.png).
+
 Live v0.7.0: `factory_dashboard start`, открыт URL с одноразовым токеном,
 редирект на HttpOnly-cookie. Панель показала 2 задачи, 1 память и audit
 `review.*`; screenshot:
@@ -130,10 +135,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.9.0.tgz`: **141 811 байт**.
-- SHA256: `407ef723cafaa15da0b7d5ad9984606aebf99a58bbc2e695c261c65737dfd7d9`.
+- `dist/dsh-ai-factory-0.10.0.tgz`: **143 540 байт**.
+- SHA256: `4ca5f8d8a7d7d443ca6757796ace39425c5b45a32a846917cd1b253f4ff1cc85`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.8.0 на 0.9.0; schema 4, 35 инструментов.
+- `portable-test` обновлён с 0.9.0 на 0.10.0; schema 4, 35 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -148,7 +153,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл и standalone PostgreSQL/TLS не реализованы; Model Router закрыт.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.9.0 не выполнен.
+- Полный restart DSH после 0.10.0 не выполнен.
 
 ## 8. Повтор
 

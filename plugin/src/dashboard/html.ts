@@ -183,6 +183,8 @@ tr:last-child td { border-bottom: 0; }
       <button data-tab="tasks">Задачи <span class="nav-count" id="nav-task-count"></span></button>
       <button data-tab="memory">Память <span class="nav-count" id="nav-memory"></span></button>
       <button data-tab="audit">Журнал</button>
+      <button data-tab="models">Модели</button>
+      <button data-tab="sync">Синхронизация</button>
       <button data-tab="tools">Инструменты</button>
       <button data-tab="settings">Настройки</button>
     </nav>
@@ -203,7 +205,7 @@ tr:last-child td { border-bottom: 0; }
 (function () {
   'use strict';
   var state = { data: null, tab: 'overview', error: '' };
-  var titles = { overview: 'Обзор', agents: 'Агенты', tasks: 'Задачи', memory: 'Память', audit: 'Журнал', tools: 'Инструменты', settings: 'Настройки' };
+  var titles = { overview: 'Обзор', agents: 'Агенты', tasks: 'Задачи', memory: 'Память', audit: 'Журнал', models: 'Модели', sync: 'Синхронизация', tools: 'Инструменты', settings: 'Настройки' };
   function byId(id) { return document.getElementById(id); }
   function esc(value) {
     return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (ch) {
@@ -297,6 +299,36 @@ tr:last-child td { border-bottom: 0; }
     }).join('');
     return '<div class="section-head"><h2>Audit log</h2><p>метаданные, без содержимого памяти</p></div><div class="panel">' + (rows || empty('Журнал пуст.')) + '</div>';
   }
+  function renderModels(d) {
+    var m = d.models || {};
+    var agents = (d.agents || []).map(function (agent) {
+      var route = agent.route || {};
+      return '<div class="agent"><div class="agent-head"><div><h3>' + esc(agent.name) + '</h3><div class="role">' + esc(agent.role) + '</div></div><span class="chip ' + (agent.enabled ? 'ready' : 'off') + '">' + (agent.enabled ? 'вкл' : 'выкл') + '</span></div>' +
+        '<div class="facts"><div class="fact"><span>primary</span><code>' + esc(route.primary || agent.model || 'inherit') + '</code></div>' +
+        '<div class="fact"><span>fallbacks</span><code>' + esc((route.fallbacks || []).join(', ') || '—') + '</code></div>' +
+        '<div class="fact"><span>allowlist</span><code>' + esc((agent.allowedTools || []).length) + ' tools</code></div></div></div>';
+    }).join('');
+    return '<div class="section-head"><h2>Model Router</h2><p>' + (m.enabled ? 'включён' : 'выключен') + ' · max attempts ' + esc(m.maxAttempts) + '</p></div>' +
+      '<div class="grid kpis">' + kpi('Router', m.enabled ? 'ON' : 'OFF', 'profile → parent') + kpi('Fallbacks', (m.fallbacks || []).length, (m.fallbacks || []).join(', ') || 'не заданы') + kpi('Attempts', m.maxAttempts, 'на один child') + '</div>' +
+      (agents ? '<div class="cards">' + agents + '</div>' : empty('Профили не найдены.'));
+  }
+  function renderSync(d) {
+    var s = d.sync || {};
+    var facts = [
+      ['URL', s.configured ? s.url : 'не настроен'],
+      ['auto', s.auto ? 'включён' : 'выключен'],
+      ['running', s.running ? 'да' : 'нет'],
+      ['token', s.tokenPresent ? 'есть' : 'нет'],
+      ['cursor', s.cursor || '—'],
+      ['last sync', s.lastSyncAt ? fmtTime(s.lastSyncAt) : '—'],
+      ['last error', s.lastSyncError || s.lastError || '—'],
+    ].map(function (pair) {
+      return '<div class="fact"><span>' + esc(pair[0]) + '</span><code>' + esc(pair[1]) + '</code></div>';
+    }).join('');
+    return '<div class="section-head"><h2>Синхронизация памяти</h2><p>outbox → HTTP → PostgreSQL/pgvector</p></div>' +
+      '<div class="grid kpis">' + kpi('Настроен', s.configured ? 'да' : 'нет', s.url || 'локальный режим') + kpi('Pending', s.pending || 0, 'операций в outbox') + kpi('Failed', s.failed || 0, 'ждут retry') + kpi('Auto', s.auto ? 'ON' : 'OFF', 'таймер плагина') + '</div>' +
+      '<div class="panel"><h3>Состояние</h3><div class="facts">' + facts + '</div></div>';
+  }
   function renderTools(d) {
     var rows = (d.tools || []).map(function (tool) {
       return '<tr><td><strong class="mono">' + esc(tool.name) + '</strong></td><td>' + esc(tool.description) + '</td></tr>';
@@ -339,6 +371,8 @@ tr:last-child td { border-bottom: 0; }
     else if (state.tab === 'tasks') view.innerHTML = renderTasks(d);
     else if (state.tab === 'memory') view.innerHTML = renderMemory(d);
     else if (state.tab === 'audit') view.innerHTML = renderAudit(d);
+    else if (state.tab === 'models') view.innerHTML = renderModels(d);
+    else if (state.tab === 'sync') view.innerHTML = renderSync(d);
     else if (state.tab === 'tools') view.innerHTML = renderTools(d);
     else view.innerHTML = renderSettings(d);
   }

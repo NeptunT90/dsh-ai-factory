@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.9.0 регистрирует **35 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.10.0 регистрирует **35 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -43,8 +43,8 @@
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
   имеет `factory_dispatch`, REVIEWER/RESEARCHER не имеют destructive-tools,
   SYSADMIN ограничен администрированием.
-- **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory,
-  Audit, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
+- **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory, Audit,
+  Models, Sync, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
   внешних ассетов и без мутаций.
 - **Sync client/outbox + server**: локальный outbox и `factory_sync`
   (status/push/pull), HTTPS/loopback, токен из env, backoff; сервер
@@ -175,7 +175,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.9.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и

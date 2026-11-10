@@ -31,13 +31,19 @@ describe('DashboardServer', () => {
       agents: unknown[]
       tasks: unknown[]
       tools: unknown[]
+      models: { enabled: boolean; maxAttempts: number; fallbacks: string[] }
+      sync: { configured: boolean; auto: boolean; pending: number; failed: number }
     }
-    expect(state.overview.version).toBe('0.9.0')
+    expect(state.overview.version).toBe('0.10.0')
     expect(state.overview.agents).toBe(7)
     expect(state.overview.tasks.total).toBeGreaterThanOrEqual(1)
     expect(state.agents).toHaveLength(7)
     expect(state.tasks.length).toBeGreaterThanOrEqual(1)
     expect(state.tools).toHaveLength(1)
+    expect(state.models.enabled).toBe(true)
+    expect(state.models.maxAttempts).toBe(2)
+    expect(state.sync.configured).toBe(false)
+    expect(state.sync.pending).toBe(0)
 
     const redirect = await fetch(`${base}/?token=${started.token}`, { redirect: 'manual' })
     expect(redirect.status).toBe(302)
@@ -48,6 +54,8 @@ describe('DashboardServer', () => {
     const html = await page.text()
     expect(html).toContain('AI FACTORY')
     expect(html).toContain('/api/state')
+    expect(html).toContain('data-tab="models"')
+    expect(html).toContain('data-tab="sync"')
 
     const post = await fetch(`${base}/api/state`, {
       method: 'POST',

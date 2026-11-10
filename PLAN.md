@@ -144,7 +144,8 @@
 - [x] Русский интерфейс, адаптивность, read-only.
 - [x] Локальный HTTP только на 127.0.0.1, случайный токен, HttpOnly-cookie,
       CSP/no-store, без внешних ассетов.
-- [ ] Workflows, Knowledge Base, Models, Scheduler, Security, Server, GitHub
+- [x] Models и Sync разделы dashboard (read-only).
+- [ ] Workflows, Knowledge Base, Scheduler, Security, GitHub
       разделы (сейчас честно показаны как `plan`).
 - [ ] Мутации из UI (agent save/task create) с отдельной CSRF/approval
       политикой — не реализованы.
