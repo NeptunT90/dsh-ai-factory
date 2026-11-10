@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Direct TLS v0.14.0
+
+- HTTPS server + cert/key env; 9 server tests; self-signed test.
+- Docker/env TLS; real deploy still pending.
+
 ### Standalone PostgreSQL v0.13.0
 
 - PgStore (`pg`) + DATABASE_URL; Compose pgvector; 8 server tests.

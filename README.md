@@ -49,8 +49,9 @@
 - **Sync client/outbox + server**: локальный outbox и `factory_sync`
   (status/push/pull), HTTPS/loopback, токен из env, backoff; сервер
   `server/` на embedded PGlite или standalone PostgreSQL (`DATABASE_URL`)
-  с pgvector, Bearer auth, idempotency, LWW/conflict и Docker Compose;
-  реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим автономен.
+  с pgvector, Bearer auth, direct TLS, idempotency, LWW/conflict и Docker
+  Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
+  автономен.
 - Аудит действий без записи содержимого памяти.
 - 54 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно

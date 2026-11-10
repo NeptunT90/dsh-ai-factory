@@ -25,6 +25,8 @@ services:
       SYNC_HOST: 0.0.0.0
       SYNC_PORT: 8787
       DATABASE_URL: postgres://factory:${POSTGRES_PASSWORD}@postgres:5432/factory
+      SYNC_TLS_CERT_FILE: ${SYNC_TLS_CERT_FILE:-}
+      SYNC_TLS_KEY_FILE: ${SYNC_TLS_KEY_FILE:-}
     # Bind to loopback on the host; expose through an HTTPS reverse proxy.
     ports:
       - "127.0.0.1:8787:8787"

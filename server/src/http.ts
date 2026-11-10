@@ -1,4 +1,5 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
+import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { createServer as createHttpsServer } from 'node:https'
 import { timingSafeEqual } from 'node:crypto'
 import type { AddressInfo } from 'node:net'
 import type { SyncStore } from './store-types.js'
@@ -25,30 +26,41 @@ async function readBody(req: IncomingMessage): Promise<string> {
 }
 
 /** HTTP API for the optional sync server. */
+export interface TlsOptions {
+  readonly cert: string | Buffer
+  readonly key: string | Buffer
+}
+
+/** HTTP(S) API for the optional sync server. */
 export class SyncHttpServer {
-  private server: Server | undefined
+  private server: import('node:http').Server | import('node:https').Server | undefined
   private port = 0
 
   constructor(
     private readonly store: SyncStore,
     private readonly token: string,
+    private readonly tls?: TlsOptions,
   ) {
     if (token.trim() === '') throw new Error('SYNC_TOKEN must be non-empty')
   }
 
   get url(): string {
-    return this.port === 0 ? '' : `http://127.0.0.1:${this.port}`
+    const scheme = this.tls ? 'https' : 'http'
+    return this.port === 0 ? '' : `${scheme}://127.0.0.1:${this.port}`
   }
 
   async start(port = 8787, host = '127.0.0.1'): Promise<{ port: number; url: string }> {
-    const server = createServer((req, res) => {
+    const handler = (req: IncomingMessage, res: ServerResponse): void => {
       void this.handle(req, res).catch((error: unknown) => {
         if (!res.headersSent) {
           res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' })
         }
         res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'internal error' }))
       })
-    })
+    }
+    const server = this.tls
+      ? createHttpsServer({ cert: this.tls.cert, key: this.tls.key }, handler)
+      : createHttpServer(handler)
     await new Promise<void>((resolve, reject) => {
       server.once('error', reject)
       server.listen(port, host, () => {

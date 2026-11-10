@@ -114,8 +114,9 @@ host-возможность, которая обходит этот реестр
   Пароль PostgreSQL задаётся только через env/секреты, не в репозитории.
 - Standalone adapter проверен через PostgreSQL wire protocol; реальный
   Ubuntu/Docker deploy и TLS termination ещё не выполнены.
-- Сервер по умолчанию слушает `127.0.0.1`; для внешнего доступа обязателен
-  HTTPS reverse proxy. Docker Compose публикует порт только на loopback.
+- Сервер по умолчанию слушает `127.0.0.1`; для внешнего доступа используйте
+  HTTPS reverse proxy или direct TLS (`SYNC_TLS_CERT_FILE`/`KEY_FILE`).
+  Docker Compose публикует порт только на loopback.
 - `SYNC_TOKEN` сервера и `DSH_AI_FACTORY_SYNC_TOKEN` клиента не хранятся в
   репозитории.
 - Auto-sync (`syncAuto`) отправляет outbox по таймеру; ошибки остаются в

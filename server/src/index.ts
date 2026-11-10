@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
 import { PGliteStore } from './store.js'
 import { PgStore } from './pg-store.js'
 import { SyncHttpServer } from './http.js'
@@ -18,11 +19,20 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) {
 }
 
 const databaseUrl = process.env.DATABASE_URL?.trim() ?? ''
+const tlsCertFile = process.env.SYNC_TLS_CERT_FILE?.trim() ?? ''
+const tlsKeyFile = process.env.SYNC_TLS_KEY_FILE?.trim() ?? ''
+if ((tlsCertFile === '') !== (tlsKeyFile === '')) {
+  console.error('SYNC_TLS_CERT_FILE and SYNC_TLS_KEY_FILE must be set together')
+  process.exit(2)
+}
+const tls = tlsCertFile !== ''
+  ? { cert: readFileSync(resolve(tlsCertFile)), key: readFileSync(resolve(tlsKeyFile)) }
+  : undefined
 const store = databaseUrl === ''
   ? await PGliteStore.open(dataDir)
   : await PgStore.open(databaseUrl)
 console.log(databaseUrl === '' ? 'store: embedded PGlite' : 'store: PostgreSQL (DATABASE_URL)')
-const server = new SyncHttpServer(store, token)
+const server = new SyncHttpServer(store, token, tls)
 const backupDir = process.env.SYNC_BACKUP_DIR?.trim() ?? ''
 const backupIntervalHours = Number.parseFloat(process.env.SYNC_BACKUP_INTERVAL_HOURS ?? '24')
 const backupKeep = Number.parseInt(process.env.SYNC_BACKUP_KEEP ?? '7', 10)
@@ -38,7 +48,7 @@ const backup = dumpable
   : undefined
 backup?.start()
 const started = await server.start(port, host)
-console.log(`AI Factory sync server listening on http://${host}:${started.port}`)
+console.log(`AI Factory sync server listening on ${tls ? 'https' : 'http'}://${host}:${started.port}`)
 console.log(`data: ${dataDir}; health: /health; token from env`)
 if (backup?.enabled) console.log(`scheduled backups: ${backupDir} every ${backupIntervalHours}h, keep ${backupKeep}`)
 

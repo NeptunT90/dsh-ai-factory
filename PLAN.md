@@ -92,7 +92,8 @@
 - [x] Idempotency, LWW upsert, conflict response, Dockerfile/Compose.
 - [x] End-to-end: два SQLite-runtime через реальный HTTP-сервер.
 - [x] Store/HTTP тесты сервера (5).
-- [ ] Standalone PostgreSQL/Ubuntu + TLS reverse proxy.
+- [x] Standalone PostgreSQL adapter + direct TLS.
+- [ ] Фактический Ubuntu/Docker deploy + reverse proxy.
 - [x] Backup/restore сервера: dump, CLI restore, empty-target guard.
 - [x] Backup-планировщик (interval/keep, SHA256, rotation).
 - [ ] Multi-writer.

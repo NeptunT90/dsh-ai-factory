@@ -8,6 +8,8 @@ PGlite подходит для одного writer-процесса.
 ## Транспорт и авторизация
 
 - HTTPS; HTTP разрешён только для `127.0.0.1`/`localhost`.
+- Сервер поддерживает direct TLS через `SYNC_TLS_CERT_FILE`/`SYNC_TLS_KEY_FILE`
+  (оба обязательны) либо HTTP за reverse proxy.
 - `Authorization: Bearer <token>`.
 - Токен берётся только из env-переменной, имя задаётся `syncTokenEnv`
   (default `DSH_AI_FACTORY_SYNC_TOKEN`); в конфиг и SQLite не пишется.

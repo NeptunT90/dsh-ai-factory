@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.14.0] — 2026-11-10
+
+### Added
+
+- Optional direct TLS for the sync server: `SYNC_TLS_CERT_FILE` and
+  `SYNC_TLS_KEY_FILE`; HTTPS URL/health.
+- 9th server test: self-signed TLS via openssl, HTTPS /health.
+- Docker Compose/env support for optional TLS files.
+- Plugin unchanged (0.10.1, 54 tests, 35 tools).
+
 ## [0.13.0] — 2026-11-10
 
 ### Added

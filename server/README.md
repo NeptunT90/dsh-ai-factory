@@ -35,6 +35,18 @@ node server/dist/index.js
 Сервер сам создаёт `vector`, таблицы и sequence. `DATABASE_URL` имеет приоритет
 над `SYNC_DB_DIR`.
 
+### Direct TLS
+
+```powershell
+$env:SYNC_TLS_CERT_FILE = "C:\certs\cert.pem"
+$env:SYNC_TLS_KEY_FILE  = "C:\certs\key.pem"
+node server/dist/index.js
+```
+
+Оба файла обязательны вместе; сервер стартует как HTTPS и `/health` доступен
+по HTTPS. Для внешнего production по-прежнему рекомендуется reverse proxy
+(Caddy/Nginx) с автоматическим TLS; direct TLS — альтернатива.
+
 Проверка:
 
 ```powershell
@@ -133,7 +145,8 @@ env. Планировщик стартует только при непусто�
 - Standalone PostgreSQL adapter (`pg`) проверен через PostgreSQL wire protocol
   (PGlite socket); реальный Docker/Ubuntu Compose в этом окружении не запускался.
 - PGlite — embedded single-process; multi-writer требует внешнего PostgreSQL.
-- Нет встроенного TLS: используйте reverse proxy с HTTPS.
+- Direct TLS реализован (cert/key env), но требует управления сертификатами;
+  для production можно использовать reverse proxy.
 - Backup-планировщик только для PGlite; PostgreSQL backup — через `pg_dump`.
 - Restore PGlite не запускается автоматически после backup.
 - Сервер не логирует payload памяти.

@@ -14,8 +14,8 @@
 
 ## Следующая очередь
 
-- TLS reverse proxy + фактический Ubuntu/Docker deploy (standalone PostgreSQL
-  adapter уже есть; локально нет psql/Docker).
+- Фактический Ubuntu/Docker deploy (standalone PostgreSQL adapter и direct TLS
+  уже есть; локально нет psql/Docker).
 - Multi-writer сервера (backup scheduler/restore уже есть).
 - CRDT/merge и server-side conflict journal.
 - Автоматический flush outbox по таймеру уже есть (syncAuto); нужен live-сервер.
@@ -24,8 +24,7 @@
 - Настроить GitHub remote/tag/Release.
 - Установка на второй физический ПК; upgrade.
 - Неограниченный/фоновый workflow-цикл с таймером.
-- Standalone PostgreSQL/TLS; GitHub Release; второй ПК.
-- Standalone PostgreSQL/TLS; GitHub Release; второй ПК.
+- GitHub Release; второй ПК.
 
 ## Запреты
 
