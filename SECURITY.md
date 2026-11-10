@@ -105,6 +105,18 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Capability Discovery (v0.21.0 / BLOCK 4)
+
+- `capabilityScanEnabled=false` and `capabilityProbeMode=off` by default; no automatic scan.
+- Only explicit root-only `factory_capability_scan/refresh` writes the cache.
+- `factory_capability_check` is cache-only; empty/stale → UNKNOWN/STALE, never auto-scan.
+- Static allowlist only; no user command/path/argument. Filesystem detection has no process execution; safe probes use fixed argv, `shell:false`, timeout and output cap.
+- Docker is presence-only: no `docker --version`, `docker info`, daemon/socket/config access.
+- PATH is canonicalized; only trusted roots and static names; project-local SDKs are not executed.
+- Cache contains only version/path/safe metadata; no env values, raw output or secrets.
+- Capability availability is NOT a tool permission: `allowedTools` and the runtime guard remain authoritative.
+- `requiresCapabilities` is checked in Planner before plan rows and in Dispatch before claim/child; missing/stale/unknown fails closed with `CAPABILITY_MISSING`.
+
 ## Skills (v0.20.0 / BLOCK 3)
 
 - Skills are instructions, not permissions. They never add or remove tools from `allowedTools`; tool access remains profile/runtime-enforced.

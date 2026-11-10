@@ -1,16 +1,16 @@
 # Текущий блок
 
-**BLOCK 3 — Skill Manager закрыт.**
+**BLOCK 4 — Capability Discovery закрыт.**
 
 Сделано:
 
-1. `.skills/*.md` strict validator/store, migration v6 `agent_profiles.skills`.
-2. Fail-closed `SkillService.resolve`; profile/skills system sections (4000 / 6000+), task user prompt.
-3. 7 root-only management tools; `factory_agent_save skills`; audit skillIds/hashes.
-4. 46 tools, health 43 factory tools / 51 actions; 108 tests.
-5. Plugin 0.20.0, root 0.21.0, server 0.17.0.
+1. Migration v7, 14 статических capabilities, filesystem detector, opt-in probes.
+2. Cache TTL 6h; capabilityCheck только кэш; Docker presence-only; scan default off.
+3. 5 root-only tools; Planner/task/dispatch requiresCapabilities preflight.
+4. 51 tool, health 48 factory tools / 56 actions; 116 tests.
+5. Plugin 0.21.0, root 0.22.0, server 0.17.0.
 
-Дальше: BLOCK 4 — Capability Discovery / project-scoped sync.
+Дальше: BLOCK 5/6 по плану. После BLOCK 6 — Watchdog (scripts/watchdog.ps1).
 
 ## Предыдущий блок: browser/sync/live sync
 

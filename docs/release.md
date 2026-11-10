@@ -11,7 +11,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1 -Profile 
 ```
 
 Критические тесты должны пройти до упаковки. Версия берётся из
-`package.json` (root) — `v0.21.0`; installable plugin — `0.20.0`.
+`package.json` (root) — `v0.22.0`; installable plugin — `0.21.0`.
 
 ## 2. Сборка артефакта
 
@@ -27,8 +27,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.20.0.tgz` — 192 171 байт,
-SHA256 `b0848152a61d7fcd28b581ea8e35f9f425ae95616b8b0db5a093ff0b133e9c9b`.
+Артефакт: `dist/dsh-ai-factory-0.21.0.tgz` — 211 031 байт,
+SHA256 `ec8df7fbac8b590fa1d63c1ec8f48d0ab15e84c0a529d92e69cb706635fe6fcd`.
 
 ## 3. Установка из tarball
 
@@ -94,7 +94,7 @@ pnpm server:build
 dist/dsh-ai-factory-sync-server-0.17.0.tgz — 17 189 байт
 SHA256: 8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5
 
-Release notes: `dist/RELEASE_NOTES-v0.21.0.md` (генерирует `scripts/release-notes.mjs`,
+Release notes: `dist/RELEASE_NOTES-v0.22.0.md` (генерирует `scripts/release-notes.mjs`,
 используется GitHub Actions как `body_path`).
 ```
 

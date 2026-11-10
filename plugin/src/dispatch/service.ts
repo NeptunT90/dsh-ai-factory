@@ -1,6 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
+import { assertCapabilitiesAvailable, normalizeRequiredCapabilities } from '../capabilities/requirements.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
 import { ScopedChildRunner, type ChildRunner, type ScopedRunResult } from '../agents/scoped-runner.js'
@@ -96,6 +97,8 @@ export class DispatchService {
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_dispatch требует вызывающего агента')
     const project = runtime.projects.require(task.projectId)
+    const requiredCapabilities = normalizeRequiredCapabilities(task.metadata.requiresCapabilities)
+    assertCapabilitiesAvailable(runtime, requiredCapabilities, 'dispatch')
     const skills = runtime.skills.resolve(agent.id, task.projectId)
     const prompt = composePrompt(runtime, task, agent, input.prompt)
     const routePlan = runtime.models.plan(agent, parent)

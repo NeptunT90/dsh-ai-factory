@@ -8,6 +8,9 @@ export type AutonomyLevel = (typeof AUTONOMY_LEVELS)[number]
 export const LOG_LEVELS = ['debug', 'info', 'warn', 'error'] as const
 export type LogLevel = (typeof LOG_LEVELS)[number]
 
+export const CAPABILITY_PROBE_MODES = ['off', 'safe'] as const
+export type CapabilityProbeMode = (typeof CAPABILITY_PROBE_MODES)[number]
+
 /** User-facing plugin configuration (validated by the DSH loader). */
 export interface FactoryConfig {
   /** Mount AI Factory. Disable for a profile without removing installed data. */
@@ -63,6 +66,16 @@ export interface FactoryConfig {
   autoWorkflowMaxCycles: number
   /** Maximum READY tasks started per tick (1..5). */
   autoWorkflowMaxTasks: number
+  /** Explicit capability scans only; never scan automatically at startup. */
+  capabilityScanEnabled: boolean
+  /** off = filesystem detection only; safe = fixed-argv version probes. */
+  capabilityProbeMode: CapabilityProbeMode
+  /** Capability cache TTL in hours. */
+  capabilityTtlHours: number
+  /** Timeout for one safe version probe. */
+  capabilityTimeoutMs: number
+  /** Maximum bytes captured from one version probe. */
+  capabilityMaxOutputBytes: number
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -97,6 +110,11 @@ export const Config = Schema.object({
   autoWorkflowIntervalSeconds: Schema.number().min(30).max(86_400).default(120),
   autoWorkflowMaxCycles: Schema.number().min(1).max(5).default(2),
   autoWorkflowMaxTasks: Schema.number().min(1).max(5).default(1),
+  capabilityScanEnabled: Schema.boolean().default(false),
+  capabilityProbeMode: Schema.union(CAPABILITY_PROBE_MODES).default('off'),
+  capabilityTtlHours: Schema.number().min(1).max(24 * 30).default(6),
+  capabilityTimeoutMs: Schema.number().min(500).max(30_000).default(3000),
+  capabilityMaxOutputBytes: Schema.number().min(256).max(64 * 1024).default(4096),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')

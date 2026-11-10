@@ -72,7 +72,7 @@
 - Соединение синхронное; все операции одного процесса сериализованы. Для
   будущего фонового scheduler этого достаточно, пока один writer.
 
-### Схема (v1–v6)
+### Схема (v1–v7)
 
 | Таблица | Версия | Назначение |
 |---|---|---|
@@ -93,6 +93,7 @@
 | `tool_health` | v5 | Health-overlay `(tool_name, action)` для factory_* |
 | `tool_health_history` | v5 | История health-проверок |
 | `agent_profiles.skills` | v6 | Project-local skill ids профиля |
+| `capability_scans` / `capabilities` | v7 | Кэш host capability discovery, TTL 6h |
 
 Ключевые инварианты:
 
@@ -369,6 +370,19 @@ Skills are project-local `.skills/<id>.md` files validated by strict frontmatter
 - authority: Harness → Profile (system) → Skills (system) → Task (user); `composePrompt` carries task data only;
 - management tools are root-only; skills never alter `allowedTools`;
 - `factory_sync` remains a global capability; managed separately.
+
+### 7.5g. Capability Discovery (v0.21.0 / BLOCK 4)
+
+Host inventory cache, separate from tool health and from tool permissions.
+
+- static allowlist: node, python, java, docker, git, maven, gradle, dotnet, go, rust, npm, pnpm, pip, uv;
+- `capabilityScanEnabled=false` and `capabilityProbeMode=off` by default; no automatic scan;
+- filesystem/PATH/canonical detection; optional fixed-argv safe probes only when explicitly enabled;
+- Docker is presence-only: no `docker --version` / `docker info`;
+- SQLite v7 tables `capability_scans` / `capabilities`, TTL 6h, `AVAILABLE`/`UNAVAILABLE`/`STALE`/`UNKNOWN`;
+- `factory_capability_check` is cache-only; empty/stale does not auto-scan;
+- `requiresCapabilities` on plans/tasks, preflight in Planner and Dispatch before claim/child;
+- capability availability never grants `allowedTools`.
 
 ### 7.6. Sync client / outbox
 

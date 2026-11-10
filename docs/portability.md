@@ -30,7 +30,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dsh-ai-factory-0.20.0.tgz
+  -Profile desktop -Tarball .\dsh-ai-factory-0.21.0.tgz
 ```
 
 Оба варианта используют официальный `dsh plugin add` и добавляют bundle.

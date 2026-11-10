@@ -373,4 +373,45 @@ export const MIGRATIONS: readonly Migration[] = [
       ALTER TABLE agent_profiles ADD COLUMN skills TEXT NOT NULL DEFAULT '[]';
     `,
   },
+  {
+    version: 7,
+    name: 'capability discovery cache',
+    sql: `
+      CREATE TABLE capability_scans (
+        id TEXT PRIMARY KEY,
+        scope TEXT NOT NULL CHECK (scope IN ('host', 'project')),
+        project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+        status TEXT NOT NULL CHECK (status IN ('RUNNING', 'COMPLETE', 'FAILED')),
+        scanner_version TEXT NOT NULL,
+        started_at INTEGER NOT NULL,
+        finished_at INTEGER,
+        counts TEXT NOT NULL DEFAULT '{}',
+        error TEXT
+      );
+      CREATE INDEX ix_capability_scans_scope
+        ON capability_scans(scope, project_id, started_at DESC);
+
+      CREATE TABLE capabilities (
+        id TEXT PRIMARY KEY,
+        scope TEXT NOT NULL CHECK (scope IN ('host', 'project')),
+        project_id TEXT REFERENCES projects(id) ON DELETE CASCADE,
+        capability_id TEXT NOT NULL,
+        kind TEXT NOT NULL,
+        path TEXT,
+        version TEXT,
+        version_source TEXT NOT NULL DEFAULT 'unknown'
+          CHECK (version_source IN ('file', 'probe', 'none', 'unknown')),
+        status TEXT NOT NULL
+          CHECK (status IN ('AVAILABLE', 'UNAVAILABLE', 'STALE', 'UNKNOWN', 'DISABLED')),
+        confidence REAL NOT NULL DEFAULT 0,
+        details TEXT NOT NULL DEFAULT '{}',
+        last_seen_at INTEGER NOT NULL,
+        expires_at INTEGER,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE UNIQUE INDEX ux_capabilities_key
+        ON capabilities(scope, ifnull(project_id, ''), capability_id);
+      CREATE INDEX ix_capabilities_status ON capabilities(status, expires_at);
+    `,
+  },
 ]

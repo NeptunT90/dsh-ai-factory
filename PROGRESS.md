@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### BLOCK 4 Capability Discovery v0.21.0
+
+- Schema v7, static capability allowlist, filesystem detection, optional safe probes.
+- Cache-only check, TTL 6h, requiresCapabilities preflight; 51 tools, 116 tests.
+- Live scan 8/6, health 48/56.
+
 ### BLOCK 3 Skill Manager v0.20.0
 
 - `.skills` validator/store, migration v6, fail-closed resolve.

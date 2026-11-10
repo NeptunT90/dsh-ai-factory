@@ -172,3 +172,8 @@
 - [ ] Физически второй компьютер.
 - [ ] Обновление с предыдущей версии без потери данных — backup/update
       скрипты есть, но полный upgrade-тест ещё нужен.
+
+## Future after BLOCK 6 — Watchdog
+
+- [ ] `scripts/watchdog.ps1` — external supervisor: restart DSH on crash and automatically submit a recovery prompt for in-flight tasks.
+- [ ] Separate block after BLOCK 6; not part of BLOCK 4.

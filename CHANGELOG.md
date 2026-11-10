@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.22.0] — 2026-11-10
+
+### Added
+
+- BLOCK 4 Capability Discovery: migration v7, static 14-capability allowlist,
+  filesystem detector, opt-in fixed-argv probes, SQLite cache with 6h TTL.
+- 5 root-only tools: capability scan/list/get/check/refresh; check is cache-only.
+- Planner/task `requiresCapabilities` preflight and Dispatch preflight before claim/child.
+- Director brief capability summary; capability availability never grants allowedTools.
+- 51 tools, health registry 48 factory tools / 56 actions; 116 tests.
+- Plugin 0.21.0; server 0.17.0.
+
 ## [0.21.0] — 2026-11-10
 
 ### Added

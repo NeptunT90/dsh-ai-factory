@@ -78,6 +78,7 @@ export function registerOrchestrationTools(
                 priority: { type: 'number', description: 'Приоритет 0..100' },
                 maxAttempts: { type: 'number', description: 'Максимум попыток' },
                 timeoutMs: { type: 'number', description: 'Таймаут, мс' },
+                requiresCapabilities: { type: 'array', items: { type: 'string' }, description: 'Capability ids, проверяемые по кэшу до создания плана' },
               },
             },
           },
@@ -113,6 +114,7 @@ export function registerOrchestrationTools(
             priority: step.priority,
             maxAttempts: step.maxAttempts,
             timeoutMs: step.timeoutMs,
+            requiresCapabilities: step.requiresCapabilities,
           }))
           const result = runtime.planner.createPlan({
             projectId: project.id,
@@ -219,6 +221,19 @@ export function registerOrchestrationTools(
                 },
               },
               nextActions: { type: 'array', items: { type: 'string' }, required: true },
+              capabilities: {
+                type: 'object',
+                additionalProperties: false,
+                required: true,
+                properties: {
+                  checkedAt: { type: 'number', required: true },
+                  scanId: { type: 'string', required: true },
+                  available: { type: 'number', required: true },
+                  unavailable: { type: 'number', required: true },
+                  stale: { type: 'number', required: true },
+                  unknown: { type: 'number', required: true },
+                },
+              },
             },
           },
           render: (_args, value) => [
@@ -238,6 +253,8 @@ export function registerOrchestrationTools(
                   ? value.openTasks.map((task) => `- [${task.status}] ${task.title} (${task.id})`)
                   : ['- нет']),
                 '',
+                `capabilities: ${value.capabilities.available} available · ${value.capabilities.unavailable} unavailable · ${value.capabilities.stale} stale · ${value.capabilities.unknown} unknown`,
+                '',
                 'Следующие действия:',
                 ...value.nextActions.map((action) => `- ${action}`),
               ].join('\n'),
@@ -251,6 +268,7 @@ export function registerOrchestrationTools(
           const agents = runtime.agents.list({ limit: 100 })
           const openTasks = runtime.tasks.list({ projectId: project.id, limit: 20 })
           const memory = runtime.memory.search({ projectId: project.id, includeGlobal: true, limit: 5 })
+          const capabilitySummary = runtime.capabilities.summary()
           const nextActions: string[] = []
           if (stats.failed > 0) nextActions.push('Разобрать FAILED-задачи и вызвать factory_task_retry или исправить причину.')
           if (stats.ready > 0) nextActions.push('Взять READY-задачу через factory_task_claim и выполнить её.')
@@ -294,6 +312,14 @@ export function registerOrchestrationTools(
               snippet: hit.snippet,
             })),
             nextActions,
+            capabilities: {
+              checkedAt: capabilitySummary.checkedAt,
+              scanId: capabilitySummary.scanId ?? '',
+              available: capabilitySummary.available,
+              unavailable: capabilitySummary.unavailable,
+              stale: capabilitySummary.stale,
+              unknown: capabilitySummary.unknown,
+            },
           }
         },
       }),

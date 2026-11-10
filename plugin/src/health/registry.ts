@@ -29,6 +29,12 @@ export const TOOL_HEALTH_SPECS: readonly ToolHealthSpec[] = [
   { tool: 'factory_skill_update', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_skill_delete', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_skill_assign', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_capability_scan', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_capability_list', action: '*', risk: 'R0', mode: 'probe', arguments: {} },
+  { tool: 'factory_capability_get', action: '*', risk: 'R0', mode: 'observed', probeReason: 'requires_capability_id' },
+  { tool: 'factory_capability_check', action: '*', risk: 'R0', mode: 'probe', arguments: { requirements: [] } },
+  { tool: 'factory_capability_refresh', action: '*', risk: 'R1', mode: 'schema' },
+
 
   { tool: 'factory_task_create', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_task_list', action: '*', risk: 'R0', mode: 'observed', probeReason: 'hidden_side_effect:projects.updated_at' },

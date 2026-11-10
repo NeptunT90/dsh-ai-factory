@@ -3,6 +3,7 @@ import type { AgentRegistry } from '../agents/registry.js'
 import type { AgentRole } from '../agents/types.js'
 import type { TaskEngine } from '../tasks/engine.js'
 import type { TaskRecord } from '../tasks/types.js'
+import type { CapabilityService } from '../capabilities/service.js'
 
 export interface PlanStepInput {
   readonly key: string
@@ -14,6 +15,7 @@ export interface PlanStepInput {
   readonly priority?: number
   readonly maxAttempts?: number
   readonly timeoutMs?: number
+  readonly requiresCapabilities?: readonly string[]
 }
 
 export interface PlanCreateInput {
@@ -44,6 +46,7 @@ export class PlannerService {
   constructor(
     private readonly tasks: TaskEngine,
     private readonly agents: AgentRegistry,
+    private readonly capabilities?: CapabilityService,
   ) {}
 
   createPlan(input: PlanCreateInput): PlanResult {
@@ -70,6 +73,20 @@ export class PlannerService {
     }
 
     const order = topologicalOrder([...byKey.values()])
+    const requirements = [...new Set(order.flatMap((step) => step.requiresCapabilities ?? []).map((id) => id.trim()).filter((id) => id !== ''))]
+    if (requirements.length > 0) {
+      if (!this.capabilities) {
+        throw new FactoryError('CAPABILITY_MISSING', 'CapabilityService недоступен для проверки плана', { requirements })
+      }
+      const check = this.capabilities.check(requirements.map((id) => ({ id })))
+      if (!check.ready) {
+        throw new FactoryError(
+          'CAPABILITY_MISSING',
+          `Не подтверждены capabilities: ${requirements.join(', ')}. Выполните factory_capability_scan/refresh.`,
+          { operation: 'plan', items: check.items },
+        )
+      }
+    }
     const director = this.agents.findByRole('director')
     const parent = this.tasks.create({
       projectId: input.projectId,
@@ -114,7 +131,11 @@ export class PlannerService {
         assignedRole: step.role ?? agent?.role ?? null,
         maxAttempts: step.maxAttempts,
         timeoutMs: step.timeoutMs,
-        metadata: { planKey: key, planParentId: parent.id },
+        metadata: {
+          planKey: key,
+          planParentId: parent.id,
+          ...((step.requiresCapabilities?.length ?? 0) > 0 ? { requiresCapabilities: [...(step.requiresCapabilities ?? [])] } : {}),
+        },
         createdBy: input.createdBy ?? 'agent',
       })
       idByKey.set(key, task.id)

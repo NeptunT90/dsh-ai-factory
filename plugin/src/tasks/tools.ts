@@ -5,6 +5,7 @@ import { FactoryError } from '../core/errors.js'
 import { asJsonValue, type JsonValue } from '../core/json.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { ProjectRecord } from '../projects/service.js'
+import { assertCapabilitiesAvailable, normalizeRequiredCapabilities } from '../capabilities/requirements.js'
 import { TASK_STATUSES, type TaskEvent, type TaskRecord, type TaskStatus } from '../tasks/types.js'
 
 const TASK_OUTPUT = {
@@ -203,11 +204,18 @@ export function registerTaskTools(
           timeoutMs: { type: 'number', description: 'Таймаут выполнения, мс' },
           plan: { type: 'json', description: 'Структурированный план/чек-лист' },
           metadata: { type: 'json', description: 'Дополнительные JSON-метаданные' },
+          requiresCapabilities: { type: 'array', items: { type: 'string' }, description: 'Capability ids, проверяемые по кэшу' },
         },
         output: { schema: TASK_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatTask(value) }] },
         async execute(args, exec) {
           const runtime = runtimeOf(getRuntime, getStartupError)
           const project = currentProject(runtime, exec, args.projectId)
+          const requiredCapabilities = normalizeRequiredCapabilities(args.requiresCapabilities)
+          assertCapabilitiesAvailable(runtime, requiredCapabilities, 'task.create')
+          const metadata = {
+            ...(asObject(args.metadata) ?? {}),
+            ...(requiredCapabilities.length > 0 ? { requiresCapabilities: requiredCapabilities } : {}),
+          }
           const task = runtime.tasks.create({
             projectId: project.id,
             title: args.title,
@@ -222,7 +230,7 @@ export function registerTaskTools(
             maxAttempts: args.maxAttempts,
             timeoutMs: args.timeoutMs,
             plan: args.plan,
-            metadata: asObject(args.metadata),
+            metadata,
             createdBy: exec.agent?.id ?? 'agent',
           })
           runtime.auditTool('task.created', project, exec, { taskId: task.id, status: task.status })

@@ -34,6 +34,11 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     autoWorkflowIntervalSeconds: 120,
     autoWorkflowMaxCycles: 2,
     autoWorkflowMaxTasks: 1,
+    capabilityScanEnabled: false,
+    capabilityProbeMode: 'off',
+    capabilityTtlHours: 6,
+    capabilityTimeoutMs: 3000,
+    capabilityMaxOutputBytes: 4096,
     ...overrides,
   }
 }
