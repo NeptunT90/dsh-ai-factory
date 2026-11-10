@@ -19,7 +19,10 @@ tool call проходит runtime guard.
 5. **Host capabilities** (v0.17.0): отдельный список
    `HOST_TOOL_NAMES` + aliases (`read`, `write`, `edit`, `apply_patch`,
    `grep`, `glob`, `working_directory`, `bash`, `pwsh`, `terminal`,
-   `run_code`, `read_file`, `write_file`, `fs_read`, `fs_write`, `shell`).
+   `run_code`, `read_file`, `write_file`, `fs_read`, `fs_write`, `shell`) и
+   `BROWSER_TOOL_NAMES` (`browser_open`, `browser_navigate`, `browser_snapshot`,
+   `browser_click`, `browser_fill`, `browser_press`, `browser_wait`,
+   `browser_history`, `browser_screenshot`, `browser_tabs`).
    Для host-имени отказ имеет вид
    `TOOL_NOT_ALLOWED: host capability <name> ...`; `run_code` не выдаётся
    ребёнку никогда.
@@ -61,9 +64,13 @@ TOOL_NOT_ALLOWED: factory_memory_forget не входит в allowlist проф�
 - READONLY (`read` разрешён): `write` → `TOOL_NOT_ALLOWED: write ...`;
   файл не создан.
 - RESEARCHER (file-tools удалены): `read` → `unknown tool "read"`.
-- Прямого обхода через read/write/pwsh **не воспроизведено**. DSH не
-  монтирует host file/shell tools в дочернюю сессию; guard отбивает их по
-  имени, если вызов всё же отправлен.
+- NOFILE `browser_open` → `unknown tool`; browser-* не смонтированы. Если
+  браузерный вызов всё же отправлен, guard отвечает
+  `TOOL_NOT_ALLOWED: host capability browser_open ...`; тест покрывает
+  `browser_open/click/screenshot`.
+- Прямого обхода через read/write/pwsh/browser_* **не воспроизведено**.
+  DSH не монтирует эти host-инструменты в дочернюю сессию; guard отбивает их
+  по имени, если вызов всё же отправлен.
 
 Scoped REVIEWER (`tsk_7804a5a0...`) прошёл с `VERDICT: PASS`, дочерняя сессия
 `ses_22691dae...`, задача COMPLETED.

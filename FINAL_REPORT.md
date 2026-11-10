@@ -21,7 +21,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструмен�
 | Sync client | готово | outbox, push/pull, LWW, conflict, auto-sync |
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
-| Tests | готово | 58 plugin + 10 server |
+| Tests | готово | 59 plugin + 10 server |
 | Install desktop | готово | live 0.17.0, 36 tools, schema 4 |
 | Portable profile | готово | `portable-test` 0.17.0 |
 
@@ -39,6 +39,15 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструмен�
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
 
+## Три проверки (v0.17.0)
+
+- Browser-* добавлены в host-capability guard; NOFILE `browser_open` →
+  `unknown tool` (не смонтирован); unit guard для browser_open/click/screenshot.
+- SYNCONLY: `factory_sync status` работает, `read` недоступен; `factory_sync`
+  принимает только action и работает с памятью/БД, не с произвольным путём.
+- Desktop live sync: сервер :8788, push 2, remote pull 1, cursor 3, health
+  memories/operations 3/3; конфиг восстановлен, сервер остановлен.
+
 ## Четыре внутренних долга (v0.17.0)
 
 - **Host capabilities:** отдельный `HOST_TOOL_NAMES`/aliases guard; RESEARCHER без
@@ -55,8 +64,8 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v4**, **36** инструмен�
 
 ```text
 dist/dsh-ai-factory-0.17.0.tgz
-  151 694 байт
-  f2e473b7bc86626eb3204375882a82f3dba9b9b8bd1f253ac00de797f51dec37
+  152 022 байт
+  04b7781cb76461fdf8cc1507284aacaeede749b5dab15843f28130b66d4ba99f
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт

@@ -19,7 +19,7 @@
 
 ```
 Test Files  15 passed (15)
-Tests       58 passed (58)
+Tests       59 passed (59)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
@@ -76,6 +76,21 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Browser and factory-sync boundaries (v0.17.0)
+
+- NOFILE (`allowedTools: ["factory_status"]`) → `browser_open` → `unknown
+  tool`; browser-* не смонтированы. Unit guard покрывает
+  `browser_open/click/screenshot` → `TOOL_NOT_ALLOWED: host capability ...`.
+- SYNCONLY (`factory_sync`+`factory_status`) → `factory_sync status` работает;
+  `read` недоступен, файл не прочитан. `factory_sync` имеет только action и
+  читает/пишет память/БД, не произвольный путь; `factory_dashboard` — только
+  action/port.
+- Desktop live sync: локальный сервер :8788, token через существующий env
+  `USERNAME` (DSH process нельзя добавить env без restart), `syncUrl` задан,
+  `factory_sync action=sync` → accepted 2, cursor 2; remote memory через
+  `push` → `factory_sync action=pull` → applied 1, cursor 3; health
+  `memories:3`, `operations:3`. Конфиг восстановлен, сервер остановлен.
 
 ### Four internal debts v0.17.0
 
@@ -174,12 +189,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.17.0.tgz`: **151 694 байт**.
-- SHA256: `f2e473b7bc86626eb3204375882a82f3dba9b9b8bd1f253ac00de797f51dec37`.
+- `dist/dsh-ai-factory-0.17.0.tgz`: **152 022 байт**.
+- SHA256: `04b7781cb76461fdf8cc1507284aacaeede749b5dab15843f28130b66d4ba99f`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.18.0.md` (2 035 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.18.0.md` (2 184 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install

@@ -14,7 +14,9 @@
   (model.fallback_suppressed: tool_side_effect), preventing repeated side effects.
 - Original FAILED task becomes COMPLETED after its fix task passes review
   (completeFixed, event completed_after_fix).
-- Plugin 0.17.0: 58 tests, 36 tools; server 0.17.0.
+- Browser tools added to host-capability guard; NOFILE browser probe.
+- Live desktop sync (push 2, remote pull 1) with real memory; config restored.
+- Plugin 0.17.0: 59 tests, 36 tools; server 0.17.0.
 
 ## [0.17.0] — 2026-11-10
 

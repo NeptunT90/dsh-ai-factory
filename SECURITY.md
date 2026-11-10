@@ -69,7 +69,9 @@ approvals/sandbox продолжают действовать.
 REVIEWER не имеет `factory_sync`, `factory_dashboard`,
 `factory_memory_forget`, `factory_task_cancel`; RESEARCHER больше не имеет
 file-tools (`read`/`write`/`edit`) — только web/grep/glob/working_directory;
-SYSADMIN получает admin/ssh/file-tools.
+SYSADMIN получает admin/ssh/file-tools. `BROWSER_TOOL_NAMES` также входят в
+host-capability guard: `browser_open/click/screenshot` и остальные `browser_*`
+без явного allowlist дают `TOOL_NOT_ALLOWED`.
 
 **Live-проверка host capabilities (v0.17.0):**
 
@@ -83,10 +85,25 @@ SYSADMIN получает admin/ssh/file-tools.
   DSH не монтирует эти host-инструменты в дочернюю сессию, а guard отбивает
   их по имени, если модель всё же отправит такой вызов.
 
-Граница: guard стоит на исполнении инструментов через `ctx.tools`. Если
-host-возможность когда-либо появится вне этого реестра (например, новый
-executor), её нужно покрыть отдельным host-capability hook; DSH
-approvals/sandbox продолжают действовать независимо.
+### Граница allowlist: имена ≠ возможности
+
+Allowlist проверяет **имя tool-call** и не разбирает внутренние возможности
+разрешённого инструмента. Это осознанная граница:
+
+- `factory_sync` принимает только `action` (`status/push/pull/sync`); он читает
+  `syncUrl`/токен из env, локальную SQLite/outbox и отправляет **всю память**
+  на настроенный сервер, а `pull` импортирует удалённую память в локальную БД.
+  Произвольный путь к файлу через него передать нельзя; но это доступ к
+  памяти/БД и потенциальная эксфильтрация, поэтому sync-инструмент не входит
+  в built-in child-профили.
+- `factory_dashboard` принимает только `action`/`port`; он отдаёт factory-данные
+  на loopback, но не читает произвольный файл по запросу.
+- `factory_status` показывает путь БД и конфигурацию без секретов.
+- Живой probe `SYNCONLY` (`factory_sync`+`factory_status`): `factory_sync
+  status` работает, `read` недоступен; файл не прочитан.
+- Если будущий инструмент внутри обращается к ФС/shell, allowlist по имени
+  этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
+  approvals/sandbox продолжают действовать независимо.
 
 ## Model Router
 

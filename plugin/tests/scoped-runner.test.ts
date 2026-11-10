@@ -130,6 +130,11 @@ describe('tool allowlist', () => {
     expect(runtime.toolDenial('ses_child', 'pwsh')).toContain('host capability pwsh')
     expect(runtime.toolDenial('ses_child', 'run_code')).toContain('host capability run_code')
     expect(runtime.toolDenial('ses_child', 'read_file')).toContain('host capability read_file')
+    runtime.allowToolsForChild('ses_nofile', ['factory_status'])
+    expect(runtime.toolDenial('ses_nofile', 'browser_open')).toContain('host capability browser_open')
+    expect(runtime.toolDenial('ses_nofile', 'browser_click')).toContain('host capability browser_click')
+    expect(runtime.toolDenial('ses_nofile', 'browser_screenshot')).toContain('host capability browser_screenshot')
+    runtime.releaseChildTools('ses_nofile')
     runtime.releaseChildTools('ses_child')
   })
 

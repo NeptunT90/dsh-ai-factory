@@ -191,8 +191,9 @@ data. `ctx.agents.create()` получает `setup(agentCtx)`, где
 а глобальный `ctx.tools.guard` проверяет `runtime.toolDenial(childId, name)` и
 возвращает `TOOL_NOT_ALLOWED` для любой попытки вне allowlist. Для host-tools
 есть отдельный список `HOST_TOOL_NAMES`/aliases (read/write/edit/pwsh/bash,
-`run_code` и файловые aliases): отказ
-`TOOL_NOT_ALLOWED: host capability <name> ...`; `run_code` ребёнку не выдаётся.
+`run_code`, файловые aliases) и `BROWSER_TOOL_NAMES` (browser_open/click/
+screenshot/…): отказ `TOOL_NOT_ALLOWED: host capability <name> ...`;
+`run_code` ребёнку не выдаётся.
 Allowlist хранится в SQLite и виден в `factory_agent_get/save`.
 
 Встроенные профили имеют явные списки; пользовательский профиль стартует с

@@ -6,7 +6,7 @@ import type { SessionId } from '@deepseek-ai/dsh-session'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from './types.js'
-import { HOST_TOOL_NAMES } from './allowlists.js'
+import { BROWSER_TOOL_NAMES, HOST_TOOL_NAMES } from './allowlists.js'
 
 export interface ScopedRunInput {
   readonly parent: Agent
@@ -107,7 +107,7 @@ export class ScopedChildRunner implements ChildRunner {
           const deny = new Set(
             known.filter((name) => !allowed.includes(name) && !name.startsWith('factory_')),
           )
-          for (const name of HOST_TOOL_NAMES) {
+          for (const name of [...HOST_TOOL_NAMES, ...BROWSER_TOOL_NAMES]) {
             if (!allowed.includes(name)) deny.add(name)
           }
           const restrictable = new Set(known)
@@ -120,8 +120,8 @@ export class ScopedChildRunner implements ChildRunner {
               sessionId,
               profile: input.profile.name,
               allowedHost: HOST_TOOL_NAMES.filter((name) => allowed.includes(name)),
-              deniedHost: HOST_TOOL_NAMES.filter((name) => !allowed.includes(name)),
-              knownHost: known.filter((name) => (HOST_TOOL_NAMES as readonly string[]).includes(name)),
+              deniedHost: [...HOST_TOOL_NAMES, ...BROWSER_TOOL_NAMES].filter((name) => !allowed.includes(name)),
+              knownHost: known.filter((name) => (HOST_TOOL_NAMES as readonly string[]).includes(name) || (BROWSER_TOOL_NAMES as readonly string[]).includes(name)),
             },
           })
         },

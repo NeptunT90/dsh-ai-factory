@@ -29,9 +29,24 @@ export const HOST_TOOL_ALIASES = [
   'shell',
 ] as const
 
+/** Browser tools are host capabilities too; a child without them must be denied. */
+export const BROWSER_TOOL_NAMES = [
+  'browser_open',
+  'browser_navigate',
+  'browser_snapshot',
+  'browser_click',
+  'browser_fill',
+  'browser_press',
+  'browser_wait',
+  'browser_history',
+  'browser_screenshot',
+  'browser_tabs',
+] as const
+
 export function isHostCapability(name: string): boolean {
   return (HOST_TOOL_NAMES as readonly string[]).includes(name) ||
-    (HOST_TOOL_ALIASES as readonly string[]).includes(name)
+    (HOST_TOOL_ALIASES as readonly string[]).includes(name) ||
+    (BROWSER_TOOL_NAMES as readonly string[]).includes(name)
 }
 
 /**

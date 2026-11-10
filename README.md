@@ -56,7 +56,7 @@
   Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
   автономен.
 - Аудит действий без записи содержимого памяти.
-- 58 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 59 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
 - Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 35

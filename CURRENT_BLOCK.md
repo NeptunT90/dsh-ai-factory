@@ -1,6 +1,15 @@
 # Текущий блок
 
-**Финальные четыре долга.**
+**Три проверки: browser, sync-границы, live sync.**
+
+Сделано:
+
+1. Browser-* добавлены в host guard; NOFILE browser_open → unknown tool (не смонтирован).
+2. SYNCONLY: factory_sync работает, read недоступен; произвольный путь не принимается.
+3. Desktop live sync: push 2, pull remote 1, cursor 3; health 3/3; конфиг восстановлен.
+4. 58 тестов, plugin 0.17.0.
+
+## Предыдущий блок: четыре долга
 
 Сделано:
 

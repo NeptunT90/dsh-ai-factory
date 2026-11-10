@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Browser + sync boundaries + live sync v0.17.0
+
+- BROWSER_TOOL_NAMES in host guard; NOFILE browser unknown; unit denials.
+- SYNCONLY proves sync capabilities vs file access boundary.
+- Desktop live sync: accepted 2, remote pull 1, cursor 3; config restored.
+
 ### Four internal debts v0.17.0
 
 - Host capability guard; RESEARCHER no file-tools; live probes.

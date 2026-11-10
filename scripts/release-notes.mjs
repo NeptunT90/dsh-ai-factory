@@ -40,7 +40,7 @@ const lines = [
   '',
   '## Verification',
   '',
-  '- plugin: 56 Vitest tests, 36 tools, schema v4;',
+  '- plugin: 59 Vitest tests, 36 tools, schema v4;',
   '- server: 10 node:test tests (PGlite, PostgreSQL wire, TLS, multi-writer);',
   '- live desktop: `factory_status`, scoped children, Model fallback, auto workflow,',
   '  dashboard, sync;',

@@ -182,4 +182,14 @@ describe('plugin mount', () => {
       remember.execute({ content: 'ghp_abcdefghijklmnopqrstuvwxyz0123456789' }, fakeExec(harness.workspace) as never),
     ).rejects.toThrowError(/секрет/)
   })
+
+  it('sync and dashboard tools expose no arbitrary filesystem path parameter', () => {
+    const harness = createHarness()
+    for (const name of ['factory_sync', 'factory_dashboard']) {
+      const definition = harness.tools.get(name)!
+      const parameterNames = Object.keys(definition.parameters ?? {})
+      expect(parameterNames).not.toEqual(expect.arrayContaining(['path', 'file_path', 'file', 'directory', 'dir']))
+      expect(JSON.stringify(definition.parameters ?? {})).not.toMatch(/file_path|(^|[^a-z])path([^a-z]|$)/i)
+    }
+  })
 })
