@@ -145,7 +145,19 @@ Error: TOOL_NOT_ALLOWED: factory_dispatch не входит в allowlist про�
 - audit `model.fallback` содержит from/to, без prompt;
 - профиль BADROUTE после теста отключён, конфиг восстановлен.
 
-## 9. Ограничения smoke
+## 9. Autonomous workflow (v0.15.0)
+
+READY-задача `tsk_aee61490…`; autoWorkflowEnabled=true, interval 30s, maxCycles=1.
+Coordinator Agent создан; tick:
+
+```
+workflow.started → child PONG → review PASS → workflow.passed
+auto_workflow.tick status=PASSED cycles=1
+```
+
+Задача COMPLETED. Конфиг после теста восстановлен, auto выключен.
+
+## 10. Ограничения smoke
 
 - Live workflow полностью проверен: REVIEW→PASS и FAIL→fix→PASS.
 - Сервер синхронизации в live-режиме не подключался; e2e PGlite проверен

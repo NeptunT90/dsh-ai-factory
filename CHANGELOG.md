@@ -9,7 +9,7 @@
 - Plugin-owned coordinator Agent (ctx.agents.create, root) is the parent for
   workflow children; timer scans READY tasks; audit auto_workflow.*.
 - 2 auto-workflow tests (56 total), 35 tools; default disabled.
-- Live: auto_workflow.started and coordinator creation verified.
+- Live auto-tick: READY task → workflow PASSED, task COMPLETED; config restored.
 
 ## [0.14.0] — 2026-11-10
 

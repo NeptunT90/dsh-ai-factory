@@ -78,9 +78,12 @@ cert (openssl). Docker Compose не запускался — Docker нет.
 
 ### Autonomous workflow v0.15.0 (live)
 
-- `autoWorkflowEnabled=true`, interval 30s, no READY tasks at check.
-- Audit `auto_workflow.started`, coordinator Agent создан; tick не запускался.
-- Default config — false; maxCycles/maxTasks ограничены.
+- Создана READY-задача `tsk_aee61490…`; включены autoWorkflow*, interval 30s,
+  maxCycles=1, maxTasks=1, fallback deepseek-flash.
+- Tick сработал: `workflow.started` → child PONG → REVIEW PASS →
+  `workflow.passed` / `auto_workflow.tick`; задача COMPLETED.
+- Конфиг восстановлен, auto выключен; default — false.
+- MaxCycles/maxTasks ограничены.
 
 ### Scoped allowlist v0.8.0 (live)
 

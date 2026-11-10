@@ -129,7 +129,7 @@
 
 - Coordinator root Agent + timer scans READY tasks; bounded cycles.
 - autoWorkflow* config, default off; audit; 2 tests (56 total).
-- Live: auto_workflow.started, no tick (no READY tasks).
+- Live: READY task → auto tick PASSED; config restored.
 
 ### Direct TLS v0.14.0
 
