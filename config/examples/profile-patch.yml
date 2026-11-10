@@ -1,0 +1,20 @@
+# Пример пользовательского слоя профиля DSH.
+# Файл кладётся в %USERPROFILE%\.dsh\profiles\<profile>\cordis.patch.yml
+# (не заменяйте существующие записи; добавьте этот блок в конец массива).
+#
+# Patch заменяет конфигурацию строки целиком, поэтому перечислены все поля,
+# которые нужно сохранить. Значения ниже — defaults Phase 1.
+
+- id: ai-factory
+  config:
+    enabled: true
+    dataDir: ''
+    dbFile: factory.db
+    maxSearchResults: 20
+    workingMemoryTtlHours: 72
+    maxContentChars: 100000
+    defaultAutonomy: autonomous
+    allowGlobalMemory: true
+    projectIdOverride: ''
+    redactLogs: true
+    logLevel: info

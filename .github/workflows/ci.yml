@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.28.5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Verify install artifact
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'plugin/lib/index.js')) { throw 'plugin/lib/index.js missing' }
+          if (-not (Test-Path 'plugin/cordis.patch.yml')) { throw 'bundle patch missing' }
+          $pkg = Get-Content plugin/package.json -Raw | ConvertFrom-Json
+          if (-not $pkg.dsh.bundle.patch) { throw 'dsh.bundle.patch missing' }
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: dsh-ai-factory-lib
+          path: plugin/lib
+          if-no-files-found: error

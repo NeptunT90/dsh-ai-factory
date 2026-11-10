@@ -1,0 +1,8 @@
+# dsh-ai-factory bundle patch.
+#
+# One Cordis row. Config is intentionally omitted so this file stays a plain
+# id/name insert (the plugin-manager hot-mount path accepts only bare rows).
+# Override settings by id in the profile's own cordis.patch.yml when needed.
+- insert:
+    - id: ai-factory
+      name: dsh-ai-factory

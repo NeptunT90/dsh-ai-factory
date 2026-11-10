@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/dsh-ai-factory/dsh-ai-factory/config/factory-config.schema.json",
+  "title": "DSH AI Factory plugin configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "enabled": { "type": "boolean", "default": true },
+    "dataDir": {
+      "type": "string",
+      "default": "",
+      "description": "Empty = ~/.dsh/ai-factory; ~ and %VARS% are expanded; relative paths resolve against ~/.dsh"
+    },
+    "dbFile": { "type": "string", "default": "factory.db", "pattern": "^[^/\\\\]+$" },
+    "maxSearchResults": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 },
+    "workingMemoryTtlHours": { "type": "number", "minimum": 0, "maximum": 8760, "default": 72 },
+    "maxContentChars": { "type": "integer", "minimum": 100, "maximum": 1000000, "default": 100000 },
+    "defaultAutonomy": { "enum": ["safe", "autonomous", "trusted"], "default": "autonomous" },
+    "allowGlobalMemory": { "type": "boolean", "default": true },
+    "projectIdOverride": { "type": "string", "default": "" },
+    "redactLogs": { "type": "boolean", "default": true },
+    "logLevel": { "enum": ["debug", "info", "warn", "error"], "default": "info" }
+  }
+}

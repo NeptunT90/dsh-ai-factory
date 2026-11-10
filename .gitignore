@@ -1,0 +1,38 @@
+# Build artifacts
+node_modules/
+plugin/lib/
+plugin/coverage/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local runtime data and secrets
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+data/
+secrets/
+config/local/
+config/*.local.json
+
+# Research / extracted DSH source (not part of the product)
+.research/
+.tmp/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local backups
+backups/
+
+# OpenWolf local brain state
+.dshwolf/

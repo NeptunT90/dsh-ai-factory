@@ -1,0 +1,14 @@
+{
+  "name": "dsh-ai-factory-repo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DSH AI Factory — autonomous multi-agent platform for DeepSeek Harness",
+  "license": "MIT",
+  "packageManager": "pnpm@11.28.5",
+  "scripts": {
+    "build": "pnpm --filter dsh-ai-factory build",
+    "typecheck": "pnpm --filter dsh-ai-factory typecheck",
+    "test": "pnpm --filter dsh-ai-factory test",
+    "verify": "pnpm typecheck && pnpm test && pnpm build"
+  }
+}
