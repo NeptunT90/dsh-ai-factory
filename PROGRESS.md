@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### BLOCK 5 Agent Marketplace v0.22.0
+
+- `.agents` export/import/validate; built-in templates, subset/access/skills/secrets checks.
+- 3 root-only tools; 54 tools, 122 tests.
+
 ### BLOCK 4 Capability Discovery v0.21.0
 
 - Schema v7, static capability allowlist, filesystem detection, optional safe probes.

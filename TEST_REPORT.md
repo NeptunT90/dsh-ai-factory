@@ -18,14 +18,14 @@
 ### Plugin
 
 ```
-Test Files  22 passed (22)
-Tests       116 passed (116)
+Test Files  23 passed (23)
+Tests       122 passed (122)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (51 инструмент).
+contract (54 инструмента).
 
 ### Sync server
 
@@ -76,6 +76,14 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Agent Marketplace v0.22.0 (live)
+
+- Exported NOFILE → `.agents/nofile.json`, hash e3c7eef2…; no `agt_`/`isBuiltin`.
+- Validate valid; clean runtime import with name override → new custom profile, allowedTools preserved.
+- Escalation file `factory_dispatch` with caller tools only `read` → FORBIDDEN.
+- `.agents` fixtures removed.
+- 122 plugin tests / 10 server.
 
 ### Capability Discovery v0.21.0 (live)
 
@@ -233,12 +241,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.21.0.tgz`: **211 031 байт**.
-- SHA256: `ec8df7fbac8b590fa1d63c1ec8f48d0ab15e84c0a529d92e69cb706635fe6fcd`.
+- `dist/dsh-ai-factory-0.22.0.tgz`: **220 234 байт**.
+- SHA256: `3a3e6a442d42c53a8f30199a7a248b9dca4951c16725a93d92782921fa55b58f`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.22.0.md` (1 818 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.23.0.md` (1 642 байта), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -250,7 +258,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.15.0 на 0.21.0; schema 7, 51 инструмент.
+- `portable-test` обновлён с 0.15.0 на 0.22.0; schema 7, 54 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -265,7 +273,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл реализован bounded (autoWorkflow*, default off); standalone PostgreSQL/TLS реализованы, deploy не выполнен.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.21.0 не выполнен; HMR reload выполнен.
+- Полный restart DSH после 0.22.0 не выполнен; HMR reload выполнен.
 
 ## 8. Повтор
 

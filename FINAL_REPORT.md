@@ -1,7 +1,7 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-10. Плагин **dsh-ai-factory 0.21.0**, sync-сервер **0.17.0**,
-DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **51** инструмент.
+Дата: 2026-11-10. Плагин **dsh-ai-factory 0.22.0**, sync-сервер **0.17.0**,
+DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **54** инструмента.
 
 ## Что внедрено
 
@@ -11,7 +11,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **51** инструмен�
 | SQLite storage/migrations | готово | schema v7, миграции v1→v7, тесты |
 | Memory Engine | готово | CRUD, версии, FTS5, TTL, import/applyRemote |
 | Task Engine | готово | зависимости, claim/lease, retry, recovery |
-| Tool/Agent registry | готово | 7 builtin-профилей, CRUD, 51 tools |
+| Tool/Agent registry | готово | 7 builtin-профилей, CRUD, 54 tools |
 | Planner/orchestration | готово | `factory_plan_create`, DAG |
 | Dispatch/reviewer | готово | реальные `ctx.agents` children, allowlist |
 | Recovery | готово | stale lease, startup recovery |
@@ -22,12 +22,12 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **51** инструмен�
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
 | Tests | готово | 59 plugin + 10 server |
-| Install desktop | готово | live 0.21.0, 51 tools, schema 7 |
-| Portable profile | готово | `portable-test` 0.21.0 |
+| Install desktop | готово | live 0.22.0, 51 tools, schema 7 |
+| Portable profile | готово | `portable-test` 0.22.0 |
 
 ## Live-доказательства
 
-- `factory_status`: 0.21.0, schema 7, 10 профилей (7 builtin + 3 test; `BADROUTE` disabled), 29 задач, 3 памяти.
+- `factory_status`: 0.22.0, schema 7, 10 профилей (7 builtin + 3 test; `BADROUTE` disabled), 29 задач, 3 памяти.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -39,7 +39,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **51** инструмен�
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
 
-## BLOCK 3 Skill Manager (v0.21.0)
+## BLOCK 3 Skill Manager (v0.22.0)
 
 - Project-local `.skills/*.md`, strict frontmatter/limits, atomic store, fail-closed resolve.
 - Profile + skills are system prompt sections; task remains user; no `complete`.
@@ -85,9 +85,9 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **51** инструмен�
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-0.21.0.tgz
-  211 031 байт
-  ec8df7fbac8b590fa1d63c1ec8f48d0ab15e84c0a529d92e69cb706635fe6fcd
+dist/dsh-ai-factory-0.22.0.tgz
+  220 234 байт
+  3a3e6a442d42c53a8f30199a7a248b9dca4951c16725a93d92782921fa55b58f
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -95,7 +95,7 @@ dist/dsh-ai-factory-sync-server-0.17.0.tgz
 ```
 
 `dist/SHA256SUMS` содержит оба файла; release notes —
-`dist/RELEASE_NOTES-v0.22.0.md`.
+`dist/RELEASE_NOTES-v0.23.0.md`.
 
 ## Ограничения (внешняя инфраструктура)
 
@@ -121,7 +121,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.21.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.22.0.tgz
 ```
 
 Проверка в DSH:

@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.21.0 регистрирует **51 инструмент**.
+- Загружается Cordis-загрузчиком DSH; в v0.22.0 регистрирует **54 инструмента**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v7**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -43,6 +43,7 @@
   `TOOL_NOT_ALLOWED`.
 - **Model Router**: маршрут профиль → родитель → `modelFallbacks`; fallback при ошибке child; audit `model.route`/`model.fallback`.
 - **Autonomous workflow**: при `autoWorkflowEnabled` таймер находит READY-задачи и запускает bounded dispatch → review → fix через coordinator Agent; по умолчанию выключен.
+- **Agent Marketplace**: project-local `.agents/<slug>.json`; export strips internal IDs/secrets; import validates allowedTools subset, accessLevel, skills; built-ins as templates.
 - **Capability Discovery**: статический allowlist, файловое обнаружение без команд, optional safe probes, TTL 6h; `factory_capability_check` cache-only; `requiresCapabilities` на плане/задаче блокирует missing/stale до claim/child.
 - **Skill Manager**: project-local `.skills/*.md`; strict frontmatter, 16 KiB/50-file limits, root-only management, `factory_skill_assign`; profile + skills are system sections (4000 / 6000+), task stays user; skills never change `allowedTools`.
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
@@ -58,7 +59,7 @@
   Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
   автономен.
 - Аудит действий без записи содержимого памяти.
-- 116 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 122 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   10 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
 - Проверено в реальном Electron-процессе DSH: схема **v6**, 7 builtin-агентов, 51
@@ -196,7 +197,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.21.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.22.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -209,7 +210,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 > Вызови `factory_status` и покажи сырые поля.
 
 Ожидаемый ответ: `status: ready`, `driver: node:sqlite`,
-`schemaVersion: 7`, `agents: 7`, 51 инструмент.
+`schemaVersion: 7`, `agents: 7`, 54 инструмента.
 
 ### Установка на второй компьютер
 

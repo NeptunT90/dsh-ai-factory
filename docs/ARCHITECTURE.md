@@ -384,6 +384,15 @@ Host inventory cache, separate from tool health and from tool permissions.
 - `requiresCapabilities` on plans/tasks, preflight in Planner and Dispatch before claim/child;
 - capability availability never grants `allowedTools`.
 
+### 7.5h. Agent Marketplace (v0.22.0 / BLOCK 5)
+
+- `.agents/<slug>.json` project-local portable profiles; no migration;
+- export strips internal `agt_*`, `isBuiltin`, version/timestamps and rejects secrets;
+- import validates `allowedTools` subset, access level, project skills and name collision;
+- built-ins export as templates; import always creates a new custom profile;
+- 3 root-only tools; no child access; files use atomic temp+rename;
+- health: 51 factory tools / 59 actions; plugin total 54.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в

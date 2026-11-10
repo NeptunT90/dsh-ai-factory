@@ -22,6 +22,10 @@ export const TOOL_HEALTH_SPECS: readonly ToolHealthSpec[] = [
   { tool: 'factory_agent_get', action: '*', risk: 'R0', mode: 'probe', arguments: { id: 'agt_director' } },
   { tool: 'factory_agent_save', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_agent_toggle', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_agent_export', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_agent_import', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_agent_validate', action: '*', risk: 'R0', mode: 'observed', probeReason: 'requires_agent_file' },
+
   { tool: 'factory_skill_list', action: '*', risk: 'R0', mode: 'probe', arguments: {} },
   { tool: 'factory_skill_get', action: '*', risk: 'R0', mode: 'observed', probeReason: 'requires_skill_id' },
   { tool: 'factory_skill_validate', action: '*', risk: 'R0', mode: 'probe', arguments: {} },

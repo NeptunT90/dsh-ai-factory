@@ -2,6 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { SkillStore } from '../skills/store.js'
+import { AgentMarketplaceService } from './marketplace.js'
 import { FactoryError } from '../core/errors.js'
 import { asJsonValue, type JsonValue } from '../core/json.js'
 import type { FactoryRuntime } from '../runtime.js'
@@ -429,6 +430,131 @@ export function registerAgentTools(
           const agent = runtime.agents.setEnabled(args.id, args.enabled)
           runtime.auditTool('agent.toggled', null, exec, { agentId: agent.id, enabled: agent.enabled })
           return view(agent)
+        },
+      }),
+    ),
+  )
+
+  disposers.push(
+    ctx.tools.register(
+      defineTool({
+        name: 'factory_agent_export',
+        description: 'Экспортировать custom/built-in профиль как переносимый .agents/<slug>.json без внутренних ID и секретов. Root-only.',
+        parameters: {
+          agentId: { type: 'string', required: true, description: 'id профиля' },
+        },
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              marketplaceId: { type: 'string', required: true },
+              relativePath: { type: 'string', required: true },
+              hash: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            { type: 'text', text: `Экспортирован ${value.marketplaceId}: ${value.relativePath}\nhash: ${value.hash}` },
+          ],
+        },
+        async execute(args, exec) {
+          const runtime = runtimeOf(getRuntime, getStartupError)
+          if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+            throw new FactoryError('FORBIDDEN', 'Agent marketplace доступен только root/DIRECTOR')
+          }
+          const result = new AgentMarketplaceService(ctx, runtime).export(args.agentId, exec)
+          runtime.auditTool('agent.exported', null, exec, {
+            agentId: args.agentId,
+            marketplaceId: result.marketplaceId,
+            hash: result.hash,
+          })
+          return { marketplaceId: result.marketplaceId, relativePath: result.relativePath, hash: result.hash }
+        },
+      }),
+    ),
+  )
+
+  disposers.push(
+    ctx.tools.register(
+      defineTool({
+        name: 'factory_agent_import',
+        description: 'Импортировать профиль из .agents/<slug>.json в текущий проект как новый custom-профиль с проверкой прав. Root-only.',
+        parameters: {
+          fileId: { type: 'string', required: true, description: 'marketplace id / имя файла без .json' },
+          name: { type: 'string', description: 'Override имени для избежания CONFLICT' },
+        },
+        output: { schema: AGENT_OUTPUT, render: (_args, value) => [{ type: 'text', text: formatAgent(value) }] },
+        async execute(args, exec) {
+          const runtime = runtimeOf(getRuntime, getStartupError)
+          if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+            throw new FactoryError('FORBIDDEN', 'Agent marketplace доступен только root/DIRECTOR')
+          }
+          const result = new AgentMarketplaceService(ctx, runtime).import(args.fileId, exec, args.name)
+          runtime.auditTool('agent.imported', null, exec, {
+            agentId: result.agent.id,
+            marketplaceId: result.marketplaceId,
+            name: result.agent.name,
+            accessLevel: result.agent.accessLevel,
+          })
+          return view(result.agent)
+        },
+      }),
+    ),
+  )
+
+  disposers.push(
+    ctx.tools.register(
+      defineTool({
+        name: 'factory_agent_validate',
+        description: 'Проверить .agents/<slug>.json без записи: формат, allowedTools subset, skills, accessLevel. Root-only.',
+        parameters: {
+          fileId: { type: 'string', required: true, description: 'marketplace id / имя файла без .json' },
+          name: { type: 'string', description: 'Override имени для проверки' },
+        },
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              valid: { type: 'boolean', required: true },
+              marketplaceId: { type: 'string', required: true },
+              name: { type: 'string', required: true },
+              code: { type: 'string', required: true },
+              message: { type: 'string', required: true },
+              errors: { type: 'array', items: { type: 'string' }, required: true },
+              warnings: { type: 'array', items: { type: 'string' }, required: true },
+              missingAllowedTools: { type: 'array', items: { type: 'string' }, required: true },
+              missingSkills: { type: 'array', items: { type: 'string' }, required: true },
+              accessLevel: { type: 'string', required: true },
+            },
+          },
+          render: (_args, value) => [
+            {
+              type: 'text',
+              text: value.valid
+                ? `valid: ${value.marketplaceId} (${value.name})`
+                : `invalid: ${value.code} · ${value.message}`,
+            },
+          ],
+        },
+        async execute(args, exec) {
+          const runtime = runtimeOf(getRuntime, getStartupError)
+          if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+            throw new FactoryError('FORBIDDEN', 'Agent marketplace доступен только root/DIRECTOR')
+          }
+          const result = new AgentMarketplaceService(ctx, runtime).validate(args.fileId, exec, args.name)
+          return {
+            valid: result.valid,
+            marketplaceId: result.marketplaceId,
+            name: result.name,
+            code: result.code,
+            message: result.message,
+            errors: [...result.errors],
+            warnings: [...result.warnings],
+            missingAllowedTools: [...result.missingAllowedTools],
+            missingSkills: [...result.missingSkills],
+            accessLevel: result.accessLevel,
+          }
         },
       }),
     ),

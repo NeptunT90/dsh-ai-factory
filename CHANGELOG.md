@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.23.0] — 2026-11-10
+
+### Added
+
+- BLOCK 5 Agent Marketplace: `.agents/<slug>.json` export/import/validate;
+  internal IDs/secrets stripped/rejected; allowedTools subset, accessLevel, skills checks;
+  built-in templates; name override; atomic writes.
+- 3 root-only marketplace tools; 54 tools total, health 51 factory tools / 59 actions.
+- 122 plugin tests; server 0.17.0.
+
 ## [0.22.0] — 2026-11-10
 
 ### Added

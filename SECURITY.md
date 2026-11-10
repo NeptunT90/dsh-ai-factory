@@ -105,6 +105,16 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Agent Marketplace (v0.22.0 / BLOCK 5)
+
+- `factory_agent_export/import/validate` are root-only; no child allowlist.
+- `.agents/<slug>.json` is project-local; internal `agt_*`, `isBuiltin`, version/timestamps are not exported.
+- Import checks `allowedTools ⊆ caller tools`, `accessLevel ≤ caller`, project skill existence and name collision.
+- Export/import reject secret-like material with `SECRET_DETECTED`; no file is written on failed export.
+- Path traversal, symlink, invalid UTF-8/JSON, unknown fields and >128 KiB files are rejected.
+- Built-ins export as templates; import always creates a new custom profile.
+- `.agents` writes are governed by the DSH sandbox; the plugin enforces project-relative paths and root-only management.
+
 ## Capability Discovery (v0.21.0 / BLOCK 4)
 
 - `capabilityScanEnabled=false` and `capabilityProbeMode=off` by default; no automatic scan.

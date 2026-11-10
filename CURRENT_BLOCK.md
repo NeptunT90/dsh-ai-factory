@@ -1,16 +1,15 @@
 # Текущий блок
 
-**BLOCK 4 — Capability Discovery закрыт.**
+**BLOCK 5 — Agent Marketplace закрыт.**
 
 Сделано:
 
-1. Migration v7, 14 статических capabilities, filesystem detector, opt-in probes.
-2. Cache TTL 6h; capabilityCheck только кэш; Docker presence-only; scan default off.
-3. 5 root-only tools; Planner/task/dispatch requiresCapabilities preflight.
-4. 51 tool, health 48 factory tools / 56 actions; 116 tests.
-5. Plugin 0.21.0, root 0.22.0, server 0.17.0.
+1. `.agents/<slug>.json` export/import/validate; no migration.
+2. Built-in templates, name override, allowedTools subset, accessLevel, skills, secret rejection.
+3. 3 root-only tools; 54 tools, health 51/59; 122 tests.
+4. Plugin 0.22.0, root 0.23.0, server 0.17.0.
 
-Дальше: BLOCK 5/6 по плану. После BLOCK 6 — Watchdog (scripts/watchdog.ps1).
+Дальше: BLOCK 6 — Automatic Backup Expansion. После BLOCK 6 — Watchdog (`scripts/watchdog.ps1`).
 
 ## Предыдущий блок: browser/sync/live sync
 
