@@ -48,6 +48,20 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
   Web GUI-сессию.
 - 27 прежних плагинов сохранены; `doctor.ps1` проходит.
 
+### Live smoke v0.7.0
+
+Вызовы сделаны из Web GUI через реальные инструменты:
+
+- `factory_status` → 0.7.0, schema 3, 7 агентов, 34 инструмента.
+- `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
+- `factory_dispatch` задачи `tsk_a2e5f83e…` → child
+  `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
+- `factory_review` задачи `tsk_4336caca…` → child `fa6e4cad…`,
+  structured **PASS**, задача COMPLETED, fix не создавался.
+- Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
+
+Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
 ### Reviewer / workflow
 
 - 3 reviewer-теста: structured PASS, FAIL + fix-задача, отсутствие subagents.
@@ -82,9 +96,10 @@ GET /health
 
 ## 5. Dashboard
 
-Браузерная проверка выполнена на demo-runtime (v0.4.0); UI не менялся.
-Проверены Overview/Agents/Tasks/Settings; screenshot:
-[docs/assets/dashboard-overview.png](docs/assets/dashboard-overview.png).
+Live v0.7.0: `factory_dashboard start`, открыт URL с одноразовым токеном,
+редирект на HttpOnly-cookie. Панель показала 2 задачи, 1 память и audit
+`review.*`; screenshot:
+[docs/assets/dashboard-live-v0.7.0.png](docs/assets/dashboard-live-v0.7.0.png).
 Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
@@ -102,9 +117,9 @@ Read-only auth/405 проверены автотестами.
   embedded PGlite, single writer.
 - Нет автоматического планировщика backup/restore и multi-writer; backup
   endpoint/скрипт запускаются вручную.
-- Нет автоматического flush outbox по таймеру.
-- Live tool-calls из модели в Web GUI не выполнены (текущий клиент не
-  инициирует tool-call; схемы доставлены).
+- Auto-sync реализован; live-сервер к desktop-профилю не подключался.
+- `factory_workflow_run` в live-режиме не запускался: unit-тесты покрывают
+  цикл, а dispatch и REVIEWER проверены live отдельно.
 - Scoped tool allowlist, Model Router, фоновый автономный цикл не реализованы.
 - Физически второй ПК не проверялся.
 - Полный restart DSH после 0.7.0 не выполнен.

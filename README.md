@@ -294,6 +294,7 @@ config/                 примеры конфигурации
 - [release.md](docs/release.md) — сборка, tarball, GitHub Release.
 - [portability.md](docs/portability.md) — установка на второй ПК.
 - [sync-protocol.md](docs/sync-protocol.md) — контракт sync-сервера и outbox.
+- [LIVE_SMOKE.md](docs/LIVE_SMOKE.md) — живой smoke v0.7.0 в Web GUI.
 - [server/README.md](server/README.md) — запуск sync-сервера.
 
 ## Лицензия

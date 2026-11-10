@@ -121,6 +121,8 @@
 - `factory_dispatch review=true` → REVIEW.
 - `factory_workflow_run`: dispatch → REVIEWER → fix → repeat, maxCycles 1–5.
 - PASSED/FAILED/EXHAUSTED/ERROR, история циклов, audit workflow.*.
+- Live smoke из Web GUI: реальный dispatch (PONG) и реальный REVIEWER (PASS),
+  dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
 ### Исправлено
