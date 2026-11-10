@@ -27,8 +27,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.5.0.tgz` — 121 920 байт,
-SHA256 `27b8ede14fb51046c66c2c73de799e060929e56239bcd58a3a825c5e219eb7a7`.
+Артефакт: `dist/dsh-ai-factory-0.5.0.tgz` — 123 562 байт,
+SHA256 `f3f8e888f108acfe1b751147801803c3ec7f8f2ff4da9adf84e172abd28088b6`.
 
 ## 3. Установка из tarball
 
@@ -90,8 +90,14 @@ pnpm server:build
 
 Docker-образ и Compose — [server/README.md](../server/README.md). Перед
 публикацией сервера задайте `SYNC_TOKEN`, TLS reverse proxy и volume для
-данных. PGlite — embedded PostgreSQL; standalone PostgreSQL/Ubuntu — следующий
-шаг.
+данных. Backup:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/server-backup.ps1 `
+  -Url http://127.0.0.1:8787 -OutFile .\sync-backup.tar.gz
+```
+
+PGlite — embedded PostgreSQL; standalone PostgreSQL/Ubuntu — следующий шаг.
 
 ## 7. GitHub Actions
 

@@ -67,6 +67,7 @@ export class FactoryRuntime {
     this.tasks = new TaskEngine(db, this.projects, this.agents, config)
     this.planner = new PlannerService(this.tasks, this.agents)
     this.sync = new SyncService(db, this.memory, this.audit, config)
+    if (config.syncAuto) this.sync.startAuto()
     try {
       this.expiredOnStart = this.memory.expire()
     } catch (error) {
@@ -159,6 +160,7 @@ export class FactoryRuntime {
   }
 
   close(): void {
+    this.sync.stopAuto()
     try {
       this.audit.record({ event: 'factory.stopped', level: 'info', data: {} })
     } catch {

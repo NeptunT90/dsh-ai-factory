@@ -23,3 +23,5 @@
     syncDeviceId: ''
     syncBatchSize: 50
     syncTimeoutMs: 15000
+    syncAuto: false
+    syncIntervalSeconds: 60

@@ -81,6 +81,16 @@ PGlite подходит для одного writer-процесса.
 помечаются в outbox и требуют ручного разрешения/повторной отправки. Это
 сознательно простое поведение; CRDT/merge — следующий шаг.
 
+## Auto-sync и backup
+
+- `syncAuto: true` запускает push+pull каждые `syncIntervalSeconds` (мин. 15)
+  при загруженном плагине; таймер `unref`-нут, снимается при unload.
+- `status` показывает `auto`, `running`, `lastSyncAt`, `lastSyncError`.
+- `GET /v1/admin/backup` (Bearer) отдаёт consistent `.tar.gz` PGlite data-dir;
+  `scripts/server-backup.ps1` сохраняет файл и SHA256. Restore — остановить
+  сервер, сохранить текущий data-dir, распаковать архив, запустить.
+- Backup содержит память пользователя; не публиковать.
+
 ## Outbox
 
 SQLite triggers создают `sync_outbox` на реальные изменения

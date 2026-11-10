@@ -97,8 +97,11 @@
   HTTPS/loopback; cursor; backoff.
 - `MemoryEngine.applyRemote`: LWW по updatedAt, импорт проекта, подавление
   обратного outbox, FTS-обновление.
-- 3 sync-теста: push из A → pull в B, offline outbox/backoff, отказ по токену.
-- 37 тестов; live v0.5.0, schema 3, 32 инструмента.
+- 4 sync-теста: push из A → pull в B, offline outbox/backoff, отказ по токену,
+  auto-sync timer.
+- Auto-sync по таймеру (`syncAuto`/`syncIntervalSeconds`) и status.
+- Backup endpoint `/v1/admin/backup` + `scripts/server-backup.ps1`.
+- 38 plugin-тестов, 5 server-тестов; live v0.5.0, schema 3, 32 инструмента.
 - Sync-сервер `server/` на PGlite (PostgreSQL/WASM) + pgvector, Bearer auth,
   idempotency, LWW/conflict, Dockerfile/Compose и 5 node --test тестов.
 - End-to-end: два SQLite-runtime через реальный HTTP-сервер; health

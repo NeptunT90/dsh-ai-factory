@@ -65,11 +65,32 @@ $env:DSH_AI_FACTORY_SYNC_TOKEN = "тот-же-токен"
 - `POST /v1/sync/push` — Bearer, idempotent `opId`.
 - `GET /v1/sync/pull?since=<cursor>` — Bearer, LWW/cursor.
 
+## Backup
+
+Сервер отдаёт consistent tar.gz через защищённый endpoint:
+
+```powershell
+$env:SYNC_TOKEN = "тот-же-токен"
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\scripts\server-backup.ps1 `
+  -Url http://127.0.0.1:8787 -OutFile .\sync-backup.tar.gz
+```
+
+Restore:
+
+1. Остановить сервер.
+2. Сохранить текущий `SYNC_DB_DIR` (переименовать, не удалять).
+3. Создать пустой `SYNC_DB_DIR` и распаковать туда архив:
+   `tar -xzf sync-backup.tar.gz -C <SYNC_DB_DIR>`.
+4. Запустить сервер и проверить `/health` (`memories`/`operations`).
+
+Архив содержит полноценный PGlite data-dir; не публикуйте его — там память
+пользователя.
+
 ## Ограничения
 
 - PGlite — embedded single-process PostgreSQL; для нескольких writer-хостов
   нужен standalone PostgreSQL + `pg` adapter (следующий шаг).
 - Нет встроенного TLS: используйте reverse proxy с HTTPS.
-- Нет автоматического backup-планировщика: сохраняйте volume/каталог `data`.
+- Нет автоматического backup-планировщика: endpoint/скрипт запускаются вручную.
 - Сервер не логирует payload памяти.
 - Конфликты push возвращаются клиенту; автоматического merge/CRDT нет.

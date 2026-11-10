@@ -24,6 +24,8 @@ Patch заменяет конфигурацию строки целиком. Е�
 | `syncDeviceId` | string | `""` | Постоянный id устройства; пусто = сгенерировать |
 | `syncBatchSize` | number | 50 | Максимум операций в push |
 | `syncTimeoutMs` | number | 15000 | Таймаут запроса |
+| `syncAuto` | boolean | false | Автоматический push+pull при загруженном плагине |
+| `syncIntervalSeconds` | number | 60 | Интервал auto-sync (мин. 15) |
 
 ## Пути
 

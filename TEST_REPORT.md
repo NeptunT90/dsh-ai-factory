@@ -19,12 +19,12 @@
 
 ```
 Test Files  10 passed (10)
-Tests       37 passed (37)
+Tests       38 passed (38)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
-offline/backoff, auth failure, tool contract (32 инструмента).
+offline/backoff, auth failure, auto-sync timer, tool contract (32 инструмента).
 
 ### Sync server
 
@@ -35,7 +35,7 @@ fail 0
 ```
 
 Покрыто: pgvector health, idempotent push, pull/cursor, LWW и conflict,
-invalid payload, HTTP Bearer auth, health.
+invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
@@ -63,7 +63,9 @@ GET /health
 3. Runtime B (SQLite B) pull → applied 1; запись в B, обратного outbox 0.
 4. A update → push; B pull → version 2, content обновлён.
 5. `/health`: `memories:1`, `operations:2`, `vector:true`.
-6. Сервер остановлен и запущен снова на том же `SYNC_DB_DIR`; `/health`
+6. Backup endpoint вернул gzip; `scripts/server-backup.ps1` скачал
+   `sync-backup-test.tar.gz` (4 856 650 байт, magic `1F8B`, SHA256) — сервер
+   остановлен и запущен снова на том же `SYNC_DB_DIR`; `/health`
    подтвердил `memories:1`, `operations:2` — данные пережили restart.
 
 Это реальный HTTP-обмен между двумя SQLite через PostgreSQL-совместимый
@@ -78,8 +80,8 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.5.0.tgz`: **121 920 байт**.
-- SHA256: `27b8ede14fb51046c66c2c73de799e060929e56239bcd58a3a825c5e219eb7a7`.
+- `dist/dsh-ai-factory-0.5.0.tgz`: **123 562 байт**.
+- SHA256: `f3f8e888f108acfe1b751147801803c3ec7f8f2ff4da9adf84e172abd28088b6`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
 - `portable-test` обновлён с 0.4.0 на 0.5.0; schema 3, 32 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
@@ -89,7 +91,8 @@ Read-only auth/405 проверены автотестами.
 
 - Standalone PostgreSQL/Ubuntu + TLS reverse proxy не развёрнуты; используется
   embedded PGlite, single writer.
-- Нет автоматического backup/restore сервера и multi-writer.
+- Нет автоматического планировщика backup/restore и multi-writer; backup
+  endpoint/скрипт запускаются вручную.
 - Нет автоматического flush outbox по таймеру.
 - Live tool-calls из модели в Web GUI не выполнены (текущий клиент не
   инициирует tool-call; схемы доставлены).

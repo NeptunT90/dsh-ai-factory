@@ -116,6 +116,28 @@ describe('SyncService', () => {
     expect(updated.version).toBe(2)
   })
 
+  it('auto-sync flushes the outbox on the configured timer', async () => {
+    process.env.DSH_AI_FACTORY_SYNC_TOKEN = 'test-token'
+    const mock = await mockSyncServer('test-token')
+    const runtime = track(
+      createTestRuntime({ syncUrl: mock.url, syncDeviceId: 'dev_auto', syncTokenEnv: 'DSH_AI_FACTORY_SYNC_TOKEN' }),
+    )
+    runtime.runtime.sync.startAuto(100)
+    runtime.runtime.memory.remember({ content: 'auto sync memory', kind: 'semantic', projectId: runtime.projectId })
+    const deadline = Date.now() + 3000
+    while (mock.changes.length === 0 && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+    runtime.runtime.sync.stopAuto()
+    const stopDeadline = Date.now() + 1000
+    while (runtime.runtime.sync.status().running && Date.now() < stopDeadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+    expect(mock.changes.length).toBeGreaterThanOrEqual(1)
+    expect(runtime.runtime.sync.status().auto).toBe(false)
+    expect(runtime.runtime.sync.status().lastSyncAt).toBeGreaterThan(0)
+  })
+
   it('keeps failed operations in the outbox when the server is unavailable and backs off', async () => {
     process.env.DSH_AI_FACTORY_SYNC_TOKEN = 'test-token'
     const runtime = track(

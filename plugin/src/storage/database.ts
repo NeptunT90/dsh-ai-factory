@@ -72,6 +72,10 @@ export class FactoryDatabase {
     }
   }
 
+  get isClosed(): boolean {
+    return this.closed
+  }
+
   get schemaVersion(): number {
     const row = this.get<{ user_version: number }>('PRAGMA user_version')
     return row?.user_version ?? 0

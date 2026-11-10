@@ -14,7 +14,8 @@
 3. Store/HTTP тесты сервера — 5 passed.
 4. End-to-end: A SQLite → HTTP → PGlite → B SQLite; update дошёл;
    health `vector: true`.
-5. Plugin 0.5.0: schema 3, 32 инструмента; 37 plugin-тестов.
+5. Auto-sync по таймеру и backup endpoint/скрипт.
+6. Plugin 0.5.0: schema 3, 32 инструмента; 38 plugin-тестов, 5 server-тестов.
 
 Осталось:
 

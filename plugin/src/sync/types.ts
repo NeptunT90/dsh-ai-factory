@@ -61,4 +61,8 @@ export interface SyncStatus {
   readonly pending: number
   readonly failed: number
   readonly lastError: string
+  readonly auto: boolean
+  readonly running: boolean
+  readonly lastSyncAt: number
+  readonly lastSyncError: string
 }

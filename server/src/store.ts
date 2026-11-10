@@ -332,6 +332,12 @@ export class PGliteStore {
     return { changes, cursor: String(cursor) }
   }
 
+  /** Consistent tar.gz snapshot of the PGlite data directory. */
+  async dump(): Promise<Uint8Array> {
+    const blob = await this.db.dumpDataDir('gzip')
+    return new Uint8Array(await blob.arrayBuffer())
+  }
+
   async health(): Promise<{ ok: true; vector: boolean; memories: number; operations: number }> {
     const extension = await this.db.query<{ extname: string }>(
       "SELECT extname FROM pg_extension WHERE extname = 'vector'",

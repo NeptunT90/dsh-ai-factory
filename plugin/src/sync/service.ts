@@ -61,6 +61,9 @@ function normalizeBaseUrl(raw: string): string {
 
 /** Local outbox and HTTP client for memory synchronization. */
 export class SyncService {
+  private autoTimer: ReturnType<typeof setInterval> | undefined
+  private syncing = false
+
   constructor(
     private readonly db: FactoryDatabase,
     private readonly memory: MemoryEngine,
@@ -105,6 +108,52 @@ export class SyncService {
         this.db.get<{ last_error: string | null }>(
           'SELECT last_error FROM sync_outbox WHERE sent_at IS NULL AND last_error IS NOT NULL ORDER BY attempts DESC LIMIT 1',
         )?.last_error ?? '',
+      auto: this.autoTimer !== undefined,
+      running: this.syncing,
+      lastSyncAt: Number(this.getState('last_sync_at') ?? 0),
+      lastSyncError: this.getState('last_sync_error') ?? '',
+    }
+  }
+
+  /** Start periodic push+pull while the plugin is alive. */
+  startAuto(intervalMs?: number): void {
+    if (this.autoTimer !== undefined) return
+    if (!this.configured) return
+    const interval = intervalMs === undefined
+      ? Math.max(15_000, Math.min(86_400_000, this.config.syncIntervalSeconds * 1000))
+      : Math.max(100, Math.min(86_400_000, intervalMs))
+    this.autoTimer = setInterval(() => void this.autoTick(), interval)
+    this.autoTimer.unref?.()
+    this.audit.record({ event: 'sync.auto_started', level: 'info', data: { intervalMs: interval } })
+  }
+
+  stopAuto(): void {
+    if (this.autoTimer !== undefined) {
+      clearInterval(this.autoTimer)
+      this.autoTimer = undefined
+      this.audit.record({ event: 'sync.auto_stopped', level: 'info', data: {} })
+    }
+  }
+
+  private async autoTick(): Promise<void> {
+    if (this.syncing || !this.configured || this.db.isClosed) return
+    this.syncing = true
+    try {
+      await this.sync()
+    } catch (error) {
+      if (this.db.isClosed) return
+      try {
+        this.setState('last_sync_error', errorMessage(error).slice(0, 1000))
+        this.audit.record({
+          event: 'sync.auto_failed',
+          level: 'warn',
+          data: { error: errorMessage(error).slice(0, 500) },
+        })
+      } catch {
+        // The plugin may have unloaded while a network request was in flight.
+      }
+    } finally {
+      this.syncing = false
     }
   }
 
@@ -163,6 +212,8 @@ export class SyncService {
         }
       }
     }
+    this.setState('last_sync_at', String(now()))
+    this.setState('last_sync_error', '')
     this.audit.record({
       event: 'sync.push',
       level: conflicts + failed > 0 ? 'warn' : 'info',
@@ -196,6 +247,8 @@ export class SyncService {
     if (typeof response.cursor === 'string' && response.cursor !== '') {
       this.setState('cursor', response.cursor)
     }
+    this.setState('last_sync_at', String(now()))
+    this.setState('last_sync_error', '')
     this.audit.record({
       event: 'sync.pull',
       level: 'info',

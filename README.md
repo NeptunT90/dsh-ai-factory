@@ -48,8 +48,9 @@
   LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
   развёрнут; локальный режим полностью автономен.
 - Аудит действий без записи содержимого памяти.
-- 37 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
-  dashboard, sync, tool contract), строгая типизация TypeScript, сборка в `lib/`.
+- 38 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+  dashboard, sync/auto-sync, tool contract); отдельно 5 тестов sync-сервера;
+  строгая типизация TypeScript, сборка в `lib/`.
 - Проверено в реальном Electron-процессе DSH: схема **v3**, 7 агентов, 32
   инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
@@ -120,7 +121,11 @@ triggers), при ошибке остаются там и повторяются
 LWW по `updatedAt` и не создаёт обратный outbox.
 
 Сервер: [server/README.md](server/README.md) (PGlite PostgreSQL + pgvector,
-Bearer auth, Docker Compose). Контракт: [docs/sync-protocol.md](docs/sync-protocol.md).
+Bearer auth, Docker Compose, backup endpoint). Контракт:
+[docs/sync-protocol.md](docs/sync-protocol.md).
+
+Для автоматического flush/pull задайте `syncAuto: true` и
+`syncIntervalSeconds` (минимум 15); таймер живёт только пока загружен плагин.
 
 `factory_dashboard` запускает сервер только на `127.0.0.1` (порт 0 — свободный).
 URL содержит одноразовый токен; после открытия токен превращается в

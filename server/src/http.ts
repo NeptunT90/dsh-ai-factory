@@ -125,6 +125,17 @@ export class SyncHttpServer {
       return
     }
 
+    if (req.method === 'GET' && url.pathname === '/v1/admin/backup') {
+      const bytes = await this.store.dump()
+      res.writeHead(200, {
+        'Content-Type': 'application/gzip',
+        'Content-Disposition': `attachment; filename="dsh-ai-factory-sync-${Date.now()}.tar.gz"`,
+        'Content-Length': String(bytes.byteLength),
+      })
+      res.end(Buffer.from(bytes))
+      return
+    }
+
     this.json(res, 404, { error: 'not found' })
   }
 

@@ -74,4 +74,13 @@ test('health is public, push/pull require the bearer token', async () => {
   const pullBody = await pulled.json()
   assert.equal(pullBody.changes.length, 1)
   assert.equal(pullBody.changes[0].payload.content, 'HTTP body')
+
+  const backup = await fetch(`${started.url}/v1/admin/backup`, {
+    headers: { Authorization: 'Bearer test-token' },
+  })
+  assert.equal(backup.status, 200)
+  assert.equal(backup.headers.get('content-type'), 'application/gzip')
+  const bytes = new Uint8Array(await backup.arrayBuffer())
+  assert.equal(bytes[0], 0x1f)
+  assert.equal(bytes[1], 0x8b)
 })

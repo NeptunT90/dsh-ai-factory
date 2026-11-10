@@ -45,6 +45,10 @@ export interface FactoryConfig {
   syncBatchSize: number
   /** HTTP timeout for one sync request. */
   syncTimeoutMs: number
+  /** Flush/pull automatically while the plugin is loaded. */
+  syncAuto: boolean
+  /** Auto-sync interval in seconds (minimum 15). */
+  syncIntervalSeconds: number
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -70,6 +74,8 @@ export const Config = Schema.object({
   syncDeviceId: Schema.string().default(''),
   syncBatchSize: Schema.number().min(1).max(200).default(50),
   syncTimeoutMs: Schema.number().min(1000).max(60_000).default(15_000),
+  syncAuto: Schema.boolean().default(false),
+  syncIntervalSeconds: Schema.number().min(15).max(86_400).default(60),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')
