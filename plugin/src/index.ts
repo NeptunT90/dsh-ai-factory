@@ -4,6 +4,9 @@ import { Config, resolveConfig, type FactoryConfig } from './config.js'
 import { registerMemoryTools } from './memory/tools.js'
 import { FactoryRuntime, FACTORY_VERSION, type PluginLogger } from './runtime.js'
 import { registerStatusTool } from './tools/status.js'
+import { registerAgentTools } from './agents/tools.js'
+import { registerTaskTools } from './tasks/tools.js'
+import { registerOrchestrationTools } from './orchestration/tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -52,10 +55,16 @@ export function apply(ctx: Context, config: FactoryConfig): void {
     disposers.push(registerStatusTool(ctx, () => runtime, () => startupError))
     if (runtime) {
       disposers.push(...registerMemoryTools(ctx, () => runtime, () => startupError))
+      disposers.push(...registerAgentTools(ctx, () => runtime, () => startupError))
+      disposers.push(...registerTaskTools(ctx, () => runtime, () => startupError))
+      disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       runtime.audit.record({
         event: 'factory.tools_registered',
         level: 'info',
-        data: { count: disposers.length, names: ['factory_status', 'factory_memory_*'] },
+        data: {
+          count: disposers.length,
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration'],
+        },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)
     }

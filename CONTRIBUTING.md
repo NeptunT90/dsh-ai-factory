@@ -29,6 +29,9 @@ pwsh -NoProfile -File scripts/doctor.ps1
   сообщения инструментов — на русском.
 - Время — epoch milliseconds; id — с префиксом (`mem_`, `prj_`, `tsk_`).
 - SQL — только параметризованный.
+- Кодировка: JSON/YAML/TS — UTF-8 **без BOM**; PowerShell-скрипты для
+  Windows PowerShell 5.1 — UTF-8 **с BOM**. `Set-Content -Encoding UTF8` в
+  PowerShell 5.1 добавляет BOM и уже один раз ломал `package.json`.
 
 ## Коммиты
 

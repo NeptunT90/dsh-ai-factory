@@ -4,25 +4,27 @@
 
 ## Сейчас
 
-1. Завершить Phase 1:
-   - пересобрать плагин с audit-записью о регистрации инструментов;
-   - установить в профиль `desktop` после резервной копии;
-   - вызвать `factory_status` из Web GUI и проверить память через
-     `factory_memory_remember` / `factory_memory_search`;
-   - проверить, что данные сохраняются после перезапуска.
-2. Добавить скрипты `install/uninstall/backup/restore/doctor`.
-3. Обновить `TEST_REPORT.md` фактическими результатами.
-4. Закоммитить Phase 1.
+1. Финальный smoke в Web GUI:
+   - `factory_status`;
+   - `factory_plan_create` с 2–3 шагами;
+   - `factory_task_claim` / `complete` для первого шага;
+   - проверить, что зависимый шаг стал READY.
+2. Полный перезапуск DSH и проверка сохранности схемы/задач.
+3. Закоммитить Phase 2/3 core.
 
 ## Следующая очередь
 
-- Phase 2: Agent Registry и DIRECTOR.
-- Phase 3: Task Engine + Recovery.
-- Phase 1.1: brief памяти в промпт через официальный механизм.
+- Phase 2b: `ctx.agents.create` / subagent-диспетчеризация.
+- Ограничение инструментов агента через scoped registration/restrict.
+- Model Router и выбор модели по роли.
+- Phase 3b: workflow-ветвления, автоматический executor, REVIEWER-цикл.
+- Инъекция brief/памяти в начало сессии через официальный `agent.inject`.
+- Dashboard, server sync, GitHub — после стабилизации ядра.
 
 ## Запреты
 
 - Не менять исходники DSH.
 - Не публиковать секреты и содержимое пользовательской памяти.
 - Не удалять данные без явного флага.
+- Не выдавать профили агентов за запущенных LLM-агентов.
 - Не выдавать план за реализацию.

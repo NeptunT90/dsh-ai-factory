@@ -120,4 +120,87 @@ export const MIGRATIONS: readonly Migration[] = [
       END;
     `,
   },
+  {
+    version: 2,
+    name: 'orchestration: agent profiles, tasks, task events',
+    sql: `
+      CREATE TABLE agent_profiles (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        role TEXT NOT NULL CHECK (role IN (
+          'director', 'researcher', 'developer', 'sysadmin', 'analyst', 'executor', 'reviewer', 'custom'
+        )),
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        system_instruction TEXT NOT NULL DEFAULT '',
+        model_provider TEXT,
+        model TEXT,
+        reasoning_effort TEXT,
+        tools TEXT NOT NULL DEFAULT '[]',
+        access_level TEXT NOT NULL DEFAULT 'workspace' CHECK (access_level IN (
+          'read', 'workspace', 'elevated', 'trusted'
+        )),
+        memory_scope TEXT NOT NULL DEFAULT 'project' CHECK (memory_scope IN (
+          'project', 'global', 'both'
+        )),
+        limits TEXT NOT NULL DEFAULT '{}',
+        enabled INTEGER NOT NULL DEFAULT 1 CHECK (enabled IN (0, 1)),
+        is_builtin INTEGER NOT NULL DEFAULT 0 CHECK (is_builtin IN (0, 1)),
+        version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+      CREATE INDEX ix_agent_profiles_role ON agent_profiles(role, enabled);
+
+      CREATE TABLE tasks (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        parent_id TEXT REFERENCES tasks(id) ON DELETE SET NULL,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        goal TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL CHECK (status IN (
+          'NEW', 'PLANNING', 'READY', 'RUNNING', 'WAITING', 'REVIEW', 'FAILED', 'COMPLETED', 'CANCELLED'
+        )),
+        priority INTEGER NOT NULL DEFAULT 50,
+        created_by TEXT NOT NULL,
+        assigned_agent_id TEXT REFERENCES agent_profiles(id) ON DELETE SET NULL,
+        assigned_role TEXT,
+        plan TEXT NOT NULL DEFAULT '[]',
+        dependencies TEXT NOT NULL DEFAULT '[]',
+        due_at INTEGER,
+        available_at INTEGER,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        max_attempts INTEGER NOT NULL DEFAULT 3 CHECK (max_attempts >= 1),
+        timeout_ms INTEGER,
+        result TEXT,
+        error TEXT,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0),
+        lease_owner TEXT,
+        lease_until INTEGER,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        started_at INTEGER,
+        finished_at INTEGER
+      );
+      CREATE INDEX ix_tasks_project_status ON tasks(project_id, status, priority DESC, created_at ASC);
+      CREATE INDEX ix_tasks_ready ON tasks(project_id, status, available_at);
+      CREATE INDEX ix_tasks_parent ON tasks(parent_id);
+      CREATE INDEX ix_tasks_agent ON tasks(assigned_agent_id, status);
+      CREATE INDEX ix_tasks_lease ON tasks(status, lease_until);
+
+      CREATE TABLE task_events (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        ts INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        actor TEXT,
+        from_status TEXT,
+        to_status TEXT,
+        data TEXT NOT NULL DEFAULT '{}'
+      );
+      CREATE INDEX ix_task_events_task ON task_events(task_id, ts DESC);
+    `,
+  },
 ]

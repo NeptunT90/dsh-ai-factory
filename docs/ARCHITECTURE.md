@@ -72,16 +72,19 @@
 - Соединение синхронное; все операции одного процесса сериализованы. Для
   будущего фонового scheduler этого достаточно, пока один writer.
 
-### Схема v1
+### Схема (v1 + v2)
 
-| Таблица | Назначение |
-|---|---|
-| `projects` | Проект: стабильный id, canonical path, имя |
-| `memory_entries` | Записи памяти, trust, версии, TTL, soft delete |
-| `memory_versions` | Снимок состояния до изменения |
-| `memory_fts` | FTS5-индекс (title, content, tags) |
-| `audit_log` | Аудит действий и жизненного цикла |
-| `settings` | Зарезервировано для будущих настроек |
+| Таблица | Версия | Назначение |
+|---|---|---|
+| `projects` | v1 | Проект: стабильный id, canonical path, имя |
+| `memory_entries` | v1 | Записи памяти, trust, версии, TTL, soft delete |
+| `memory_versions` | v1 | Снимок состояния до изменения |
+| `memory_fts` | v1 | FTS5-индекс (title, content, tags) |
+| `audit_log` | v1 | Аудит действий и жизненного цикла |
+| `settings` | v1 | Зарезервировано для настроек |
+| `agent_profiles` | v2 | Durable-профили специалистов и лимиты |
+| `tasks` | v2 | Очередь задач, зависимости, lease, retry |
+| `task_events` | v2 | История переходов задачи |
 
 Ключевые инварианты:
 
@@ -146,11 +149,14 @@ apply(ctx, config)
   ├─ config.enabled? ── нет → лог, выход
   ├─ FactoryRuntime.create
   │    ├─ resolveConfig / mkdir
-  │    ├─ FactoryDatabase (migrations)
+  │    ├─ FactoryDatabase (миграции v1→v2)
   │    ├─ ProjectService / AuditLog / MemoryEngine
-  │    └─ expire просроченной памяти
+  │    ├─ AgentRegistry.seedBuiltins()
+  │    ├─ TaskEngine + PlannerService
+  │    ├─ expire просроченной памяти
+  │    └─ recoverStale() для задач с истёкшим lease
   ├─ registerStatusTool (всегда)
-  ├─ registerMemoryTools (если runtime готов)
+  ├─ registerMemoryTools / AgentTools / TaskTools / OrchestrationTools
   └─ ctx.effect(() => dispose tools → close DB)
 ```
 
@@ -158,25 +164,74 @@ apply(ctx, config)
 `status:error` с причиной. Ошибка отдельного инструмента возвращается как
 штатная ошибка tool-call.
 
-## 7. Будущие подсистемы и их места
+## 7. Agent Registry и Task Engine
 
-| Подсистема | Точка интеграции | Фаза |
-|---|---|---|
-| Task Engine | `tasks/` + таблицы `tasks`, `task_events` | 3 |
-| DIRECTOR | оркестратор над Task Engine и Agent Registry | 2–3 |
-| Agent Registry | `agents/`; профили + `ctx.agents` | 2 |
-| Tool Registry | метаданные над `ctx.tools`; не подмена registry | 2 |
-| Reviewer | отдельный агент + правила приёмки | 6 |
-| Workflow | граф шагов над Task Engine | 3 |
-| Recovery | lease/heartbeat задач, повторные попытки | 3 |
-| Scheduler | `ctx.effect` + таймеры, только пока процесс жив | 3 |
-| Dashboard | отдельный локальный HTTP + токен или client-plugin | 7 |
-| Server sync | outbox + REST + pgvector | 4 |
-| GitHub | `git`/API через Tool Registry | 5 |
-| Plugin Creator | отдельный контролируемый модуль | 8 |
+### 7.1. Agent Registry
 
-Ни один из этих модулей не будет «пустой папкой»: каждый появится с
-работающей реализацией, тестами и записью в прогрессе.
+Таблица `agent_profiles` хранит durable-профили:
+`role`, `title`, `system_instruction`, `model_provider/model`,
+`tools` (рекомендуемые имена/glob-паттерны), `access_level`,
+`memory_scope`, `limits`, `enabled`, `is_builtin`, `version`.
+
+Семь встроенных профилей: DIRECTOR, RESEARCHER, DEVELOPER, SYSADMIN, ANALYST,
+EXECUTOR, REVIEWER. `seedBuiltins()` идемпотентен: существующие профили и
+пользовательские правки не перезаписываются.
+
+**Важно:** профиль — это конфигурация роли, а не запущенный LLM-агент.
+Фактическое создание дочернего агента через `ctx.agents.create()` и передача
+ему scoped-инструментов — Phase 2b. До этого `tools` — рекомендации для
+будущего ограничения, а не enforcement.
+
+### 7.2. Task Engine
+
+`tasks` — durable очередь. Поля: проект, родитель, цель, статус, приоритет,
+исполнитель/роль, план, зависимости, срок, `attempts/max_attempts`,
+`available_at`, `lease_owner/lease_until`, результат/ошибка, версия.
+
+Статусы: `NEW → PLANNING → READY → RUNNING → WAITING/REVIEW → COMPLETED`,
+а также `FAILED`, `CANCELLED`. Ключевые инварианты:
+
+- `claim` атомарен: READY, все зависимости COMPLETED, лимит параллельных
+  задач агента не превышен; lease и attempt выдаются в одной транзакции.
+- `complete` освобождает lease и переводит зависимые WAITING → READY.
+- `fail` делает retry с экспоненциальным backoff, пока есть попытки; иначе
+  FAILED. Ручной `retry` расширяет бюджет на одну попытку.
+- `recoverStale` на старте находит RUNNING с истёкшим lease и возвращает их в
+  READY/FAILED. Это реальное восстановление после падения, а не имитация.
+- `task_events` хранит аудит переходов.
+
+### 7.3. Planner / DIRECTOR
+
+`factory_plan_create` принимает цель и шаги; Planner проверяет уникальность
+ключей, DAG и циклы, топологически создаёт родителя и дочерние задачи,
+назначает профили по ролям. Зависимости становятся id задач.
+
+`factory_director_brief` — не автономный LLM-цикл, а фактический снимок
+состояния: агенты, статистика задач, открытые задачи, последние записи памяти
+и детерминированные next actions. Решение и вызовы инструментов остаются за
+главной моделью.
+
+### 7.4. Реализовано / ещё нет
+
+| Подсистема | Статус |
+|---|---|
+| Agent Registry + 7 профилей + CRUD | реализовано и проверено |
+| Task Engine: зависимости, lease, retry, recovery, events | реализовано и проверено |
+| Planner DAG + `factory_plan_create` | реализовано и проверено |
+| DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
+| Фактический запуск дочерних LLM-агентов через `ctx.agents` | Phase 2b |
+| Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
+| Scheduler, dashboard, server sync, GitHub | Phase 4/5/7 |
+
+| Будущая подсистема | Точка интеграции |
+|---|---|
+| Reviewer | отдельный агент + правила приёмки |
+| Workflow | граф шагов над Task Engine |
+| Scheduler | `ctx.effect` + таймеры, только пока процесс жив |
+| Dashboard | локальный HTTP + токен или client-plugin |
+| Server sync | outbox + REST + pgvector |
+| GitHub | `git`/API через Tool Registry |
+| Plugin Creator | отдельный контролируемый модуль |
 
 ## 8. Принятые решения
 
@@ -193,10 +248,14 @@ apply(ctx, config)
 6. **Никаких tools для shell/SSH в Phase 1** — сначала фундамент и
    безопасность; опасные инструменты появятся с политикой approvals.
 
-## 9. Ограничения Phase 1
+## 9. Ограничения текущей фазы
 
 - Один процесс-писатель; межпроцессная синхронизация не реализована.
-- Нет фонового scheduler; TTL очищается при старте и при явном вызове.
+- Нет фонового scheduler; TTL и recovery запускаются при старте и явно.
+- Профили агентов не запускают модель и не ограничивают host-tools
+  принудительно; это Phase 2b.
+- Task Engine не запускает исполнителей автоматически — задачи берутся через
+  `claim`; автоматическая диспетчеризация появится вместе с агентами.
 - Нет embeddings/векторного поиска.
 - Нет UI; взаимодействие через инструменты и SQLite/CLI-диагностику.
-- Нет автоматического brief в промпт; это Phase 2.
+- Нет автоматического brief в промпт; это Phase 2b.

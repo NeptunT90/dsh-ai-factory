@@ -28,7 +28,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 
 - `status: ready`
 - `driver: node:sqlite`
-- `schemaVersion: 1`
+- `schemaVersion: 2`
+- `agents: 7`
 - `dbPath` указывает на `%USERPROFILE%\.dsh\ai-factory\factory.db`
 
 Затем:

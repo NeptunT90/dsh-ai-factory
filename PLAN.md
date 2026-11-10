@@ -36,6 +36,8 @@
       текущую Web GUI-сессию.
 - [x] Скрипты install/uninstall/backup/restore/doctor; install, backup, doctor
       проверены на реальном профиле.
+- [x] Инструменты доставлены в живую Web GUI-сессию (29 схем), плагин
+      перезагружен через HMR.
 - [~] Вызвать memory-tool из модели и подтвердить запись/чтение (финальный
       smoke-тест).
 
@@ -44,29 +46,33 @@
 
 ## Phase 2 — Agent Core
 
-- [ ] DIRECTOR как оркестратор (не «промпт», а сервис с состоянием).
-- [ ] Agent Registry: профили RESEARCHER, DEVELOPER, SYSADMIN, ANALYST,
-      EXECUTOR, REVIEWER.
-- [ ] Динамическое создание/редактирование агентов, лимиты, права.
+- [x] Agent Registry: 7 профилей (DIRECTOR, RESEARCHER, DEVELOPER, SYSADMIN,
+      ANALYST, EXECUTOR, REVIEWER), CRUD, версии, лимиты, доступ.
+- [x] DIRECTOR brief с фактическим состоянием фабрики.
+- [x] Tool Registry: чтение реального каталога host-tools (`factory_tools_list`).
+- [ ] DIRECTOR как автономный исполнитель, а не только brief.
 - [ ] Agent Communication через `ctx.agents`/subagent-механизм DSH.
 - [ ] Model Router: основная/резервная модель, выбор по роли.
-- [ ] Tool Registry: каталог, проверка доступности, привязка к агентам.
+- [ ] Принудительное ограничение инструментов агента (scoped restrictions).
 - [ ] Brief памяти в начало сессии (проверить `agent.inject`).
 
 **Критерий:** DIRECTOR передаёт задачу специалисту с нужными инструментами, и
-результат сохраняется в общей памяти.
+результат сохраняется в общей памяти. Пока не достигнут.
 
 ## Phase 3 — Task Engine
 
-- [ ] Таблицы `tasks`, `task_events`, `leases`.
-- [ ] Статусы NEW…CANCELLED, очереди, приоритеты, зависимости.
-- [ ] Planner и сохранение плана.
-- [ ] Workflow Engine: последовательность/параллельность/ветвления/retry.
-- [ ] Execution Engine с таймаутами и отменой.
-- [ ] Recovery: lease, heartbeat, восстановление после перезапуска.
-- [ ] Runtime-тест: многоэтапная задача переживает restart.
+- [x] Таблицы `tasks`, `task_events`; миграция v1→v2 без потери данных.
+- [x] Статусы NEW…CANCELLED, приоритеты, зависимости, очередь.
+- [x] Planner и сохранение DAG-плана.
+- [x] Recovery: lease, heartbeat, retry/backoff, восстановление после сбоя.
+- [x] Lazy-продвижение зависимых задач после complete.
+- [ ] Workflow Engine: ветвления, параллельные группы, ожидание.
+- [ ] Execution Engine с автоматическим запуском исполнителей и таймаутами.
+- [ ] Runtime-тест: многоэтапная задача переживает реальный restart DSH
+      (unit-тест восстановления уже есть).
 
 **Критерий:** задача проходит полный цикл и восстанавливается после сбоя.
+Частично достигнут: движок и recovery готовы, автозапуск — нет.
 
 ## Phase 4 — Memory / Server
 

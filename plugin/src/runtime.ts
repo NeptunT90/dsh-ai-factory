@@ -9,8 +9,11 @@ import { ProjectService, type ProjectRecord } from './projects/service.js'
 import { FactoryDatabase } from './storage/database.js'
 import { MemoryEngine } from './memory/engine.js'
 import type { MemoryStats } from './memory/types.js'
+import { AgentRegistry } from './agents/registry.js'
+import { TaskEngine } from './tasks/engine.js'
+import { PlannerService } from './planner/service.js'
 
-export const FACTORY_VERSION = '0.1.0'
+export const FACTORY_VERSION = '0.2.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -30,6 +33,9 @@ export interface FactoryStatus {
   readonly startedAt: number
   readonly uptimeMs: number
   readonly projects: number
+  readonly agents: number
+  readonly tasks: number
+  readonly recoveredTasks: number
   readonly memory: MemoryStats
   readonly error: string
 }
@@ -41,8 +47,12 @@ export class FactoryRuntime {
   readonly projects: ProjectService
   readonly audit: AuditLog
   readonly memory: MemoryEngine
+  readonly agents: AgentRegistry
+  readonly tasks: TaskEngine
+  readonly planner: PlannerService
   readonly startedAt = Date.now()
   private expiredOnStart = 0
+  private recoveredOnStart = 0
 
   private constructor(config: ResolvedConfig, db: FactoryDatabase, logger: PluginLogger) {
     this.config = config
@@ -50,16 +60,39 @@ export class FactoryRuntime {
     this.projects = new ProjectService(db, config.projectIdOverride)
     this.audit = new AuditLog(db, config.redactLogs)
     this.memory = new MemoryEngine(db, this.projects, config)
+    this.agents = new AgentRegistry(db)
+    this.agents.seedBuiltins()
+    this.tasks = new TaskEngine(db, this.projects, this.agents, config)
+    this.planner = new PlannerService(this.tasks, this.agents)
     try {
       this.expiredOnStart = this.memory.expire()
     } catch (error) {
       logger.warn(`[ai-factory] expired-memory sweep failed: ${errorMessage(error)}`)
     }
+    try {
+      this.recoveredOnStart = this.tasks.recoverStale()
+    } catch (error) {
+      logger.warn(`[ai-factory] stale-task recovery failed: ${errorMessage(error)}`)
+    }
     this.audit.record({
       event: 'factory.started',
       level: 'info',
-      data: { version: FACTORY_VERSION, driver: db.driver, schemaVersion: db.schemaVersion },
+      data: {
+        version: FACTORY_VERSION,
+        driver: db.driver,
+        schemaVersion: db.schemaVersion,
+        agents: this.agents.count(),
+        tasks: this.tasks.count(),
+        recoveredTasks: this.recoveredOnStart,
+      },
     })
+    if (this.recoveredOnStart > 0) {
+      this.audit.record({
+        event: 'factory.tasks_recovered',
+        level: 'warn',
+        data: { count: this.recoveredOnStart },
+      })
+    }
   }
 
   static create(config: FactoryConfig, logger: PluginLogger): FactoryRuntime {
@@ -97,9 +130,17 @@ export class FactoryRuntime {
       startedAt: this.startedAt,
       uptimeMs: Date.now() - this.startedAt,
       projects: this.projects.count(),
+      agents: this.agents.count(),
+      tasks: this.tasks.count(),
+      recoveredTasks: this.recoveredOnStart,
       memory: this.memory.stats(),
       error: '',
     }
+  }
+
+  /** Stale RUNNING tasks recovered by the startup sweep. */
+  get recoveredAtStartup(): number {
+    return this.recoveredOnStart
   }
 
   /** Record a tool-level audit event without leaking content. */

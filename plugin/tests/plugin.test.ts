@@ -83,7 +83,10 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(8)
+    expect(harness.tools.size).toBe(29)
+    expect(harness.tools.has('factory_agent_list')).toBe(true)
+    expect(harness.tools.has('factory_task_create')).toBe(true)
+    expect(harness.tools.has('factory_plan_create')).toBe(true)
 
     const status = await harness.tools.get('factory_status')!.execute({}, fakeExec(harness.workspace) as never)
     expect((status as { status: string }).status).toBe('ready')
@@ -115,6 +118,51 @@ describe('plugin mount', () => {
     const get = harness.tools.get('factory_memory_get')!
     const entry = (await get.execute({ id: stored.entry.id }, exec)) as { title: string }
     expect(entry.title).toBe('Проверка инструмента')
+  })
+
+  it('exposes agent, task and plan tools end-to-end through the tool contract', async () => {
+    const harness = createHarness()
+    const exec = fakeExec(harness.workspace) as never
+
+    const agents = (await harness.tools.get('factory_agent_list')!.execute({}, exec)) as {
+      count: number
+      agents: Array<{ name: string }>
+    }
+    expect(agents.count).toBe(7)
+    expect(agents.agents.map((agent) => agent.name)).toContain('DIRECTOR')
+
+    const plan = (await harness.tools.get('factory_plan_create')!.execute(
+      {
+        goal: 'Проверить оркестрацию',
+        steps: [
+          { key: 'research', title: 'Исследовать', role: 'researcher' },
+          { key: 'build', title: 'Собрать', role: 'developer', dependsOn: ['research'] },
+        ],
+      },
+      exec,
+    )) as { count: number; parentId: string; steps: Array<{ taskId: string; status: string }> }
+    expect(plan.count).toBe(2)
+    expect(plan.steps[0]?.status).toBe('READY')
+    expect(plan.steps[1]?.status).toBe('WAITING')
+
+    const createdTask = (await harness.tools.get('factory_task_create')!.execute(
+      { title: 'Задача через tool contract', metadata: { source: 'test' }, plan: ['шаг 1'] },
+      exec,
+    )) as { id: string; status: string; metadata: { source?: string } }
+    expect(createdTask.status).toBe('READY')
+    expect(createdTask.metadata.source).toBe('test')
+    const fetchedTask = (await harness.tools.get('factory_task_get')!.execute({ id: createdTask.id }, exec)) as {
+      title: string
+    }
+    expect(fetchedTask.title).toBe('Задача через tool contract')
+
+    const brief = (await harness.tools.get('factory_director_brief')!.execute({}, exec)) as {
+      projectId: string
+      tasks: { total: number }
+      nextActions: string[]
+    }
+    expect(brief.tasks.total).toBeGreaterThanOrEqual(3)
+    expect(brief.nextActions.length).toBeGreaterThan(0)
   })
 
   it('reports a clean tool error when a secret is written', async () => {

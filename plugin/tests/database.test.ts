@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { FactoryDatabase } from '../src/storage/database.js'
 import { MIGRATIONS } from '../src/storage/migrations.js'
+import { DatabaseSync } from 'node:sqlite'
 
 const dirs: string[] = []
 
@@ -37,6 +38,26 @@ describe('FactoryDatabase', () => {
     ).toThrowError('boom')
     expect(db.get('SELECT * FROM settings WHERE key = ?', ['x'])).toBeUndefined()
     db.close()
+  })
+
+  it('upgrades an existing v1 database without losing data', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'ai-factory-migrate-'))
+    dirs.push(dir)
+    const path = join(dir, 'v1.db')
+    const raw = new DatabaseSync(path)
+    raw.exec(MIGRATIONS[0]!.sql)
+    raw.exec('PRAGMA user_version = 1')
+    raw
+      .prepare('INSERT INTO projects (id, name, root_path, metadata, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run('prj_v1', 'old', 'C:/old', '{}', 1, 1)
+    raw.close()
+
+    const upgraded = new FactoryDatabase(path)
+    expect(upgraded.schemaVersion).toBe(2)
+    expect(upgraded.get<{ name: string }>('SELECT name FROM projects WHERE id = ?', ['prj_v1'])?.name).toBe('old')
+    expect(upgraded.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")).toBeDefined()
+    expect(upgraded.get("SELECT count(*) AS n FROM agent_profiles")?.n).toBe(0)
+    upgraded.close()
   })
 
   it('exposes FTS5 and memory triggers', () => {
