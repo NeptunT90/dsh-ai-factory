@@ -115,7 +115,8 @@
 - [x] REVIEWER PASS/PASS_WITH_WARNINGS/FAIL через реального child-агента
       (`factory_review`, structured output).
 - [x] FAIL создаёт READY-задачу на исправление (`metadata.fixFor`).
-- [ ] Автоматический цикл fix → re-review с лимитом попыток.
+- [x] Bounded-цикл dispatch → review → fix → re-review (`factory_workflow_run`,
+      maxCycles 1–5).
 - [ ] Security Manager и изоляция.
 
 ## Phase 7 — Dashboard / Management
@@ -142,7 +143,7 @@
 - [x] Релизный tarball без `node_modules`, проверка обязательных файлов и
       SHA256SUMS (`scripts/package.ps1`).
 - [x] Установка из tarball в отдельный профиль `portable-test` (не link),
-      boot v0.6.0 с 33 инструментами; upgrade 0.5.0 → 0.6.0.
+      boot v0.7.0 с 34 инструментами; upgrade 0.6.0 → 0.7.0.
 - [x] GitHub Actions CI + release workflow на тег `v*`.
 - [x] README/CHANGELOG/SECURITY, release/portability docs.
 - [ ] Тег и GitHub Release (нужен remote/credentials).

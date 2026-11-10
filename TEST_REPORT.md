@@ -18,13 +18,14 @@
 ### Plugin
 
 ```
-Test Files  11 passed (11)
-Tests       41 passed (41)
+Test Files  12 passed (12)
+Tests       45 passed (45)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
-offline/backoff, auth failure, auto-sync timer, tool contract (33 инструмента).
+offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
+contract (34 инструмента).
 
 ### Sync server
 
@@ -39,12 +40,20 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.6.0**.
-- `factory.started`: schema **3**, agents 7, tools **33**.
+- HMR загрузил AI Factory **v0.7.0**.
+- `factory.started`: schema **3**, agents 7, tools **34**.
 - SQLite v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
-- Схема `factory_sync` доставлена в Web GUI-сессию.
+- Схемы `factory_sync`, `factory_review`, `factory_workflow_run` доставлены в
+  Web GUI-сессию.
 - 27 прежних плагинов сохранены; `doctor.ps1` проходит.
+
+### Reviewer / workflow
+
+- 3 reviewer-теста: structured PASS, FAIL + fix-задача, отсутствие subagents.
+- 3 workflow-теста: FAIL → fix → PASS, EXHAUSTED при maxCycles, ERROR без
+  subagents.
+- `factory_dispatch review=true` проверен отдельно.
 
 ## 4. End-to-end sync
 
@@ -80,10 +89,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.6.0.tgz`: **128 486 байт**.
-- SHA256: `de4982770a83f00f121a26bb992136434d0b42ca75b5e3f71e003d94ea949b64`.
+- `dist/dsh-ai-factory-0.7.0.tgz`: **132 219 байт**.
+- SHA256: `e9b95123df3704efacfba214912c17a9c6ad2f2180345140edf3859c525906c4`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.5.0 на 0.6.0; schema 3, 33 инструмента.
+- `portable-test` обновлён с 0.6.0 на 0.7.0; schema 3, 34 инструмента.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -96,9 +105,9 @@ Read-only auth/405 проверены автотестами.
 - Нет автоматического flush outbox по таймеру.
 - Live tool-calls из модели в Web GUI не выполнены (текущий клиент не
   инициирует tool-call; схемы доставлены).
-- Scoped tool allowlist, Model Router и автоматический fix → re-review не реализованы.
+- Scoped tool allowlist, Model Router, фоновый автономный цикл не реализованы.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.6.0 не выполнен.
+- Полный restart DSH после 0.7.0 не выполнен.
 
 ## 8. Повтор
 

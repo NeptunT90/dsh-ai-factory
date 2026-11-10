@@ -1,16 +1,16 @@
 # Текущий блок
 
-**Phase 6a — независимый REVIEWER.**
+**Phase 6b — bounded workflow dispatch → review → fix.**
 
 Сделано:
 
-1. `factory_review` запускает реального child REVIEWER с structured output
-   (PASS/PASS_WITH_WARNINGS/FAIL).
-2. PASS/PASS_WITH_WARNINGS закрывают задачу; FAIL создаёт fix-задачу.
-3. 3 reviewer-теста; всего 41 plugin-тест, 33 инструмента.
-4. Версия 0.6.0.
+1. `factory_dispatch review=true` оставляет задачу в REVIEW.
+2. `factory_workflow_run` автоматически диспатчит executor, запускает
+   REVIEWER, при FAIL берёт созданную fix-задачу и повторяет.
+3. `maxCycles` 1–5; статусы PASSED/FAILED/EXHAUSTED/ERROR + история циклов.
+4. 45 plugin-тестов, 34 инструмента, версия 0.7.0.
 
-Осталось: автоматический цикл fix → re-review, scoped tools/Model Router,
+Осталось: неограниченный автономный цикл/таймер, scoped tools/Model Router,
 standalone PostgreSQL/TLS, GitHub Release, второй ПК.
 
 ---

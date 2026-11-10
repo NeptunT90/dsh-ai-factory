@@ -14,6 +14,8 @@ export interface DispatchInput {
   readonly prompt?: string
   readonly provider?: string
   readonly leaseMinutes?: number
+  /** Leave the task in REVIEW instead of completing it after a successful child run. */
+  readonly review?: boolean
 }
 
 export interface DispatchOutput {
@@ -166,14 +168,16 @@ export class DispatchService {
       const output = textFromBlocks(result.output).trim().slice(0, 100_000)
       const diagnostic = result.diagnostic?.trim() ?? ''
       if (result.stopReason === 'completed') {
-        const completed = runtime.tasks.complete(task.id, parent.id, output || '(дочерний агент не вернул текст)')
+        const completed = input.review
+          ? runtime.tasks.submitForReview(task.id, parent.id, output || '(дочерний агент не вернул текст)')
+          : runtime.tasks.complete(task.id, parent.id, output || '(дочерний агент не вернул текст)')
         runtime.audit.record({
           event: 'dispatch.completed',
           level: 'info',
           actor: parent.id,
           projectId: task.projectId,
           sessionId: parent.id,
-          data: { taskId: task.id, childId: activation.childId, agentId: agent.id, stopReason: result.stopReason },
+          data: { taskId: task.id, childId: activation.childId, agentId: agent.id, stopReason: result.stopReason, review: input.review === true },
         })
         return {
           taskId: task.id,

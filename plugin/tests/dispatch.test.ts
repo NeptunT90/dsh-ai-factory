@@ -66,6 +66,28 @@ describe('DispatchService', () => {
     expect((captured?.request.prompt[0] as { text: string }).text).toContain('DEVELOPER')
   })
 
+  it('leaves the task in REVIEW when review=true', async () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const task = runtime.tasks.create({ projectId, title: 'Подготовить ревью' })
+    const fake = {
+      startActivation: async () =>
+        activation(
+          Promise.resolve({
+            output: [{ type: 'text', text: 'Результат для ревью.' }],
+            stopReason: 'completed',
+          }),
+        ),
+    } as unknown as SubagentRuntime
+
+    const output = await new DispatchService(fakeContext(fake), runtime).dispatch(
+      { taskId: task.id, review: true },
+      fakeExec(),
+    )
+    expect(output.taskStatus).toBe('REVIEW')
+    expect(runtime.tasks.require(task.id).status).toBe('REVIEW')
+    expect(runtime.tasks.require(task.id).result).toContain('Результат для ревью')
+  })
+
   it('marks the task for retry when the child fails', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Падающая задача', maxAttempts: 2 })

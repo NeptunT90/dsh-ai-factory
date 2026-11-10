@@ -37,7 +37,7 @@ export function registerDispatchTool(
       description:
         'Запустить реального дочернего агента через официальный ctx.subagents (провайдер spawn), дождаться результата и завершить связанную задачу Task Engine. ' +
         'Дочерний агент работает в отдельной сессии, получает роль/инструкцию профиля и справочный контекст памяти. ' +
-        'Задача должна быть READY; при успехе она станет COMPLETED, при ошибке — READY (retry) или FAILED. ' +
+        'Задача должна быть READY; при успехе она станет COMPLETED (или REVIEW при review=true), при ошибке — READY (retry) или FAILED. ' +
         'Это синхронный вызов: инструмент возвращается после завершения ребёнка.',
       parameters: {
         taskId: { type: 'string', required: true, description: 'id READY-задачи' },
@@ -45,6 +45,7 @@ export function registerDispatchTool(
         prompt: { type: 'string', description: 'Дополнительные указания дочернему агенту' },
         provider: { type: 'string', description: 'Провайдер subagents (по умолчанию spawn)' },
         leaseMinutes: { type: 'number', description: 'Lease задачи в минутах (по умолчанию 30)' },
+        review: { type: 'boolean', description: 'Оставить задачу в REVIEW для независимого ревью вместо COMPLETED' },
       },
       output: {
         schema: DISPATCH_OUTPUT,

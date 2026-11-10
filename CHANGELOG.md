@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.7.0] — 2026-11-10
+
+### Added
+
+- `factory_dispatch` параметр `review=true`: успешный child оставляет задачу в
+  REVIEW вместо COMPLETED.
+- `factory_workflow_run`: bounded-цикл executor → REVIEWER → fix task → repeat,
+  `maxCycles` 1–5, статусы PASSED/FAILED/EXHAUSTED/ERROR и история циклов.
+- Audit `workflow.*`; fail fix-задачи автоматически диспатчатся следующим
+  циклом.
+- 4 новых теста (всего 45), 34 инструмента; версия 0.7.0.
+
 ## [0.6.0] — 2026-11-10
 
 ### Added

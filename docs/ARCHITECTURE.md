@@ -264,6 +264,19 @@ GitHub) показаны как `plan`, а не имитируются.
 - FAIL → task FAILED + новая READY-задача «Исправить: …» с `metadata.fixFor`;
 - audit `review.*`, child id, fix id; при ошибке child задача остаётся REVIEW.
 
+### 7.5b. Workflow
+
+`factory_workflow_run` — синхронный bounded-цикл:
+
+1. READY → `factory_dispatch(review=true)` → REVIEW;
+2. REVIEW → `factory_review`;
+3. FAIL → REVIEWER создаёт READY fix-задачу; цикл берёт её;
+4. PASS/PASS_WITH_WARNINGS → PASSED;
+5. лимит циклов → EXHAUSTED; ошибка child → ERROR/FAILED.
+
+История циклов и audit `workflow.*` сохраняются; исходная задача после FAIL
+остаётся FAILED, успешная fix-задача — COMPLETED.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
@@ -299,7 +312,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Sync server: PGlite PostgreSQL + pgvector + HTTP/auth | реализовано и проверено e2e |
 | Standalone PostgreSQL/Ubuntu deployment + TLS proxy | Phase 4b |
 | Независимый REVIEWER через child-агент + structured verdict | реализовано |
-| Автоматический fix → re-review цикл | Phase 6b |
+| Bounded workflow dispatch → review → fix (maxCycles 1–5) | реализовано |
+| Фоновый/неограниченный автономный цикл | Phase 6c |
 | Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |

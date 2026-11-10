@@ -116,6 +116,13 @@
   с `metadata.fixFor`.
 - Audit review.*, 33 инструмента, 41 plugin-тест.
 
+### Workflow v0.7.0
+
+- `factory_dispatch review=true` → REVIEW.
+- `factory_workflow_run`: dispatch → REVIEWER → fix → repeat, maxCycles 1–5.
+- PASSED/FAILED/EXHAUSTED/ERROR, история циклов, audit workflow.*.
+- 45 plugin-тестов, 34 инструмента.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,
