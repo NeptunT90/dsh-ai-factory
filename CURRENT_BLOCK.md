@@ -1,25 +1,28 @@
 # Текущий блок
 
-**Phase 9 (v1) — релизный tarball и установка на второй профиль.**
+**Phase 4a — sync client и локальный outbox.**
 
 Сделано:
 
-1. `scripts/package.ps1`: build → `pnpm pack` → verify → SHA256SUMS.
-2. `scripts/verify-package.ps1`: manifest, lib, bundle patch, README/LICENSE,
-   отсутствие `node_modules`, версия.
-3. `scripts/install.ps1 -Tarball` и `scripts/update.ps1` (backup перед update).
-4. `dist/dsh-ai-factory-0.4.0.tgz` собран (110432 байта) и проверен.
-5. Tarball установлен в профиль `portable-test` как обычная папка (не link);
-   DSH загрузил v0.4.0, schema 2, 7 агентов, 31 инструмент.
-6. Release workflow на тег `v*`, документация release/portability.
+1. Миграция v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
+   `memory_sync_insert/update`.
+2. `factory_sync` (status/push/pull/sync).
+3. Bearer-токен только из env (`syncTokenEnv`), HTTPS или loopback HTTP,
+   cursor, идемпотентные `opId`, retry/backoff.
+4. `MemoryEngine.applyRemote`: LWW по `updatedAt`, remap проекта, подавление
+   обратного outbox, FTS.
+5. 37 тестов; два независимых SQLite-runtime обмениваются памятью через
+   mock-сервер. Offline и auth-failure сценарии проверены.
+6. Live DSH v0.5.0: schema 3, 32 инструмента, triggers установлены.
 
 Осталось:
 
-1. Настроить GitHub remote, создать тег и Release (нужны credentials).
-2. Проверить физически второй ПК.
-3. Upgrade-тест с предыдущей версии с реальными данными.
-4. Server sync (Phase 4), scoped-tools/Model Router (Phase 2c).
-5. Dashboard: остальные разделы и live tool-call.
+1. Production sync-сервер: PostgreSQL + pgvector, REST API, Docker Compose,
+   auth, migrations, backup/restore.
+2. Автоматический flush outbox и server-side conflict log.
+3. Второй физический ПК/сервер.
+4. Scoped-tools/Model Router (Phase 2c), REVIEWER/Workflow.
+5. Live tool-calls из модели в Web GUI.
 
-Критерий блока: артефакт собирается, проверяется и устанавливается без
-`link:` — достигнут; публикация Release и второй ПК — нет.
+Критерий блока: локальный outbox и push/pull проверены между двумя SQLite —
+достигнут; полноценная серверная синхронизация — нет (нужен PostgreSQL).

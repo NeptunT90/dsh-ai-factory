@@ -15,81 +15,76 @@
 ## 2. Автотесты
 
 ```
-Test Files  9 passed (9)
-Tests       34 passed (34)
+Test Files  10 passed (10)
+Tests       37 passed (37)
 ```
 
 Покрыто:
 
-- миграции v1→v2, сохранение данных;
+- миграции v1→v2→v3, сохранение проектов;
 - FTS5, память, версии, TTL, секреты;
 - 7 профилей агентов, CRUD, лимиты;
 - Task Engine: зависимости, lease, retry/backoff, recovery, события;
-- Planner DAG и продвижение шагов;
-- Dispatch через fake `SubagentRuntime`: успех, ошибка, отсутствие сервиса;
-- Dashboard:
-  - 401 без токена;
-  - Bearer-токен → 200 и реальный JSON;
-  - токен в URL → 302 + HttpOnly-cookie → HTML;
-  - POST → 405 (read-only);
-  - остановка сервера освобождает порт;
-- 31 инструмент, включая `factory_dashboard`.
+- Planner DAG;
+- Dispatch fake `SubagentRuntime`: успех, ошибка, отсутствие сервиса;
+- Dashboard: auth/401, cookie redirect, POST→405, stop;
+- **Sync**: outbox trigger, push A → pull B между двумя SQLite, LWW update,
+  offline/backoff, auth failure;
+- 32 инструмента, включая `factory_sync`.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.4.0**.
-- `factory.started`: schema 2, agents 7, tools 31;
-- SQLite schema 2, 7 профилей;
-- 27 прежних плагинов сохранены;
-- схема `factory_dashboard` доставлена в Web GUI-сессию;
+- HMR загрузил AI Factory **v0.5.0**.
+- `factory.started`: schema **3**, agents 7, tools **32**.
+- SQLite v3: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
+  `memory_sync_insert/update`.
+- 27 прежних плагинов сохранены.
+- Схема `factory_sync` доставлена в Web GUI-сессию.
 - `doctor.ps1` проходит.
 
-## 4. Браузерная проверка dashboard
+## 4. Dashboard
 
-Запущен локальный demo-runtime (SQLite, 7 агентов, план из 3 задач, 2 записи
-памяти) и `DashboardServer` на ephemeral-порту.
+Браузерная проверка выполнена на demo-runtime (v0.4.0); UI не менялся с
+0.5.0. Проверены Обзор, Агенты, Задачи, Настройки; screenshot:
+[docs/assets/dashboard-overview.png](docs/assets/dashboard-overview.png).
+Read-only API, токен/cookie, 401/405 проверены автотестами.
 
-Проверено в браузере:
+## 5. Sync
 
-- токен в URL → редирект `/` + HttpOnly-cookie, токен исчезает из адресной
-  строки;
-- Обзор: 7 агентов, 4 активных задачи, 2 записи памяти, очередь по статусам,
-  системные факты;
-- Агенты: 7 карточек с ролями, доступом, лимитами, инструментами;
-- Задачи: таблица с RUNNING/WAITING/PLANNING, приоритетом, попытками;
-- Настройки: реальные config-поля и честные `plan`-пометки для
-  Model Router, REVIEWER, Server sync, GitHub;
-- адаптивная вёрстка, русский интерфейс, без внешних CDN.
+Контракт описан в [docs/sync-protocol.md](docs/sync-protocol.md).
 
-Скриншот: [docs/assets/dashboard-overview.png](docs/assets/dashboard-overview.png).
+Проверено mock-сервером:
 
-## 5. Release package / portability
+- A: remember → outbox row → push → accepted/sent;
+- B (отдельная SQLite): pull → запись применена, обратного outbox нет;
+- A update → push → B pull (LWW по updatedAt);
+- сервер недоступен: операция остаётся, attempts/backoff, статус failed;
+- неверный Bearer-токен: push отклонён, операция не потеряна.
 
-- `scripts/package.ps1` — PASS.
-- `dist/dsh-ai-factory-0.4.0.tgz`: 110432 байта.
-- SHA256: `ac50541ef97390b2a3a5d718926497f7d6a2dd2ffb46077f1c4ad2c541d001d6`.
-- `scripts/verify-package.ps1`: package.json, lib/index.js, cordis.patch.yml,
-  README, LICENSE присутствуют; `node_modules` отсутствует.
-- Установка из tarball в профиль `portable-test`:
-  - `node_modules/dsh-ai-factory` — обычная папка, **не link/junction**;
-  - dependency `file:C:/...tgz`, bundle добавлен;
-  - `--dump-config` содержит `id: ai-factory`;
-  - boot: `factory.started` v0.4.0, schema 2, 7 агентов,
-    `factory.tools_registered: 31`.
-- Release workflow `.github/workflows/release.yml` на тег `v*` готов;
-  фактический GitHub Release не создан (нет remote/credentials).
+**Не проверено:** production PostgreSQL/pgvector-сервер, второй физический ПК,
+автоматический flush outbox, server-side conflict journal.
 
-## 6. Ограничения / не проверено
+## 6. Release / portability
 
-- Live-вызов `factory_dashboard` из модели в Web GUI ещё не сделан; сервер
-  проверен напрямую в тестах и браузере.
-- Live dispatch с реальной LLM не выполнен; fake-service контракт пройден.
-- Tool allowlist ребёнка и Model Router не реализованы.
-- Dashboard read-only; Workflows/KB/Models/Scheduler/Security/Server/GitHub
-  разделов пока нет.
-- Полный restart DSH после v0.4.0 не выполнен.
+- `dist/dsh-ai-factory-0.5.0.tgz`: **121 920 байт**.
+- SHA256: `27b8ede14fb51046c66c2c73de799e060929e56239bcd58a3a825c5e219eb7a7`.
+- `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
+- `portable-test` обновлён с 0.4.0 на 0.5.0 из tarball:
+  - dependency `file:...0.5.0.tgz`;
+  - schema 3, 7 агентов, 32 инструмента;
+  - boot `factory.started` v0.5.0.
+- Release workflow на тег `v*` готов; GitHub Release не создан (нет remote).
 
-## 7. Повтор
+## 7. Ограничения / не проверено
+
+- Production sync-сервер (PostgreSQL/pgvector) отсутствует.
+- Live tool-calls (dispatch/dashboard/sync) из модели в Web GUI не выполнены:
+  текущий клиент не инициирует tool-call; схемы доставлены.
+- Scoped tool allowlist, Model Router, auto REVIEWER/Workflow не реализованы.
+- Полный restart DSH после 0.5.0 не выполнен.
+- Физически второй ПК не проверялся.
+
+## 8. Повтор
 
 ```powershell
 pnpm install
@@ -97,8 +92,5 @@ pnpm typecheck
 pnpm test
 pnpm build
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1 -Profile desktop
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
 ```
-
-Live smoke в чате:
-
-> Вызови `factory_dashboard` с action=start и дай мне URL. Затем `factory_status`.

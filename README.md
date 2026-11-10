@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.4.0 регистрирует **31 инструмент**.
+- Загружается Cordis-загрузчиком DSH; в v0.5.0 регистрирует **32 инструмента**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v2**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -42,11 +42,15 @@
 - **Dashboard v1**: локальная read-only панель (Overview, Agents, Tasks, Memory,
   Audit, Tools, Settings) на 127.0.0.1, случайный токен, HttpOnly-cookie, без
   внешних ассетов и без мутаций.
+- **Sync client/outbox**: локальный outbox и `factory_sync` (status/push/pull),
+  HTTPS/loopback, токен только из env, backoff при недоступности сервера.
+  Серверная часть PostgreSQL/pgvector пока не развёрнута; локальный режим
+  полностью автономен.
 - Аудит действий без записи содержимого памяти.
-- 34 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
-  dashboard, tool contract), строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема v2, 7 агентов, 31
-  инструмент, audit `factory.started`; драйвер — `node:sqlite`.
+- 37 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+  dashboard, sync, tool contract), строгая типизация TypeScript, сборка в `lib/`.
+- Проверено в реальном Electron-процессе DSH: схема **v3**, 7 агентов, 32
+  инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
 
@@ -96,6 +100,7 @@
 | `factory_tools_list` | Реальные инструменты DSH, видимые агенту |
 | `factory_dispatch` | Запустить дочернего агента через `ctx.subagents` и завершить задачу |
 | `factory_dashboard` | Запустить/остановить локальную read-only панель и получить URL |
+| `factory_sync` | status/push/pull памяти через outbox и sync-сервер |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
 Профили агентов — durable-конфигурация ролей. `factory_dispatch` реально
@@ -103,6 +108,15 @@
 host-инструменты по allowlist профиля; это Phase 2c.
 
 ### Dashboard
+
+### Sync
+
+`factory_sync` работает только при заданном `syncUrl` и переменной окружения
+`syncTokenEnv` (по умолчанию `DSH_AI_FACTORY_SYNC_TOKEN`). Токен не хранится в
+конфигурации. HTTP разрешён только для loopback; для внешнего сервера — HTTPS.
+Операции памяти автоматически попадают в локальный `sync_outbox` (SQLite
+triggers), при ошибке остаются там и повторяются с backoff. Pull использует
+LWW по `updatedAt` и не создаёт обратный outbox.
 
 `factory_dashboard` запускает сервер только на `127.0.0.1` (порт 0 — свободный).
 URL содержит одноразовый токен; после открытия токен превращается в
@@ -143,7 +157,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.4.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.5.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -156,7 +170,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 > Вызови `factory_status` и покажи сырые поля.
 
 Ожидаемый ответ: `status: ready`, `driver: node:sqlite`,
-`schemaVersion: 2`, `agents: 7`.
+`schemaVersion: 3`, `agents: 7`.
 
 ### Установка на второй компьютер
 
@@ -267,6 +281,7 @@ config/                 примеры конфигурации
 - [SECURITY.md](SECURITY.md) — модель угроз и правила.
 - [release.md](docs/release.md) — сборка, tarball, GitHub Release.
 - [portability.md](docs/portability.md) — установка на второй ПК.
+- [sync-protocol.md](docs/sync-protocol.md) — контракт sync-сервера и outbox.
 
 ## Лицензия
 

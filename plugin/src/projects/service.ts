@@ -125,6 +125,40 @@ export class ProjectService {
     return this.ensure(rootPath).id
   }
 
+  /**
+   * Import a project advertised by the sync server. The remote id is preferred
+   * so memory references stay stable; if this machine already has another id
+   * for the same root path, that local id wins and the caller remaps.
+   */
+  importRemote(input: { id: string; name: string; rootPath: string }): ProjectRecord {
+    const existing = this.get(input.id)
+    if (existing) return existing
+    const rootPath = input.rootPath.trim() || `remote:${input.id}`
+    const byPath = this.db.get<ProjectRow>(
+      'SELECT id, name, root_path, description, created_at, updated_at FROM projects WHERE root_path = ?',
+      [rootPath],
+    )
+    if (byPath) return mapProject(byPath)
+    const ts = now()
+    try {
+      this.db.run(
+        `INSERT INTO projects (id, name, root_path, description, metadata, created_at, updated_at)
+         VALUES (?, ?, ?, NULL, '{}', ?, ?)`,
+        [input.id, input.name.slice(0, 200) || input.id, rootPath, ts, ts],
+      )
+    } catch (error) {
+      const raced = this.get(input.id)
+      if (raced) return raced
+      const racedPath = this.db.get<ProjectRow>(
+        'SELECT id, name, root_path, description, created_at, updated_at FROM projects WHERE root_path = ?',
+        [rootPath],
+      )
+      if (racedPath) return mapProject(racedPath)
+      throw error
+    }
+    return this.get(input.id) as ProjectRecord
+  }
+
   /** A stable new id for a project that has no path yet (reserved for future imports). */
   newProjectId(): string {
     return newId('prj')

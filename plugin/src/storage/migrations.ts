@@ -203,4 +203,119 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX ix_task_events_task ON task_events(task_id, ts DESC);
     `,
   },
+  {
+    version: 3,
+    name: 'sync: outbox, cursor, remote-apply guard and memory triggers',
+    sql: `
+      CREATE TABLE sync_outbox (
+        op_id TEXT PRIMARY KEY,
+        entity_id TEXT NOT NULL,
+        operation TEXT NOT NULL CHECK (operation IN ('upsert', 'delete')),
+        payload TEXT NOT NULL,
+        base_version INTEGER,
+        created_at INTEGER NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        next_attempt_at INTEGER,
+        sent_at INTEGER,
+        last_error TEXT
+      );
+      CREATE INDEX ix_sync_outbox_pending
+        ON sync_outbox(sent_at, next_attempt_at, created_at);
+
+      CREATE TABLE sync_state (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER NOT NULL
+      );
+
+      -- Present only inside applyRemote's transaction. Suppresses outbox
+      -- triggers so remote changes are not re-uploaded.
+      CREATE TABLE sync_apply_guard (
+        id INTEGER PRIMARY KEY CHECK (id = 1)
+      );
+
+      CREATE TRIGGER memory_sync_insert
+        AFTER INSERT ON memory_entries
+        WHEN NOT EXISTS (SELECT 1 FROM sync_apply_guard)
+      BEGIN
+        INSERT INTO sync_outbox
+          (op_id, entity_id, operation, payload, base_version, created_at)
+        VALUES (
+          'op_' || lower(hex(randomblob(16))),
+          NEW.id,
+          'upsert',
+          json_object(
+            'id', NEW.id,
+            'projectId', NEW.project_id,
+            'projectName', (SELECT name FROM projects WHERE id = NEW.project_id),
+            'projectRoot', (SELECT root_path FROM projects WHERE id = NEW.project_id),
+            'scope', NEW.scope,
+            'kind', NEW.kind,
+            'title', NEW.title,
+            'content', NEW.content,
+            'tags', json(NEW.tags),
+            'trust', NEW.trust,
+            'confidence', NEW.confidence,
+            'sourceType', NEW.source_type,
+            'sourceRef', NEW.source_ref,
+            'agentId', NEW.agent_id,
+            'sessionId', NEW.session_id,
+            'status', NEW.status,
+            'version', NEW.version,
+            'supersedesId', NEW.supersedes_id,
+            'metadata', json(NEW.metadata),
+            'createdAt', NEW.created_at,
+            'updatedAt', NEW.updated_at,
+            'accessedAt', NEW.accessed_at,
+            'expiresAt', NEW.expires_at,
+            'deletedAt', NEW.deleted_at
+          ),
+          NULL,
+          CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
+        );
+      END;
+
+      CREATE TRIGGER memory_sync_update
+        AFTER UPDATE OF title, content, tags, trust, confidence, metadata, status, version
+        ON memory_entries
+        WHEN NOT EXISTS (SELECT 1 FROM sync_apply_guard) AND NEW.version <> OLD.version
+      BEGIN
+        INSERT INTO sync_outbox
+          (op_id, entity_id, operation, payload, base_version, created_at)
+        VALUES (
+          'op_' || lower(hex(randomblob(16))),
+          NEW.id,
+          'upsert',
+          json_object(
+            'id', NEW.id,
+            'projectId', NEW.project_id,
+            'projectName', (SELECT name FROM projects WHERE id = NEW.project_id),
+            'projectRoot', (SELECT root_path FROM projects WHERE id = NEW.project_id),
+            'scope', NEW.scope,
+            'kind', NEW.kind,
+            'title', NEW.title,
+            'content', NEW.content,
+            'tags', json(NEW.tags),
+            'trust', NEW.trust,
+            'confidence', NEW.confidence,
+            'sourceType', NEW.source_type,
+            'sourceRef', NEW.source_ref,
+            'agentId', NEW.agent_id,
+            'sessionId', NEW.session_id,
+            'status', NEW.status,
+            'version', NEW.version,
+            'supersedesId', NEW.supersedes_id,
+            'metadata', json(NEW.metadata),
+            'createdAt', NEW.created_at,
+            'updatedAt', NEW.updated_at,
+            'accessedAt', NEW.accessed_at,
+            'expiresAt', NEW.expires_at,
+            'deletedAt', NEW.deleted_at
+          ),
+          OLD.version,
+          CAST((julianday('now') - 2440587.5) * 86400000 AS INTEGER)
+        );
+      END;
+    `,
+  },
 ]

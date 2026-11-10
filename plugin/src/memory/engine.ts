@@ -6,6 +6,7 @@ import { newId, now, sha256 } from '../core/ids.js'
 import { assertNoSecrets, injectionMarkers } from '../core/security.js'
 import type { FactoryDatabase } from '../storage/database.js'
 import type { ProjectService } from '../projects/service.js'
+import type { RemoteMemoryPayload } from '../sync/types.js'
 import {
   MEMORY_KINDS,
   MEMORY_SCOPES,
@@ -544,6 +545,112 @@ export class MemoryEngine {
       }
     })
     return expired.length
+  }
+
+  /**
+   * Apply one remote memory payload with last-write-wins by updatedAt.
+   * The sync guard suppresses outbox triggers, so a pulled change is not
+   * uploaded again. Project ids are remapped to the local project when the
+   * same root path already exists under another id.
+   */
+  applyRemote(payload: RemoteMemoryPayload): boolean {
+    if (!payload || typeof payload !== 'object') throw new FactoryError('INVALID_INPUT', 'Некорректный remote payload')
+    if (typeof payload.id !== 'string' || !payload.id.startsWith('mem_')) {
+      throw new FactoryError('INVALID_INPUT', 'remote payload без корректного memory id')
+    }
+    if (!isKind(payload.kind)) throw new FactoryError('INVALID_INPUT', 'remote payload с неизвестным kind')
+    if (!isScope(payload.scope)) throw new FactoryError('INVALID_INPUT', 'remote payload с неизвестной scope')
+    if (!isTrust(payload.trust)) throw new FactoryError('INVALID_INPUT', 'remote payload с неизвестным trust')
+    if (!isSourceType(payload.sourceType)) {
+      throw new FactoryError('INVALID_INPUT', 'remote payload с неизвестным sourceType')
+    }
+    if (!Number.isFinite(payload.updatedAt) || !Number.isFinite(payload.createdAt)) {
+      throw new FactoryError('INVALID_INPUT', 'remote payload с некорректными timestamp')
+    }
+    const content = normalizeContent(String(payload.content ?? ''))
+    if (content === '') throw new FactoryError('INVALID_INPUT', 'remote payload с пустым content')
+    let projectId: string | null = null
+    if (payload.scope === 'project') {
+      if (!payload.projectId) throw new FactoryError('INVALID_INPUT', 'remote project memory без projectId')
+      const project = this.projects.importRemote({
+        id: payload.projectId,
+        name: payload.projectName || payload.projectId,
+        rootPath: payload.projectRoot || `remote:${payload.projectId}`,
+      })
+      projectId = project.id
+    }
+    const tags = normalizeTags(
+      Array.isArray(payload.tags) ? payload.tags.filter((tag): tag is string => typeof tag === 'string') : [],
+    )
+    const metadata =
+      payload.metadata !== null && typeof payload.metadata === 'object' && !Array.isArray(payload.metadata)
+        ? payload.metadata
+        : {}
+    const hash = sha256(`${payload.kind}\u0000${payload.scope}\u0000${projectId ?? ''}\u0000${content.toLowerCase()}`)
+    const duplicate = this.db.get<{ id: string }>(
+      `SELECT id FROM memory_entries
+       WHERE status = 'active' AND id <> ? AND ifnull(project_id, '') = ? AND kind = ? AND content_hash = ?`,
+      [payload.id, projectId ?? '', payload.kind, hash],
+    )
+    if (duplicate) return false
+    const version = Math.max(1, Math.floor(Number(payload.version) || 1))
+    const status = payload.status === 'deleted' || payload.status === 'superseded' ? payload.status : 'active'
+    let applied = false
+    this.db.transaction(() => {
+      this.db.run('INSERT OR REPLACE INTO sync_apply_guard (id) VALUES (1)')
+      try {
+        const result = this.db.run(
+          `INSERT INTO memory_entries
+            (id, project_id, scope, kind, title, content, tags, tags_text, trust, confidence,
+             source_type, source_ref, agent_id, session_id, content_hash, status, version,
+             supersedes_id, metadata, access_count, created_at, updated_at, accessed_at,
+             expires_at, deleted_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             project_id = excluded.project_id, scope = excluded.scope, kind = excluded.kind,
+             title = excluded.title, content = excluded.content, tags = excluded.tags,
+             tags_text = excluded.tags_text, trust = excluded.trust, confidence = excluded.confidence,
+             source_type = excluded.source_type, source_ref = excluded.source_ref,
+             agent_id = excluded.agent_id, session_id = excluded.session_id,
+             content_hash = excluded.content_hash, status = excluded.status,
+             version = excluded.version, supersedes_id = excluded.supersedes_id,
+             metadata = excluded.metadata, created_at = excluded.created_at,
+             updated_at = excluded.updated_at, accessed_at = excluded.accessed_at,
+             expires_at = excluded.expires_at, deleted_at = excluded.deleted_at
+           WHERE excluded.updated_at > memory_entries.updated_at`,
+          [
+            payload.id,
+            projectId,
+            payload.scope,
+            payload.kind,
+            String(payload.title ?? titleFrom(content)).slice(0, 200),
+            content,
+            JSON.stringify(tags),
+            tags.join(' '),
+            payload.trust,
+            clampConfidence(payload.confidence),
+            payload.sourceType,
+            payload.sourceRef ?? null,
+            payload.agentId ?? null,
+            payload.sessionId ?? null,
+            hash,
+            status,
+            version,
+            payload.supersedesId ?? null,
+            JSON.stringify(metadata),
+            Math.floor(payload.createdAt),
+            Math.floor(payload.updatedAt),
+            payload.accessedAt ?? null,
+            payload.expiresAt ?? null,
+            payload.deletedAt ?? null,
+          ],
+        )
+        applied = result.changes > 0
+      } finally {
+        this.db.run('DELETE FROM sync_apply_guard')
+      }
+    })
+    return applied
   }
 
   private searchLike(

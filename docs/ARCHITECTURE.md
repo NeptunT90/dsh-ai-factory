@@ -85,6 +85,10 @@
 | `agent_profiles` | v2 | Durable-профили специалистов и лимиты |
 | `tasks` | v2 | Очередь задач, зависимости, lease, retry |
 | `task_events` | v2 | История переходов задачи |
+| `sync_outbox` | v3 | Идемпотентные операции памяти для сервера |
+| `sync_state` | v3 | deviceId и cursor |
+| `sync_apply_guard` | v3 | Подавление outbox при pull |
+| `memory_sync_insert/update` | v3 | Триггеры автоматического outbox |
 
 Ключевые инварианты:
 
@@ -249,7 +253,26 @@ capabilities. UI на русском, адаптивный, обновление
 Неподдерживаемые разделы (Workflows/KB/Models/Scheduler/Security/Server/
 GitHub) показаны как `plan`, а не имитируются.
 
-### 7.6. Реализовано / ещё нет
+### 7.6. Sync client / outbox
+
+SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
+`sync_outbox` каждую реальную версию памяти (не access_count). Payload —
+`json_object(...)` с project name/root, полями memory и `updatedAt`.
+
+`SyncService`:
+
+- `push` — батч операций с `opId`/`baseVersion`; Bearer-токен из env;
+  accepted → `sent_at`, ошибки → attempts/backoff;
+- `pull` — `since=cursor`, применяет payload через `MemoryEngine.applyRemote`;
+- `applyRemote` — LWW по `updatedAt`, импорт/remap проекта, guard-таблица
+  подавляет обратный outbox, FTS-триггеры обновляют индекс;
+- URL: HTTPS или loopback HTTP; HTTP на внешний host отклоняется;
+- сетевой сбой не удаляет операцию; локальный режим работает без сервера.
+
+Production PostgreSQL/pgvector-сервер ещё не реализован; контракт и mock-
+сервер описаны в `docs/sync-protocol.md`.
+
+### 7.7. Реализовано / ещё нет
 
 | Подсистема | Статус |
 |---|---|
@@ -259,6 +282,8 @@ GitHub) показаны как `plan`, а не имитируются.
 | DIRECTOR brief + Tool Registry (`factory_tools_list`) | реализовано |
 | Реальный дочерний агент через `ctx.subagents` (`factory_dispatch`) | реализовано |
 | Read-only dashboard на 127.0.0.1 | реализовано |
+| Sync client + SQLite outbox + LWW pull | реализовано и проверено mock-сервером |
+| PostgreSQL/pgvector sync server | Phase 4b, ожидает сервер |
 | Scoped tool restrictions по allowlist профиля | Phase 2c |
 | Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |
@@ -298,6 +323,9 @@ GitHub) показаны как `plan`, а не имитируются.
   явно, полный DIRECTOR/REVIEWER-цикл — Phase 3b+.
 - Dashboard v1 read-only; мутации из UI и остальные разделы — позже.
 - Dashboard работает, пока жив host-процесс DSH; фонового демона нет.
+- Sync server отсутствует: клиент/outbox проверены mock-сервером, но реальная
+  PostgreSQL/pgvector-синхронизация и второй ПК не развёрнуты.
+- Нет автоматического flush outbox по таймеру; push вызывается инструментом.
 - Нет embeddings/векторного поиска.
 - Нет UI; взаимодействие через инструменты и SQLite/CLI-диагностику.
 - Нет автоматического brief в промпт; это Phase 2b.

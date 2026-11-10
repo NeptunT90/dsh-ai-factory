@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+﻿import { afterEach, describe, expect, it } from 'vitest'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -53,7 +53,7 @@ describe('FactoryDatabase', () => {
     raw.close()
 
     const upgraded = new FactoryDatabase(path)
-    expect(upgraded.schemaVersion).toBe(2)
+    expect(upgraded.schemaVersion).toBe(3)
     expect(upgraded.get<{ name: string }>('SELECT name FROM projects WHERE id = ?', ['prj_v1'])?.name).toBe('old')
     expect(upgraded.get("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")).toBeDefined()
     expect(upgraded.get("SELECT count(*) AS n FROM agent_profiles")?.n).toBe(0)
@@ -69,10 +69,10 @@ describe('FactoryDatabase', () => {
       `INSERT INTO memory_entries
        (id, project_id, scope, kind, title, content, tags, tags_text, trust, confidence, source_type,
         content_hash, status, version, metadata, access_count, created_at, updated_at, accessed_at)
-       VALUES ('mem_test', NULL, 'global', 'semantic', 'SQLite', 'полнотекстовый поиск', '[]', '',
+       VALUES ('mem_test', NULL, 'global', 'semantic', 'SQLite', 'РїРѕР»РЅРѕС‚РµРєСЃС‚РѕРІС‹Р№ РїРѕРёСЃРє', '[]', '',
         'unverified', 0.7, 'agent', 'hash', 'active', 1, '{}', 0, 1, 1, 1)`,
     )
-    const hit = db.get<{ n: number }>("SELECT count(*) AS n FROM memory_fts WHERE memory_fts MATCH 'полнотекстовый*'")
+    const hit = db.get<{ n: number }>("SELECT count(*) AS n FROM memory_fts WHERE memory_fts MATCH 'РїРѕР»РЅРѕС‚РµРєСЃС‚РѕРІС‹Р№*'")
     expect(hit?.n).toBe(1)
     db.close()
   })

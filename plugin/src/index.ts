@@ -9,6 +9,7 @@ import { registerTaskTools } from './tasks/tools.js'
 import { registerOrchestrationTools } from './orchestration/tools.js'
 import { registerDispatchTool } from './dispatch/tools.js'
 import { DashboardManager, registerDashboardTool } from './dashboard/tools.js'
+import { registerSyncTool } from './sync/tools.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -67,12 +68,13 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       disposers.push(registerDispatchTool(ctx, () => runtime, () => startupError))
       disposers.push(registerDashboardTool(ctx, dashboard))
+      disposers.push(registerSyncTool(ctx, () => runtime, () => startupError))
       runtime.audit.record({
         event: 'factory.tools_registered',
         level: 'info',
         data: {
           count: disposers.length,
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)

@@ -32,7 +32,7 @@ describe('DashboardServer', () => {
       tasks: unknown[]
       tools: unknown[]
     }
-    expect(state.overview.version).toBe('0.4.0')
+    expect(state.overview.version).toBe('0.5.0')
     expect(state.overview.agents).toBe(7)
     expect(state.overview.tasks.total).toBeGreaterThanOrEqual(1)
     expect(state.agents).toHaveLength(7)

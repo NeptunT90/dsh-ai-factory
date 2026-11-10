@@ -12,8 +12,9 @@ import type { MemoryStats } from './memory/types.js'
 import { AgentRegistry } from './agents/registry.js'
 import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
+import { SyncService } from './sync/service.js'
 
-export const FACTORY_VERSION = '0.4.0'
+export const FACTORY_VERSION = '0.5.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -50,6 +51,7 @@ export class FactoryRuntime {
   readonly agents: AgentRegistry
   readonly tasks: TaskEngine
   readonly planner: PlannerService
+  readonly sync: SyncService
   readonly startedAt = Date.now()
   private expiredOnStart = 0
   private recoveredOnStart = 0
@@ -64,6 +66,7 @@ export class FactoryRuntime {
     this.agents.seedBuiltins()
     this.tasks = new TaskEngine(db, this.projects, this.agents, config)
     this.planner = new PlannerService(this.tasks, this.agents)
+    this.sync = new SyncService(db, this.memory, this.audit, config)
     try {
       this.expiredOnStart = this.memory.expire()
     } catch (error) {

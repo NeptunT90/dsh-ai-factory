@@ -84,11 +84,16 @@
 
 ## Phase 4 — Memory / Server
 
-- [ ] PostgreSQL + pgvector, REST API, авторизация.
-- [ ] Outbox, идемпотентность, версии, конфликты.
-- [ ] LWW/CRDT-политика конфликтов и журнал синхронизации.
-- [ ] Backup/restore сервера.
-- [ ] Локальная работа при недоступном сервере.
+- [x] SQLite outbox, идемпотентные `opId`, версии, retry/backoff.
+- [x] Sync client `factory_sync` (status/push/pull), Bearer env-token,
+      HTTPS/loopback, LWW pull, cursor.
+- [x] Применение remote без обратного outbox (SQLite guard).
+- [x] Mock-сервер: две независимые SQLite-базы обмениваются памятью.
+- [ ] PostgreSQL + pgvector, REST API, production auth.
+- [ ] Docker Compose, migrations, backup/restore сервера.
+- [ ] Конфликты (CRDT/merge) и журнал синхронизации на сервере.
+- [ ] Автоматический flush outbox по таймеру.
+- [ ] Второй физический ПК и серверное развёртывание.
 
 ## Phase 5 — Specialists and Tools
 
@@ -132,7 +137,7 @@
 - [x] Релизный tarball без `node_modules`, проверка обязательных файлов и
       SHA256SUMS (`scripts/package.ps1`).
 - [x] Установка из tarball в отдельный профиль `portable-test` (не link),
-      boot v0.4.0 с 31 инструментом.
+      boot v0.5.0 с 32 инструментами; upgrade 0.4.0 → 0.5.0.
 - [x] GitHub Actions CI + release workflow на тег `v*`.
 - [x] README/CHANGELOG/SECURITY, release/portability docs.
 - [ ] Тег и GitHub Release (нужен remote/credentials).

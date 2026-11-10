@@ -35,6 +35,16 @@ export interface FactoryConfig {
   redactLogs: boolean
   /** Minimum log level for AI Factory diagnostics. */
   logLevel: LogLevel
+  /** Optional sync server base URL, e.g. https://factory.example.com. Empty = disabled. */
+  syncUrl: string
+  /** Environment variable that stores the sync bearer token; never put the token in config. */
+  syncTokenEnv: string
+  /** Stable device id; empty = generated and persisted locally. */
+  syncDeviceId: string
+  /** Maximum operations per push request. */
+  syncBatchSize: number
+  /** HTTP timeout for one sync request. */
+  syncTimeoutMs: number
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -55,6 +65,11 @@ export const Config = Schema.object({
   projectIdOverride: Schema.string().default(''),
   redactLogs: Schema.boolean().default(true),
   logLevel: Schema.union(LOG_LEVELS).default('info'),
+  syncUrl: Schema.string().default(''),
+  syncTokenEnv: Schema.string().default('DSH_AI_FACTORY_SYNC_TOKEN'),
+  syncDeviceId: Schema.string().default(''),
+  syncBatchSize: Schema.number().min(1).max(200).default(50),
+  syncTimeoutMs: Schema.number().min(1000).max(60_000).default(15_000),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')

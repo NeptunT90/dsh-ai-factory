@@ -30,11 +30,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dsh-ai-factory-0.4.0.tgz
+  -Profile desktop -Tarball .\dsh-ai-factory-0.5.0.tgz
 ```
 
 Оба варианта используют официальный `dsh plugin add` и добавляют bundle.
-Проверка: `factory_status` → `schemaVersion: 2`, `agents: 7`.
+Проверка: `factory_status` → `schemaVersion: 3`, `agents: 7`.
 
 ## Проверка переносимости
 
@@ -42,7 +42,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 - `scripts/package.ps1` собирает tarball без `node_modules`, с `lib/`,
   manifest и bundle patch.
 - tarball установлен в отдельный профиль `portable-test` как обычная папка
-  (не junction/link), DSH загрузил v0.4.0 и 31 инструмент.
+  (не junction/link), DSH загрузил v0.5.0 и 32 инструмента.
 - `scripts/install.ps1 -Tarball` не зависит от dev-сборки на машине установки.
 - Секреты не входят в tarball и не пишутся в память.
 - `scripts/backup.ps1` использует `VACUUM INTO` для консистентного SQLite-

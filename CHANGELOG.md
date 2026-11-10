@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] — 2026-11-10
+
+### Added
+
+- Миграция v3: `sync_outbox`, `sync_state`, `sync_apply_guard` и SQLite
+  triggers на реальные версии памяти.
+- `factory_sync` (status/push/pull/sync) с Bearer-токеном из env, HTTPS или
+  loopback HTTP, cursor, idempotent `opId`, retry/backoff.
+- `MemoryEngine.applyRemote`: LWW по `updatedAt`, импорт/remap проекта,
+  подавление обратного outbox, FTS-обновление.
+- 3 sync-теста (всего 37): обмен памятью между двумя SQLite, offline outbox,
+  отказ по токену.
+- Release tarball 0.5.0; upgrade `portable-test` 0.4.0 → 0.5.0 без потери
+  схемы/данных.
+
+### Known limitations
+
+- Production PostgreSQL/pgvector sync-сервер ещё не реализован; контракт
+  проверен mock-сервером.
+- Нет автоматического flush outbox по таймеру.
+- Second physical PC still pending.
+
 ## [0.4.0] — 2026-11-10
 
 ### Added

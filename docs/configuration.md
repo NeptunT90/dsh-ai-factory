@@ -19,6 +19,11 @@ Patch заменяет конфигурацию строки целиком. Е�
 | `projectIdOverride` | string | `""` | Один project id для переносимого проекта |
 | `redactLogs` | boolean | true | Редактировать секреты в audit |
 | `logLevel` | enum | info | debug / info / warn / error |
+| `syncUrl` | string | `""` | URL sync-сервера; пусто = локальный режим |
+| `syncTokenEnv` | string | `DSH_AI_FACTORY_SYNC_TOKEN` | Имя env-переменной с Bearer-токеном |
+| `syncDeviceId` | string | `""` | Постоянный id устройства; пусто = сгенерировать |
+| `syncBatchSize` | number | 50 | Максимум операций в push |
+| `syncTimeoutMs` | number | 15000 | Таймаут запроса |
 
 ## Пути
 

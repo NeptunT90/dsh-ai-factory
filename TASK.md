@@ -14,15 +14,15 @@
 
 ## Следующая очередь
 
+- Production sync-сервер: PostgreSQL + pgvector, REST API, Docker Compose,
+  токен, migrations, backup/restore.
+- Автоматический flush outbox по таймеру + server-side conflict log.
 - Живой smoke: `factory_plan_create` → `factory_task_claim` →
-  `factory_dispatch` с моделью.
-- Проверить `factory_dashboard` в живом DSH и открыть URL.
-- Настроить GitHub remote, tag `v0.4.0`, Release по workflow.
-- Фактическая установка на второй ПК; upgrade-тест.
-- Ограничение инструментов дочернего агента через scoped registration/restrict.
-- Model Router: fallback, выбор по роли, стоимость/контекст.
-- Автоматический DIRECTOR-цикл: claim → dispatch → REVIEWER → fix.
-- Server sync (PostgreSQL/pgvector), остальные разделы dashboard.
+  `factory_dispatch` с моделью; `factory_dashboard`/`factory_sync`.
+- Настроить GitHub remote, tag `v0.5.0`, Release по workflow.
+- Установка на второй физический ПК; upgrade 0.4→0.5.
+- Scoped-ограничение host-tools ребёнка; Model Router.
+- Автономный DIRECTOR/REVIEWER-цикл, Workflow.
 
 ## Запреты
 

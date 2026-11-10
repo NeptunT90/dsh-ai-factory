@@ -20,6 +20,11 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     projectIdOverride: '',
     redactLogs: true,
     logLevel: 'info',
+    syncUrl: '',
+    syncTokenEnv: 'DSH_AI_FACTORY_SYNC_TOKEN',
+    syncDeviceId: '',
+    syncBatchSize: 50,
+    syncTimeoutMs: 15_000,
     ...overrides,
   }
 }

@@ -19,6 +19,11 @@
     "allowGlobalMemory": { "type": "boolean", "default": true },
     "projectIdOverride": { "type": "string", "default": "" },
     "redactLogs": { "type": "boolean", "default": true },
-    "logLevel": { "enum": ["debug", "info", "warn", "error"], "default": "info" }
+    "logLevel": { "enum": ["debug", "info", "warn", "error"], "default": "info" },
+    "syncUrl": { "type": "string", "default": "", "description": "Optional sync server URL; HTTPS or loopback HTTP" },
+    "syncTokenEnv": { "type": "string", "default": "DSH_AI_FACTORY_SYNC_TOKEN" },
+    "syncDeviceId": { "type": "string", "default": "" },
+    "syncBatchSize": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
+    "syncTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 60000, "default": 15000 }
   }
 }

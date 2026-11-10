@@ -89,6 +89,19 @@
 - Добавлены `.github/workflows/release.yml`, `docs/release.md`,
   `docs/portability.md`, package README/LICENSE.
 
+### Sync foundation v0.5.0
+
+- Миграция v3: `sync_outbox`, `sync_state`, `sync_apply_guard` и SQLite
+  triggers на реальные версии памяти.
+- `factory_sync`: status/push/pull/sync; Bearer-токен только из env;
+  HTTPS/loopback; cursor; backoff.
+- `MemoryEngine.applyRemote`: LWW по updatedAt, импорт проекта, подавление
+  обратного outbox, FTS-обновление.
+- 3 sync-теста: push из A → pull в B, offline outbox/backoff, отказ по токену.
+- 37 тестов; live v0.5.0, schema 3, 32 инструмента.
+- Production PostgreSQL/pgvector-сервер ещё не реализован; mock-сервер
+  подтверждает протокол.
+
 ### Исправлено
 
 - PowerShell 5.1 `Set-Content -Encoding UTF8` добавил BOM в `package.json`,
