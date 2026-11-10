@@ -8,7 +8,8 @@
 2. `factory_workflow_run` автоматически диспатчит executor, запускает
    REVIEWER, при FAIL берёт созданную fix-задачу и повторяет.
 3. `maxCycles` 1–5; статусы PASSED/FAILED/EXHAUSTED/ERROR + история циклов.
-4. Live smoke: реальный dispatch child (PONG) и REVIEWER (PASS), dashboard.
+4. Live smoke: реальный dispatch child (PONG), REVIEWER (PASS),
+   workflow REVIEW→PASS и dashboard.
 5. 45 plugin-тестов, 34 инструмента, версия 0.7.0.
 
 Осталось: неограниченный автономный цикл/таймер, scoped tools/Model Router,

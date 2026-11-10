@@ -58,6 +58,8 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
 - `factory_review` задачи `tsk_4336caca…` → child `fa6e4cad…`,
   structured **PASS**, задача COMPLETED, fix не создавался.
+- `factory_workflow_run` задачи `tsk_28c73300…` → **PASSED** за 1 цикл,
+  задача COMPLETED.
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
@@ -118,8 +120,8 @@ Read-only auth/405 проверены автотестами.
 - Нет автоматического планировщика backup/restore и multi-writer; backup
   endpoint/скрипт запускаются вручную.
 - Auto-sync реализован; live-сервер к desktop-профилю не подключался.
-- `factory_workflow_run` в live-режиме не запускался: unit-тесты покрывают
-  цикл, а dispatch и REVIEWER проверены live отдельно.
+- `factory_workflow_run` live проверен на REVIEW→PASS; ветка FAIL→fix→PASS
+  покрыта unit-тестами.
 - Scoped tool allowlist, Model Router, фоновый автономный цикл не реализованы.
 - Физически второй ПК не проверялся.
 - Полный restart DSH после 0.7.0 не выполнен.

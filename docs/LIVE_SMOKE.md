@@ -60,7 +60,25 @@ reviewer child: fa6e4cad-1163-40ee-85de-f3c819a941eb
 REVIEWER independently проверил задачу, `git status --porcelain` и состояние
 Task Engine; задача закрыта, fix-задача не создавалась.
 
-## 5. Dashboard
+## 5. Реальный workflow
+
+Создана задача `tsk_28c73300-a2f3-46a8-bb76-114000416b23`, переведена в
+REVIEW с результатом `WORKFLOW_OK: ...`.
+
+`factory_workflow_run` с `maxCycles=2` и критерием «PASS, если result содержит
+WORKFLOW_OK»:
+
+```
+workflow: PASSED
+Ревью пройдено: PASS.
+цикл 1: tsk_28c73300… → PASS (COMPLETED)
+```
+
+`factory_task_get` подтвердил COMPLETED и review-текст с фактической проверкой
+Task Engine/БД. Это live-проверка workflow на REVIEW-задаче; ветка
+executor → FAIL → fix в live-режиме не запускалась (покрыта unit-тестами).
+
+## 6. Dashboard
 
 `factory_dashboard start` поднял loopback read-only панель. Браузер открыл
 `127.0.0.1` с токеном из URL; токен превратился в HttpOnly-cookie и исчез из
@@ -68,10 +86,11 @@ Task Engine; задача закрыта, fix-задача не создавал
 
 Скриншот: [assets/dashboard-live-v0.7.0.png](assets/dashboard-live-v0.7.0.png).
 
-## 6. Ограничения smoke
+## 7. Ограничения smoke
 
-- Workflow `factory_workflow_run` в live-режиме не запускался (unit-тесты
-  покрывают цикл); dispatch и REVIEWER проверены отдельно.
+- Live workflow проверен на старте из REVIEW (PASS за один цикл); ветка
+  executor → FAIL → fix task → повторный PASS в live-режиме не запускалась,
+  она покрыта unit-тестами.
 - Сервер синхронизации в live-режиме не подключался; e2e PGlite проверен
   отдельно.
 - Это smoke намеренно не менял файлы проекта.

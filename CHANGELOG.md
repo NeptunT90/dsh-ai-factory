@@ -10,7 +10,8 @@
   `maxCycles` 1–5, статусы PASSED/FAILED/EXHAUSTED/ERROR и история циклов.
 - Audit `workflow.*`; fail fix-задачи автоматически диспатчатся следующим
   циклом.
-- Live smoke из Web GUI: реальный dispatch (PONG), REVIEWER (PASS), dashboard.
+- Live smoke из Web GUI: реальный dispatch (PONG), REVIEWER (PASS),
+  workflow REVIEW→PASS, dashboard.
 - 4 новых теста (всего 45), 34 инструмента; версия 0.7.0.
 
 ## [0.6.0] — 2026-11-10
