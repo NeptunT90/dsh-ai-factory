@@ -109,8 +109,8 @@ describe('plugin mount', () => {
     const remember = harness.tools.get('factory_memory_remember')!
     const stored = (await remember.execute(
       {
-        content: 'РРЅСЃС‚СЂСѓРјРµРЅС‚ AI Factory СЂРµР°Р»СЊРЅРѕ РІС‹Р·С‹РІР°РµС‚ SQLite.',
-        title: 'РџСЂРѕРІРµСЂРєР° РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°',
+        content: 'Инструмент AI Factory реально вызывает SQLite.',
+        title: 'Проверка инструмента',
         kind: 'project',
         tags: ['plugin', 'sqlite'],
       },
@@ -127,7 +127,7 @@ describe('plugin mount', () => {
 
     const get = harness.tools.get('factory_memory_get')!
     const entry = (await get.execute({ id: stored.entry.id }, exec)) as { title: string }
-    expect(entry.title).toBe('РџСЂРѕРІРµСЂРєР° РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°')
+    expect(entry.title).toBe('Проверка инструмента')
   })
 
   it('exposes agent, task and plan tools end-to-end through the tool contract', async () => {
@@ -143,9 +143,9 @@ describe('plugin mount', () => {
 
     const plan = (await harness.tools.get('factory_plan_create')!.execute(
       {
-        goal: 'РџСЂРѕРІРµСЂРёС‚СЊ РѕСЂРєРµСЃС‚СЂР°С†РёСЋ',
+        goal: 'Проверить оркестрацию',
         steps: [
-          { key: 'research', title: 'РСЃСЃР»РµРґРѕРІР°С‚СЊ', role: 'researcher' },
+          { key: 'research', title: 'Исследовать', role: 'researcher' },
           { key: 'build', title: 'РЎРѕР±СЂР°С‚СЊ', role: 'developer', dependsOn: ['research'] },
         ],
       },

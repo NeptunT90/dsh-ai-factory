@@ -27,8 +27,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.16.0.tgz` — 149 117 байт,
-SHA256 `f2c4b1c760a404634581305e3fc8525d99d98a9a3fc1d8b3e594331931eca4eb`.
+Артефакт: `dist/dsh-ai-factory-0.16.0.tgz` — 149 113 байт,
+SHA256 `c4002271f6eb7151c18474ad9a9426157316a7b29c16b09e45ee4657d85102d4`.
 
 ## 3. Установка из tarball
 

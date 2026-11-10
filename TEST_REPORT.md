@@ -161,8 +161,8 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.16.0.tgz`: **149 117 байт**.
-- SHA256: `f2c4b1c760a404634581305e3fc8525d99d98a9a3fc1d8b3e594331931eca4eb`.
+- `dist/dsh-ai-factory-0.16.0.tgz`: **149 113 байт**.
+- SHA256: `c4002271f6eb7151c18474ad9a9426157316a7b29c16b09e45ee4657d85102d4`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.

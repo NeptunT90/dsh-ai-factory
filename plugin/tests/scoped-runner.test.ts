@@ -82,7 +82,7 @@ describe('ScopedChildRunner', () => {
     const result = await runner.run({
       parent: parentAgent(),
       cwd: 'C:/workspace',
-      prompt: 'РСЃСЃР»РµРґСѓР№ С‚РµРјСѓ',
+      prompt: 'Исследуй тему',
       profile: researcher,
       signal: new AbortController().signal,
     })
@@ -90,7 +90,7 @@ describe('ScopedChildRunner', () => {
     expect(result.stopReason).toBe('completed')
     expect(result.output).toBe('OK from child')
     expect(result.childId).toBe('ses_child')
-    expect(captured.prompt).toBe('РСЃСЃР»РµРґСѓР№ С‚РµРјСѓ')
+    expect(captured.prompt).toBe('Исследуй тему')
     expect(captured.options?.meta).toMatchObject({ origin: 'subagent' })
     const deny = captured.restrictions?.[0]?.deny ?? []
     expect(deny).not.toContain('factory_memory_forget')

@@ -15,6 +15,11 @@
 
 ## [0.16.0] — 2026-11-10
 
+### Fixed
+
+- Restored UTF-8 Russian strings in package metadata/tests after legacy
+  PowerShell mojibake (FTS query now uses the correct term).
+
 ### Added
 
 - `factory_auto_workflow` (36th tool): status/run/start/stop, on-demand
