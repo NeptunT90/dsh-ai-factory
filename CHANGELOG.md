@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.12.0] — 2026-11-10
+
+### Added
+
+- Server scheduled backups: `SYNC_BACKUP_DIR`,
+  `SYNC_BACKUP_INTERVAL_HOURS`, `SYNC_BACKUP_KEEP`; tar.gz + SHA256 sidecar,
+  rotation; Docker Compose `/backups` volume.
+- 7th server test: backup archive + rotation.
+- Plugin unchanged (0.10.1, 54 tests, 35 tools).
+
 ## [0.11.0] — 2026-11-10
 
 ### Added

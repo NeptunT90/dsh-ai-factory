@@ -92,6 +92,8 @@ PGlite подходит для одного writer-процесса.
   Скрипт использует PGlite `loadDataDir`, проверяет `vector`/`memories` и
   отказывается писать в непустой каталог. Затем сервер запускается на этом
   каталоге.
+- Scheduled backups: `SYNC_BACKUP_DIR` + `SYNC_BACKUP_INTERVAL_HOURS` +
+  `SYNC_BACKUP_KEEP`; архивы `.tar.gz` и `.sha256`, старые удаляются.
 - Backup содержит память пользователя; не публиковать.
 
 ## Outbox

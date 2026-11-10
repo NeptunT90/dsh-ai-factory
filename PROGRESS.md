@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Scheduled backups v0.12.0
+
+- `BackupScheduler` + SHA256 sidecar + rotation; env/Compose.
+- 7 server-тестов.
+
 ### Backup/restore server v0.11.0
 
 - PGlite restore via loadDataDir; empty-target guard; CLI script.

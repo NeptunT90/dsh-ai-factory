@@ -120,8 +120,9 @@ host-возможность, которая обходит этот реестр
 - `GET /v1/admin/backup` отдаёт consistent `.tar.gz` PGlite data-dir;
   `scripts/server-backup.ps1` сохраняет файл и SHA256.
 - Restore CLI принимает только **пустой** каталог, использует PGlite
-  `loadDataDir` и проверяет health. Backup содержит память пользователя; не
-  публиковать.
+  `loadDataDir` и проверяет health. Scheduled backups пишут tar.gz+SHA256 и
+  ротируют архивы; каталог backup должен быть защищён. Backup содержит память
+  пользователя; не публиковать.
 - Standalone PostgreSQL/Ubuntu и TLS-терминация ещё не развёрнуты.
 
 ## Reviewer / child-агенты

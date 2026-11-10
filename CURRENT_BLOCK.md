@@ -1,6 +1,17 @@
 # Текущий блок
 
-**Phase 4b — backup/restore сервера.**
+**Phase 4b — scheduled backups сервера.**
+
+Сделано:
+
+1. `BackupScheduler`: dump + SHA256, rotation, env-конфиг.
+2. Docker Compose volume `/backups`.
+3. 7 server-тестов; scheduler rotation PASS.
+4. Plugin 0.10.1 без изменений; server 0.12.0.
+
+Осталось: standalone PostgreSQL/TLS, GitHub Release, второй ПК.
+
+## Предыдущий блок: restore CLI
 
 Сделано:
 

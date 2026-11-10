@@ -91,11 +91,26 @@ node server\scripts\restore.mjs .\sync-backup.tar.gz C:\sync-restore\data
 Архив содержит полноценный PGlite data-dir; не публикуйте его — там память
 пользователя.
 
+## Scheduled backups
+
+Задайте каталог и интервал:
+
+```powershell
+$env:SYNC_BACKUP_DIR = "C:\dsh-ai-factory-server\backups"
+$env:SYNC_BACKUP_INTERVAL_HOURS = "24"
+$env:SYNC_BACKUP_KEEP = "7"
+```
+
+Сервер пишет `dsh-ai-factory-sync-*.tar.gz` + `.sha256`, удаляет старые архивы
+сверх `SYNC_BACKUP_KEEP`. Docker Compose уже монтирует `/backups` и задаёт эти
+env. Планировщик стартует только при непустом `SYNC_BACKUP_DIR`.
+
 ## Ограничения
 
 - PGlite — embedded single-process PostgreSQL; для нескольких writer-хостов
   нужен standalone PostgreSQL + `pg` adapter (следующий шаг).
 - Нет встроенного TLS: используйте reverse proxy с HTTPS.
-- Нет автоматического backup-планировщика: endpoint/скрипт запускаются вручную.
+- Backup-планировщик пишет архивы, но не проверяет restore автоматически; это
+  отдельный шаг.
 - Сервер не логирует payload памяти.
 - Конфликты push возвращаются клиенту; автоматического merge/CRDT нет.

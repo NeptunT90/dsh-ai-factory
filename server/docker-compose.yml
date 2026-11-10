@@ -7,11 +7,16 @@ services:
       SYNC_DB_DIR: /data
       SYNC_HOST: 0.0.0.0
       SYNC_PORT: 8787
+      SYNC_BACKUP_DIR: /backups
+      SYNC_BACKUP_INTERVAL_HOURS: 24
+      SYNC_BACKUP_KEEP: 7
     # Bind to loopback on the host; expose through an HTTPS reverse proxy.
     ports:
       - "127.0.0.1:8787:8787"
     volumes:
       - sync-data:/data
+      - sync-backups:/backups
 
 volumes:
   sync-data:
+  sync-backups:
