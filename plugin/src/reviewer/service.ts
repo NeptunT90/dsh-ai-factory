@@ -3,7 +3,7 @@ import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
-import { ScopedChildRunner, type ChildRunner } from '../agents/scoped-runner.js'
+import { ScopedChildRunner, type ChildRunner, type ScopedRunResult } from '../agents/scoped-runner.js'
 import type { TaskRecord } from '../tasks/types.js'
 
 export const REVIEW_VERDICTS = ['PASS', 'PASS_WITH_WARNINGS', 'FAIL'] as const
@@ -99,6 +99,22 @@ export class ReviewerService {
     const parent = exec.agent
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_review требует вызывающего агента')
     const project = runtime.projects.require(task.projectId)
+    const routePlan = runtime.models.plan(reviewer, parent)
+    if (routePlan.attempts.length === 0) {
+      throw new FactoryError('UNAVAILABLE', 'Нет model route для REVIEWER')
+    }
+    runtime.audit.record({
+      event: 'model.route',
+      level: 'info',
+      actor: parent.id,
+      projectId: task.projectId,
+      sessionId: parent.id,
+      data: {
+        taskId: task.id,
+        reviewerAgentId: reviewer.id,
+        routes: routePlan.attempts.map((route) => ({ provider: route.provider, model: route.model, source: route.source })),
+      },
+    })
     runtime.audit.record({
       event: 'review.started',
       level: 'info',
@@ -109,19 +125,40 @@ export class ReviewerService {
     })
 
     try {
-      const result = await this.runner.run({
-        parent,
-        cwd: project.rootPath,
-        prompt: composePrompt(runtime, task, reviewer, input.instructions),
-        profile: reviewer,
-        signal: exec.signal,
-        label: `review: ${task.title}`,
-        timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
-      })
-      if (result.stopReason !== 'completed') {
+      let result: ScopedRunResult | undefined
+      for (let attempt = 0; attempt < routePlan.attempts.length; attempt += 1) {
+        const route = routePlan.attempts[attempt]!
+        result = await this.runner.run({
+          parent,
+          cwd: project.rootPath,
+          prompt: composePrompt(runtime, task, reviewer, input.instructions),
+          profile: reviewer,
+          signal: exec.signal,
+          label: `review: ${task.title}`,
+          timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
+          agentOptions: route.options,
+        })
+        if (result.stopReason === 'completed') break
+        if (attempt + 1 < routePlan.attempts.length) {
+          runtime.audit.record({
+            event: 'model.fallback',
+            level: 'warn',
+            actor: parent.id,
+            projectId: task.projectId,
+            sessionId: parent.id,
+            data: {
+              taskId: task.id,
+              from: `${route.provider}/${route.model}`,
+              to: `${routePlan.attempts[attempt + 1]!.provider}/${routePlan.attempts[attempt + 1]!.model}`,
+              diagnostic: result.diagnostic.slice(0, 300),
+            },
+          })
+        }
+      }
+      if (!result || result.stopReason !== 'completed') {
         throw new FactoryError(
           'UNAVAILABLE',
-          `REVIEWER остановлен: ${result.stopReason}${result.diagnostic ? ` (${result.diagnostic})` : ''}`,
+          `REVIEWER остановлен: ${result?.stopReason ?? 'no attempt'}${result?.diagnostic ? ` (${result.diagnostic})` : ''}`,
         )
       }
       const parsed = parseVerdict(result.output) ?? {

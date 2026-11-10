@@ -26,6 +26,9 @@
     "syncBatchSize": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 },
     "syncTimeoutMs": { "type": "integer", "minimum": 1000, "maximum": 60000, "default": 15000 },
     "syncAuto": { "type": "boolean", "default": false },
-    "syncIntervalSeconds": { "type": "integer", "minimum": 15, "maximum": 86400, "default": 60 }
+    "syncIntervalSeconds": { "type": "integer", "minimum": 15, "maximum": 86400, "default": 60 },
+    "modelRouterEnabled": { "type": "boolean", "default": true },
+    "modelFallbacks": { "type": "string", "default": "", "description": "comma-separated provider/model routes" },
+    "modelMaxAttempts": { "type": "integer", "minimum": 1, "maximum": 3, "default": 2 }
   }
 }

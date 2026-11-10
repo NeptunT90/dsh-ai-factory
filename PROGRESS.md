@@ -125,6 +125,13 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Model Router v0.9.0
+
+- Route plan: профиль → родитель → `modelFallbacks`, max 3 attempts.
+- Dispatch/review retry fallback on child error; audit model.route/fallback.
+- `factory_model_route` live: deepseek-official/deepseek-flash.
+- 54 теста, 35 инструментов.
+
 ### Phase 2c — scoped allowlist v0.8.0
 
 - Schema v4: `agent_profiles.allowed_tools`, UI tools `allowedTools`.

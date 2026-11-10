@@ -26,6 +26,9 @@ Patch заменяет конфигурацию строки целиком. Е�
 | `syncTimeoutMs` | number | 15000 | Таймаут запроса |
 | `syncAuto` | boolean | false | Автоматический push+pull при загруженном плагине |
 | `syncIntervalSeconds` | number | 60 | Интервал auto-sync (мин. 15) |
+| `modelRouterEnabled` | boolean | true | Включить model routing/fallback |
+| `modelFallbacks` | string | `""` | Fallback-маршруты `provider/model` через запятую |
+| `modelMaxAttempts` | number | 2 | Максимум model-попыток (1–3) |
 
 ## Пути
 

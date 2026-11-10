@@ -118,6 +118,14 @@
 - [x] Live: RESEARCHER пытается `factory_memory_forget` → отказ, память цела.
 - [x] 50 plugin-тестов, docs/ARCHITECTURE/SECURITY.
 
+## Phase 3c — Model Router
+
+- [x] Route priority: profile → parent → modelFallbacks.
+- [x] `modelMaxAttempts` 1–3, fallback on child model error, audit.
+- [x] `factory_model_route` read-only.
+- [x] Live: DEVELOPER/REVIEWER → deepseek-official/deepseek-flash.
+- [x] 54 plugin-теста, 35 инструментов.
+
 ## Phase 6 — Autonomy and Review
 
 - [ ] SAFE / AUTONOMOUS / TRUSTED.
@@ -153,7 +161,7 @@
 - [x] Релизный tarball без `node_modules`, проверка обязательных файлов и
       SHA256SUMS (`scripts/package.ps1`).
 - [x] Установка из tarball в отдельный профиль `portable-test` (не link),
-      boot v0.7.0 с 34 инструментами; upgrade 0.6.0 → 0.7.0.
+      boot v0.9.0 с 35 инструментами; upgrade 0.8.0 → 0.9.0.
 - [x] GitHub Actions CI + release workflow на тег `v*`.
 - [x] README/CHANGELOG/SECURITY, release/portability docs.
 - [ ] Тег и GitHub Release (нужен remote/credentials).

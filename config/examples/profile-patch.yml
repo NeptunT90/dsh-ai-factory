@@ -25,3 +25,6 @@
     syncTimeoutMs: 15000
     syncAuto: false
     syncIntervalSeconds: 60
+    modelRouterEnabled: true
+    modelFallbacks: ''
+    modelMaxAttempts: 2

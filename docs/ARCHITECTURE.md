@@ -197,6 +197,21 @@ data. `ctx.agents.create()` получает `setup(agentCtx)`, где
 содержат `factory_dispatch`, `factory_review`, `factory_workflow_run` —
 оркестрация остаётся у корневого агента.
 
+### 7.1a. Model Router
+
+`ModelRouter` разрешает маршрут дочернего агента:
+
+1. явная модель профиля (`provider`/`model`);
+2. модель родителя;
+3. `modelFallbacks` (`provider/model` через запятую).
+
+`modelMaxAttempts` (1–3) ограничивает цепочку. `ScopedChildRunner` получает
+готовый `agentOptions`; dispatch/review при `stopReason:error` повторяют
+следующий route, пишут audit `model.route` и `model.fallback`. Read-only
+`factory_model_route` показывает primary/fallbacks/chain, но не запускает
+модель. Route не проверяется по каталогу провайдеров: неверный route вернёт
+ошибку child, после чего сработает fallback или задача уйдёт в retry.
+
 ### 7.2. Task Engine
 
 `tasks` — durable очередь. Поля: проект, родитель, цель, статус, приоритет,
@@ -325,7 +340,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Bounded workflow dispatch → review → fix (maxCycles 1–5) | реализовано |
 | Фоновый/неограниченный автономный цикл | Phase 6c |
 | Scoped tool restrictions по allowlist профиля | реализовано (Phase 2c) |
-| Model Router, workflow-ветвления, автоматический REVIEWER-цикл | Phase 3b/6 |
+| Model Router + fallback + `factory_model_route` | реализовано |
+| Workflow-ветвления, фоновый автономный цикл | Phase 3b/6 |
 | Scheduler, server sync, GitHub | Phase 4/5/7 |
 
 | Будущая подсистема | Точка интеграции |

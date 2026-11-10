@@ -27,6 +27,9 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     syncTimeoutMs: 15_000,
     syncAuto: false,
     syncIntervalSeconds: 60,
+    modelRouterEnabled: true,
+    modelFallbacks: '',
+    modelMaxAttempts: 2,
     ...overrides,
   }
 }

@@ -13,6 +13,7 @@ function fakeExec(): ToolRunContext {
     signal: new AbortController().signal,
     agent: {
       id: 'ses_parent',
+      options: { provider: 'fake', model: 'fake-model' },
       session: { header: { cwd: 'C:/workspace' } },
     },
   } as unknown as ToolRunContext
@@ -92,6 +93,30 @@ describe('DispatchService', () => {
     expect(output.taskStatus).toBe('READY')
     expect(runtime.tasks.require(task.id).attempts).toBe(1)
     expect(runtime.tasks.require(task.id).error).toContain('child failed')
+  })
+
+  it('retries with the configured fallback model after a child error', async () => {
+    const { runtime, projectId } = track(
+      createTestRuntime({ modelFallbacks: 'fb/one', modelMaxAttempts: 2 }),
+    )
+    const task = runtime.tasks.create({ projectId, title: 'Fallback route' })
+    const calls: string[] = []
+    const fallbackRunner: ChildRunner = {
+      async run(input) {
+        calls.push(String(input.agentOptions?.provider) + '/' + String(input.agentOptions?.model))
+        return calls.length === 1
+          ? { childId: 'ses_first', output: '', stopReason: 'error', diagnostic: 'model unavailable' }
+          : { childId: 'ses_second', output: 'fallback ok', stopReason: 'completed', diagnostic: '' }
+      },
+    }
+    const output = await new DispatchService(fakeContext(), runtime, fallbackRunner).dispatch(
+      { taskId: task.id },
+      fakeExec(),
+    )
+    expect(output.taskStatus).toBe('COMPLETED')
+    expect(output.childId).toBe('ses_second')
+    expect(calls).toEqual(['fake/fake-model', 'fb/one'])
+    expect(runtime.tasks.require(task.id).result).toContain('fallback ok')
   })
 
   it('fails without claiming when ctx.agents is unavailable', async () => {

@@ -3,7 +3,7 @@ import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
-import { ScopedChildRunner, type ChildRunner } from '../agents/scoped-runner.js'
+import { ScopedChildRunner, type ChildRunner, type ScopedRunResult } from '../agents/scoped-runner.js'
 import type { TaskRecord } from '../tasks/types.js'
 
 export interface DispatchInput {
@@ -93,6 +93,25 @@ export class DispatchService {
     if (!parent) throw new FactoryError('UNAVAILABLE', 'factory_dispatch требует вызывающего агента')
     const project = runtime.projects.require(task.projectId)
     const prompt = composePrompt(runtime, task, agent, input.prompt)
+    const routePlan = runtime.models.plan(agent, parent)
+    if (routePlan.attempts.length === 0) {
+      throw new FactoryError(
+        'UNAVAILABLE',
+        `Нет model route для ${agent.name}: задайте provider/model в профиле, у родителя или в modelFallbacks`,
+      )
+    }
+    runtime.audit.record({
+      event: 'model.route',
+      level: 'info',
+      actor: parent.id,
+      projectId: task.projectId,
+      sessionId: parent.id,
+      data: {
+        taskId: task.id,
+        agentId: agent.id,
+        routes: routePlan.attempts.map((route) => ({ provider: route.provider, model: route.model, source: route.source })),
+      },
+    })
     const leaseMs = Math.max(
       60_000,
       Math.min(24 * 60 * 60 * 1000, Math.floor((input.leaseMinutes ?? 30) * 60_000)),
@@ -128,15 +147,41 @@ export class DispatchService {
     heartbeat.unref?.()
 
     try {
-      const result = await this.runner.run({
-        parent,
-        cwd: project.rootPath,
-        prompt,
-        profile: agent,
-        signal: controller.signal,
-        label: task.title,
-        timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
-      })
+      let result: ScopedRunResult | undefined
+      let lastRoute = routePlan.attempts[0]
+      for (let attempt = 0; attempt < routePlan.attempts.length; attempt += 1) {
+        const route = routePlan.attempts[attempt]!
+        lastRoute = route
+        result = await this.runner.run({
+          parent,
+          cwd: project.rootPath,
+          prompt,
+          profile: agent,
+          signal: controller.signal,
+          label: task.title,
+          timeoutMs: task.timeoutMs && task.timeoutMs > 0 ? task.timeoutMs : undefined,
+          agentOptions: route.options,
+        })
+        if (result.stopReason === 'completed') break
+        if (attempt + 1 < routePlan.attempts.length) {
+          runtime.audit.record({
+            event: 'model.fallback',
+            level: 'warn',
+            actor: parent.id,
+            projectId: task.projectId,
+            sessionId: parent.id,
+            data: {
+              taskId: task.id,
+              from: `${route.provider}/${route.model}`,
+              to: `${routePlan.attempts[attempt + 1]!.provider}/${routePlan.attempts[attempt + 1]!.model}`,
+              diagnostic: result.diagnostic.slice(0, 300),
+            },
+          })
+        }
+      }
+      if (!result) {
+        throw new FactoryError('UNAVAILABLE', `Model Router не выполнил ни одной попытки для ${lastRoute?.provider ?? '?'}`)
+      }
       const output = result.output.slice(0, 100_000)
       const diagnostic = result.diagnostic.trim()
       if (result.stopReason === 'completed') {
@@ -155,6 +200,7 @@ export class DispatchService {
             agentId: agent.id,
             stopReason: result.stopReason,
             review: input.review === true,
+            route: lastRoute ? `${lastRoute.provider}/${lastRoute.model}` : '',
           },
         })
         return {

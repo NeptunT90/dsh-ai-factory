@@ -86,7 +86,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(34)
+    expect(harness.tools.size).toBe(35)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)
@@ -95,6 +95,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_sync')).toBe(true)
     expect(harness.tools.has('factory_review')).toBe(true)
     expect(harness.tools.has('factory_workflow_run')).toBe(true)
+    expect(harness.tools.has('factory_model_route')).toBe(true)
 
     const status = await harness.tools.get('factory_status')!.execute({}, fakeExec(harness.workspace) as never)
     expect((status as { status: string }).status).toBe('ready')
@@ -107,8 +108,8 @@ describe('plugin mount', () => {
     const remember = harness.tools.get('factory_memory_remember')!
     const stored = (await remember.execute(
       {
-        content: 'Инструмент AI Factory реально вызывает SQLite.',
-        title: 'Проверка инструмента',
+        content: 'РРЅСЃС‚СЂСѓРјРµРЅС‚ AI Factory СЂРµР°Р»СЊРЅРѕ РІС‹Р·С‹РІР°РµС‚ SQLite.',
+        title: 'РџСЂРѕРІРµСЂРєР° РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°',
         kind: 'project',
         tags: ['plugin', 'sqlite'],
       },
@@ -125,7 +126,7 @@ describe('plugin mount', () => {
 
     const get = harness.tools.get('factory_memory_get')!
     const entry = (await get.execute({ id: stored.entry.id }, exec)) as { title: string }
-    expect(entry.title).toBe('Проверка инструмента')
+    expect(entry.title).toBe('РџСЂРѕРІРµСЂРєР° РёРЅСЃС‚СЂСѓРјРµРЅС‚Р°')
   })
 
   it('exposes agent, task and plan tools end-to-end through the tool contract', async () => {
@@ -141,10 +142,10 @@ describe('plugin mount', () => {
 
     const plan = (await harness.tools.get('factory_plan_create')!.execute(
       {
-        goal: 'Проверить оркестрацию',
+        goal: 'РџСЂРѕРІРµСЂРёС‚СЊ РѕСЂРєРµСЃС‚СЂР°С†РёСЋ',
         steps: [
-          { key: 'research', title: 'Исследовать', role: 'researcher' },
-          { key: 'build', title: 'Собрать', role: 'developer', dependsOn: ['research'] },
+          { key: 'research', title: 'РСЃСЃР»РµРґРѕРІР°С‚СЊ', role: 'researcher' },
+          { key: 'build', title: 'РЎРѕР±СЂР°С‚СЊ', role: 'developer', dependsOn: ['research'] },
         ],
       },
       exec,
@@ -154,7 +155,7 @@ describe('plugin mount', () => {
     expect(plan.steps[1]?.status).toBe('WAITING')
 
     const createdTask = (await harness.tools.get('factory_task_create')!.execute(
-      { title: 'Задача через tool contract', metadata: { source: 'test' }, plan: ['шаг 1'] },
+      { title: 'Р—Р°РґР°С‡Р° С‡РµСЂРµР· tool contract', metadata: { source: 'test' }, plan: ['С€Р°Рі 1'] },
       exec,
     )) as { id: string; status: string; metadata: { source?: string } }
     expect(createdTask.status).toBe('READY')
@@ -162,7 +163,7 @@ describe('plugin mount', () => {
     const fetchedTask = (await harness.tools.get('factory_task_get')!.execute({ id: createdTask.id }, exec)) as {
       title: string
     }
-    expect(fetchedTask.title).toBe('Задача через tool contract')
+    expect(fetchedTask.title).toBe('Р—Р°РґР°С‡Р° С‡РµСЂРµР· tool contract')
 
     const brief = (await harness.tools.get('factory_director_brief')!.execute({}, exec)) as {
       projectId: string

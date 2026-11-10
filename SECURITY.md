@@ -75,6 +75,15 @@ Live-проверка: RESEARCHER вызвал `factory_memory_forget` и пол
 host-возможность, которая обходит этот реестр, вне данной модели и требует
 отдельного аудита; DSH approvals/sandbox продолжают действовать независимо.
 
+## Model Router
+
+- Маршруты и fallback-и задаются оператором (`modelFallbacks`), не моделью.
+- Audit `model.route`/`model.fallback` хранит provider/model и диагностику, но
+  не prompt и не секреты.
+- Fallback повторяет child только после `stopReason:error`, не после
+  содержательного FAIL от REVIEWER.
+- `factory_model_route` read-only; не переключает модель и не запускает child.
+
 ## Dashboard (v0.4.0)
 
 `factory_dashboard` — локальный read-only HTTP-сервер:

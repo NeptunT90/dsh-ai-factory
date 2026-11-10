@@ -1,7 +1,7 @@
 # Live smoke — v0.7.0
 
 Дата: 2026-11-10  
-DSH Desktop 0.2.2-rc.1, AI Factory 0.7.0, schema v3, 34 инструмента.
+DSH Desktop 0.2.2-rc.1, AI Factory 0.7–0.9, schema v4, 35 инструментов.
 
 Все вызовы ниже сделаны **из Web GUI-сессии** через реальные tool-calls, не из
 unit-тестов. Секреты и dashboard-токен не сохранены.

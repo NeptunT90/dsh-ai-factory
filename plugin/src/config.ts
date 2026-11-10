@@ -49,6 +49,12 @@ export interface FactoryConfig {
   syncAuto: boolean
   /** Auto-sync interval in seconds (minimum 15). */
   syncIntervalSeconds: number
+  /** Resolve model routes and retry with fallbacks on child model failure. */
+  modelRouterEnabled: boolean
+  /** Comma-separated fallback routes in provider/model form. */
+  modelFallbacks: string
+  /** Maximum child model attempts per dispatch/review (1..3). */
+  modelMaxAttempts: number
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -76,6 +82,9 @@ export const Config = Schema.object({
   syncTimeoutMs: Schema.number().min(1000).max(60_000).default(15_000),
   syncAuto: Schema.boolean().default(false),
   syncIntervalSeconds: Schema.number().min(15).max(86_400).default(60),
+  modelRouterEnabled: Schema.boolean().default(true),
+  modelFallbacks: Schema.string().default(''),
+  modelMaxAttempts: Schema.number().min(1).max(3).default(2),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')

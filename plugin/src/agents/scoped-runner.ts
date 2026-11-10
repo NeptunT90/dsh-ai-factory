@@ -15,6 +15,8 @@ export interface ScopedRunInput {
   readonly signal: AbortSignal
   readonly label?: string
   readonly timeoutMs?: number
+  /** Explicit route selected by the Model Router; overrides profile/parent derivation. */
+  readonly agentOptions?: AgentOptions
 }
 
 export interface ChildRunner {
@@ -74,6 +76,7 @@ export class ScopedChildRunner implements ChildRunner {
     let initialSeq = 0
     try {
       const options =
+        input.agentOptions ??
         modelOptions(input.profile) ??
         (input.parent.options?.provider && input.parent.options?.model
           ? {

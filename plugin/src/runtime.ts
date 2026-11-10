@@ -13,8 +13,9 @@ import { AgentRegistry } from './agents/registry.js'
 import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
+import { ModelRouter } from './models/router.js'
 
-export const FACTORY_VERSION = '0.8.0'
+export const FACTORY_VERSION = '0.9.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -52,6 +53,7 @@ export class FactoryRuntime {
   readonly tasks: TaskEngine
   readonly planner: PlannerService
   readonly sync: SyncService
+  readonly models: ModelRouter
   private readonly childToolAllowlist = new Map<string, ReadonlySet<string>>()
   readonly startedAt = Date.now()
   private expiredOnStart = 0
@@ -68,6 +70,7 @@ export class FactoryRuntime {
     this.tasks = new TaskEngine(db, this.projects, this.agents, config)
     this.planner = new PlannerService(this.tasks, this.agents)
     this.sync = new SyncService(db, this.memory, this.audit, config)
+    this.models = new ModelRouter(config)
     if (config.syncAuto) this.sync.startAuto()
     try {
       this.expiredOnStart = this.memory.expire()

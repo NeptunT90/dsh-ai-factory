@@ -18,14 +18,14 @@
 ### Plugin
 
 ```
-Test Files  13 passed (13)
-Tests       50 passed (50)
+Test Files  14 passed (14)
+Tests       54 passed (54)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (34 инструмента).
+contract (35 инструментов).
 
 ### Sync server
 
@@ -40,8 +40,8 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.8.0**.
-- `factory.started`: schema **4**, agents 7, tools **34**.
+- HMR загрузил AI Factory **v0.9.0**.
+- `factory.started`: schema **4**, agents 7, tools **35**.
 - SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
 - Схемы `factory_sync`, `factory_review`, `factory_workflow_run` доставлены в
@@ -52,7 +52,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.8.0, schema 4, 7 агентов, 34 инструмента.
+- `factory_status` → 0.9.0, schema 4, 7 агентов, 35 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -80,6 +80,13 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
   ребёнка`; внук не создан.
 - Scoped workflow `tsk_fd7a9724…` → PASSED, 1 цикл.
 - 4 allowlist-теста + live-проверка; всего **50** plugin-тестов.
+
+### Model Router v0.9.0 (live)
+
+- `factory_model_route(role=developer)` → primary `deepseek-official/deepseek-flash`,
+  fallbacks пусты, chain из одной модели.
+- `factory_model_route(role=reviewer)` → тот же route.
+- Unit: profile → parent → fallback, maxAttempts, fallback retry после child error.
 
 ### Reviewer / workflow
 
@@ -123,10 +130,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.8.0.tgz`: **137 654 байт**.
-- SHA256: `5cab59cfef9a14a4be0932667c2541dcbe087af3469a15ece8707a07c47dd15b`.
+- `dist/dsh-ai-factory-0.9.0.tgz`: **141 811 байт**.
+- SHA256: `407ef723cafaa15da0b7d5ad9984606aebf99a58bbc2e695c261c65737dfd7d9`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.7.1 на 0.8.0; schema 4, 34 инструмента.
+- `portable-test` обновлён с 0.8.0 на 0.9.0; schema 4, 35 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -139,9 +146,9 @@ Read-only auth/405 проверены автотестами.
 - Auto-sync реализован; live-сервер к desktop-профилю не подключался.
 - `factory_workflow_run` live полностью проверен: REVIEW→PASS и
   FAIL→fix→PASS.
-- Model Router и фоновый автономный цикл не реализованы; scoped allowlist закрыт.
+- Фоновый автономный цикл и standalone PostgreSQL/TLS не реализованы; Model Router закрыт.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.8.0 не выполнен.
+- Полный restart DSH после 0.9.0 не выполнен.
 
 ## 8. Повтор
 

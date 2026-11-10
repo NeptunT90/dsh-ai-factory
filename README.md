@@ -9,14 +9,14 @@
 > Статус: **Phase 1–2c, dashboard v1, sync, REVIEWER и bounded workflow
 > проверены на DSH**. Работают память, профили, Task Engine, Planner, DIRECTOR
 > brief, реальный dispatch через `ctx.agents.create` с **enforced
-> allowlist**, read-only dashboard, sync-сервер, независимый REVIEWER и цикл
-> dispatch → review → fix (до 5 циклов). Model Router ещё не реализован.
+> allowlist**, read-only dashboard, sync-сервер, Model Router с fallback,
+> независимый REVIEWER и цикл dispatch → review → fix (до 5 циклов).
 > Полный план — в [PLAN.md](PLAN.md).
 
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.8.0 регистрирует **34 инструмента**.
+- Загружается Cordis-загрузчиком DSH; в v0.9.0 регистрирует **35 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -39,6 +39,7 @@
   через `ctx.agents.create` с `setup(restrict)` и runtime guard; ребёнок
   получает отдельную сессию, cwd проекта и только `allowedTools` профиля.
   Попытка вызвать запрещённый инструмент возвращает `TOOL_NOT_ALLOWED`.
+- **Model Router**: маршрут профиль → родитель → `modelFallbacks`; fallback при ошибке child; audit `model.route`/`model.fallback`.
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
   имеет `factory_dispatch`, REVIEWER/RESEARCHER не имеют destructive-tools,
   SYSADMIN ограничен администрированием.
@@ -51,10 +52,10 @@
   LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
   развёрнут; локальный режим полностью автономен.
 - Аудит действий без записи содержимого памяти.
-- 50 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 54 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
-- Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 34
+- Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 35
   инструмента, audit `factory.started`; драйвер — `node:sqlite`.
 
 ## Инструменты
@@ -108,6 +109,7 @@
 | `factory_sync` | status/push/pull памяти через outbox и sync-сервер |
 | `factory_review` | Независимое ревью задачи child-агентом REVIEWER; FAIL создаёт fix-задачу |
 | `factory_workflow_run` | Bounded-цикл dispatch → review → fix (до 5 циклов) |
+| `factory_model_route` | Read-only Model Router: primary, fallbacks, chain |
 
 Память и задачи не являются «магическими»: модель должна вызывать инструменты.
 Профили агентов — durable-конфигурация ролей. `factory_dispatch` создаёт
@@ -173,7 +175,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.8.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.9.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -220,6 +222,11 @@ git. Для переноса памяти используйте `scripts/backup
 | `projectIdOverride` | `""` | Один project id для переносимого проекта |
 | `redactLogs` | `true` | Редактировать секреты в аудите |
 | `defaultAutonomy` | `autonomous` | Запасной уровень автономности |
+| `syncAuto` | `false` | Автоматический push+pull |
+| `syncIntervalSeconds` | `60` | Интервал auto-sync (мин. 15) |
+| `modelRouterEnabled` | `true` | Model routing/fallback |
+| `modelFallbacks` | `""` | Fallback-маршруты `provider/model` через запятую |
+| `modelMaxAttempts` | `2` | Максимум model-попыток (1–3) |
 
 Секреты в конфигурации не хранятся. API-ключи DSH остаются в его credential
 service.
@@ -277,8 +284,8 @@ config/                 примеры конфигурации
 - Нет семантического поиска на embeddings: сейчас честный FTS5/BM25;
   векторный поиск появится вместе с pgvector (Phase 4).
 - Нет автоматической инъекции памяти в промпт: инструменты вызываются моделью.
-- Allowlist enforced для child-агентов; Model Router/fallback пока не
-  реализованы.
+- Allowlist enforced для child-агентов; Model Router/fallback реализованы,
+  но маршруты не валидируются по каталогу провайдера заранее.
 - Guard проверяет вызовы через `ctx.tools`; host-возможности вне этого реестра
   требуют отдельного аудита.
 - Dashboard v1 — read-only и не содержит Workflows/KB/Models/Scheduler/

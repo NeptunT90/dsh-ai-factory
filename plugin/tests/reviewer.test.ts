@@ -13,6 +13,7 @@ function fakeExec(): ToolRunContext {
     signal: new AbortController().signal,
     agent: {
       id: 'ses_parent',
+      options: { provider: 'fake', model: 'fake-model' },
       session: { header: { cwd: 'C:/workspace' } },
     },
   } as unknown as ToolRunContext
