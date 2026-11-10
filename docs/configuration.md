@@ -29,6 +29,10 @@ Patch заменяет конфигурацию строки целиком. Е�
 | `modelRouterEnabled` | boolean | true | Включить model routing/fallback |
 | `modelFallbacks` | string | `""` | Fallback-маршруты `provider/model` через запятую |
 | `modelMaxAttempts` | number | 2 | Максимум model-попыток (1–3) |
+| `autoWorkflowEnabled` | boolean | false | Фоновый bounded workflow для READY-задач |
+| `autoWorkflowIntervalSeconds` | number | 120 | Интервал автономного скана (мин. 30) |
+| `autoWorkflowMaxCycles` | number | 2 | Циклов на задачу (1–5) |
+| `autoWorkflowMaxTasks` | number | 1 | Задач за один tick (1–5) |
 
 ## Пути
 

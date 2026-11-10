@@ -13,6 +13,7 @@ import { registerSyncTool } from './sync/tools.js'
 import { registerReviewerTool } from './reviewer/tools.js'
 import { registerWorkflowTool } from './workflow/tools.js'
 import { registerModelTool } from './models/tools.js'
+import { AutoWorkflowService } from './workflow/auto.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -54,6 +55,8 @@ export function apply(ctx: Context, config: FactoryConfig): void {
 
   try {
     runtime = FactoryRuntime.create(config, logger)
+    runtime.autoWorkflow = new AutoWorkflowService(ctx, runtime)
+    if (config.autoWorkflowEnabled) void runtime.autoWorkflow.start()
     logger.info(
       `[ai-factory] v${FACTORY_VERSION} ready; driver=${runtime.db.driver}; db=${runtime.db.path}`,
     )

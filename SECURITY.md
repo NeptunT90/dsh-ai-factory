@@ -139,9 +139,11 @@ host-возможность, которая обходит этот реестр
 - `factory_review` не принимает задачу вне REVIEW; FAIL создаёт fix-задачу,
   но не переисполняет её автоматически.
 - Child получает project root и инструкцию, но не секреты конфигурации.
-- `factory_workflow_run` ограничен 1–5 циклами и не работает по таймеру;
-  каждый цикл требует реального child-запуска, поэтому расход модели ограничен
-  явным вызовом.
+- `factory_workflow_run` ограничен 1–5 циклами.
+- `autoWorkflowEnabled` (default false) — явный opt-in на фоновый bounded
+  workflow. Coordinator Agent не получает prompt; он только parent для child.
+  Расход модели ограничен `autoWorkflowMaxCycles`/`MaxTasks` и интервалом;
+  каждый tick покрыт audit. Отключение конфигом останавливает таймер.
 
 ## Сообщение об уязвимости
 

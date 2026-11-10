@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.15.0] — 2026-11-10
+
+### Added
+
+- Autonomous bounded workflow: `autoWorkflowEnabled`,
+  `autoWorkflowIntervalSeconds`, `autoWorkflowMaxCycles`, `autoWorkflowMaxTasks`.
+- Plugin-owned coordinator Agent (ctx.agents.create, root) is the parent for
+  workflow children; timer scans READY tasks; audit auto_workflow.*.
+- 2 auto-workflow tests (56 total), 35 tools; default disabled.
+- Live: auto_workflow.started and coordinator creation verified.
+
 ## [0.14.0] — 2026-11-10
 
 ### Added

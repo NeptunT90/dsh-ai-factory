@@ -30,6 +30,10 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     modelRouterEnabled: true,
     modelFallbacks: '',
     modelMaxAttempts: 2,
+    autoWorkflowEnabled: false,
+    autoWorkflowIntervalSeconds: 120,
+    autoWorkflowMaxCycles: 2,
+    autoWorkflowMaxTasks: 1,
     ...overrides,
   }
 }

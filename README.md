@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.10.1 регистрирует **35 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.15.0 регистрирует **35 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -40,6 +40,7 @@
   получает отдельную сессию, cwd проекта и только `allowedTools` профиля.
   Попытка вызвать запрещённый инструмент возвращает `TOOL_NOT_ALLOWED`.
 - **Model Router**: маршрут профиль → родитель → `modelFallbacks`; fallback при ошибке child; audit `model.route`/`model.fallback`.
+- **Autonomous workflow**: при `autoWorkflowEnabled` таймер находит READY-задачи и запускает bounded dispatch → review → fix через coordinator Agent; по умолчанию выключен.
 - **Scoped profiles**: у каждого профиля явный `allowedTools`; DEVELOPER не
   имеет `factory_dispatch`, REVIEWER/RESEARCHER не имеют destructive-tools,
   SYSADMIN ограничен администрированием.
@@ -53,7 +54,7 @@
   Compose; реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим
   автономен.
 - Аудит действий без записи содержимого памяти.
-- 54 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
+- 56 автотестов Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
   5 тестов sync-сервера; строгая типизация TypeScript, сборка в `lib/`.
 - Проверено в реальном Electron-процессе DSH: схема **v4**, 7 агентов, 35
@@ -177,7 +178,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.1.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.15.0.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и
@@ -229,6 +230,10 @@ git. Для переноса памяти используйте `scripts/backup
 | `modelRouterEnabled` | `true` | Model routing/fallback |
 | `modelFallbacks` | `""` | Fallback-маршруты `provider/model` через запятую |
 | `modelMaxAttempts` | `2` | Максимум model-попыток (1–3) |
+| `autoWorkflowEnabled` | `false` | Фоновый bounded workflow |
+| `autoWorkflowIntervalSeconds` | `120` | Интервал скана (мин. 30) |
+| `autoWorkflowMaxCycles` | `2` | Циклов на задачу |
+| `autoWorkflowMaxTasks` | `1` | Задач за tick |
 
 Секреты в конфигурации не хранятся. API-ключи DSH остаются в его credential
 service.

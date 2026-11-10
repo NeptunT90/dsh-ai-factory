@@ -125,6 +125,12 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Autonomous workflow v0.15.0
+
+- Coordinator root Agent + timer scans READY tasks; bounded cycles.
+- autoWorkflow* config, default off; audit; 2 tests (56 total).
+- Live: auto_workflow.started, no tick (no READY tasks).
+
 ### Direct TLS v0.14.0
 
 - HTTPS server + cert/key env; 9 server tests; self-signed test.

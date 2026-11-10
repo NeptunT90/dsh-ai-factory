@@ -55,6 +55,14 @@ export interface FactoryConfig {
   modelFallbacks: string
   /** Maximum child model attempts per dispatch/review (1..3). */
   modelMaxAttempts: number
+  /** Run READY tasks autonomously via the bounded workflow on a timer. */
+  autoWorkflowEnabled: boolean
+  /** Autonomous workflow scan interval in seconds (min 30). */
+  autoWorkflowIntervalSeconds: number
+  /** Maximum workflow cycles per autonomous task (1..5). */
+  autoWorkflowMaxCycles: number
+  /** Maximum READY tasks started per tick (1..5). */
+  autoWorkflowMaxTasks: number
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -85,6 +93,10 @@ export const Config = Schema.object({
   modelRouterEnabled: Schema.boolean().default(true),
   modelFallbacks: Schema.string().default(''),
   modelMaxAttempts: Schema.number().min(1).max(3).default(2),
+  autoWorkflowEnabled: Schema.boolean().default(false),
+  autoWorkflowIntervalSeconds: Schema.number().min(30).max(86_400).default(120),
+  autoWorkflowMaxCycles: Schema.number().min(1).max(5).default(2),
+  autoWorkflowMaxTasks: Schema.number().min(1).max(5).default(1),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')

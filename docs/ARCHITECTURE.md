@@ -304,6 +304,20 @@ tools, поэтому проверяет артефакты сам. Ответ �
 История циклов и audit `workflow.*` сохраняются; исходная задача после FAIL
 остаётся FAILED, успешная fix-задача — COMPLETED.
 
+### 7.5c. Autonomous workflow
+
+`autoWorkflowEnabled` (default false) запускает `AutoWorkflowService`:
+
+- создаёт один plugin-owned **coordinator Agent** через `ctx.agents.create`
+  (root, без prompt) — он нужен как живой parent для child-агентов;
+- таймер раз в `autoWorkflowIntervalSeconds` (мин. 30) находит READY-задачи;
+- для каждой запускает bounded `WorkflowService` (`dispatch → review → fix`)
+  с `autoWorkflowMaxCycles`, не более `autoWorkflowMaxTasks` за tick;
+- audit `auto_workflow.started/tick/failed`;
+- `stop()` снимает таймер и dispose-ит coordinator.
+
+Auto workflow не является daemon: живёт только пока загружен плагин.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
@@ -346,7 +360,7 @@ TLS reverse proxy/Ubuntu deploy остаются; контракт в `docs/sync
 | Ubuntu/Docker deploy + TLS proxy | Phase 4b |
 | Независимый REVIEWER через child-агент + structured verdict | реализовано |
 | Bounded workflow dispatch → review → fix (maxCycles 1–5) | реализовано |
-| Фоновый/неограниченный автономный цикл | Phase 6c |
+| Bounded autonomous workflow по таймеру | реализовано (default off) |
 | Scoped tool restrictions по allowlist профиля | реализовано (Phase 2c) |
 | Model Router + fallback + `factory_model_route` | реализовано |
 | Workflow-ветвления, фоновый автономный цикл | Phase 3b/6 |

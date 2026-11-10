@@ -29,6 +29,10 @@
     "syncIntervalSeconds": { "type": "integer", "minimum": 15, "maximum": 86400, "default": 60 },
     "modelRouterEnabled": { "type": "boolean", "default": true },
     "modelFallbacks": { "type": "string", "default": "", "description": "comma-separated provider/model routes" },
-    "modelMaxAttempts": { "type": "integer", "minimum": 1, "maximum": 3, "default": 2 }
+    "modelMaxAttempts": { "type": "integer", "minimum": 1, "maximum": 3, "default": 2 },
+    "autoWorkflowEnabled": { "type": "boolean", "default": false },
+    "autoWorkflowIntervalSeconds": { "type": "integer", "minimum": 30, "maximum": 86400, "default": 120 },
+    "autoWorkflowMaxCycles": { "type": "integer", "minimum": 1, "maximum": 5, "default": 2 },
+    "autoWorkflowMaxTasks": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 }
   }
 }

@@ -75,7 +75,7 @@
 - [ ] Workflow Engine: ветвления, параллельные группы, ожидание.
 - [x] Execution Engine v1: синхронный `factory_dispatch` запускает исполнителя
       на READY-задаче, heartbeat-ит lease и завершает задачу результатом.
-- [ ] Автоматический цикл диспетчеризации без ручного вызова инструмента.
+- [x] Bounded autonomous workflow по таймеру (`autoWorkflowEnabled`, default off).
 - [ ] Runtime-тест: многоэтапная задача переживает реальный restart DSH
       (unit-тест восстановления уже есть).
 

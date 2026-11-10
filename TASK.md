@@ -23,7 +23,6 @@
   `factory_dispatch`; `factory_dashboard`; `factory_sync`.
 - Настроить GitHub remote/tag/Release.
 - Установка на второй физический ПК; upgrade.
-- Неограниченный/фоновый workflow-цикл с таймером.
 - GitHub Release; второй ПК.
 
 ## Запреты

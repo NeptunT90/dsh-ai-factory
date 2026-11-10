@@ -14,8 +14,9 @@ import { TaskEngine } from './tasks/engine.js'
 import { PlannerService } from './planner/service.js'
 import { SyncService } from './sync/service.js'
 import { ModelRouter } from './models/router.js'
+import { AutoWorkflowService } from './workflow/auto.js'
 
-export const FACTORY_VERSION = '0.10.1'
+export const FACTORY_VERSION = '0.15.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -54,6 +55,7 @@ export class FactoryRuntime {
   readonly planner: PlannerService
   readonly sync: SyncService
   readonly models: ModelRouter
+  autoWorkflow?: AutoWorkflowService
   private readonly childToolAllowlist = new Map<string, ReadonlySet<string>>()
   readonly startedAt = Date.now()
   private expiredOnStart = 0
@@ -191,6 +193,7 @@ export class FactoryRuntime {
 
   close(): void {
     this.sync.stopAuto()
+    void this.autoWorkflow?.stop()
     try {
       this.audit.record({ event: 'factory.stopped', level: 'info', data: {} })
     } catch {
