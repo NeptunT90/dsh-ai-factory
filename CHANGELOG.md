@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.10.1] — 2026-11-10
+
+### Fixed
+
+- Fallback diagnostics sanitized: audit/task errors no longer include child session
+  event data or system prompt text.
+- Live fallback verified: BADROUTE profile with invalid model → route fallback to
+  deepseek-official/deepseek-flash; task COMPLETED, audit model.fallback.
+
 ## [0.10.0] — 2026-11-10
 
 ### Added

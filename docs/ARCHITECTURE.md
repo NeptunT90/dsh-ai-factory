@@ -207,7 +207,7 @@ data. `ctx.agents.create()` получает `setup(agentCtx)`, где
 
 `modelMaxAttempts` (1–3) ограничивает цепочку. `ScopedChildRunner` получает
 готовый `agentOptions`; dispatch/review при `stopReason:error` повторяют
-следующий route, пишут audit `model.route` и `model.fallback`. Read-only
+следующий route, пишут audit `model.route` и `model.fallback` без prompt/event data. Read-only
 `factory_model_route` показывает primary/fallbacks/chain, но не запускает
 модель. Route не проверяется по каталогу провайдеров: неверный route вернёт
 ошибку child, после чего сработает fallback или задача уйдёт в retry.

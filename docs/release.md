@@ -27,15 +27,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.10.0.tgz` — 143 540 байт,
-SHA256 `4ca5f8d8a7d7d443ca6757796ace39425c5b45a32a846917cd1b253f4ff1cc85`.
+Артефакт: `dist/dsh-ai-factory-0.10.1.tgz` — 143 464 байт,
+SHA256 `2ea7b9bd3ed8b3210316435db464af1de6be8001c28dcc5bdb8d24964a0c0e94`.
 
 ## 3. Установка из tarball
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.10.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.10.1.tgz
 ```
 
 Скрипт делает backup конфигурации профиля, вызывает официальный
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
    ```
 4. Для установки из tarball:
    ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dsh-ai-factory-0.10.0.tgz
+   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dsh-ai-factory-0.10.1.tgz
    ```
 5. Проверить `factory_status`: `schemaVersion: 3`, `agents: 7`.
 6. Перенести память только через `scripts/backup.ps1` / `restore.ps1` или
@@ -61,13 +61,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 
 Проверено: установка tarball в отдельный профиль `portable-test` (не `link:`)
 создала обычную папку `node_modules/dsh-ai-factory`, добавила bundle и
-загрузила v0.10.0 с 35 инструментами.
+загрузила v0.10.1 с 35 инструментами.
 
 ## 5. Обновление и откат
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.1.tgz
 ```
 
 `update.ps1` сначала делает backup данных и профиля, затем устанавливает новую

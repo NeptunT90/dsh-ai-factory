@@ -16,7 +16,7 @@
 ## Что уже работает
 
 - Устанавливается в профиль DSH как bundle-плагин (`dsh plugin add`).
-- Загружается Cordis-загрузчиком DSH; в v0.10.0 регистрирует **35 инструментов**.
+- Загружается Cordis-загрузчиком DSH; в v0.10.1 регистрирует **35 инструментов**.
 - Локальное SQLite-хранилище: `node:sqlite`, WAL, миграции по
   `PRAGMA user_version` (схема **v4**), FTS5-поиск с поддержкой русского текста.
 - Память пяти типов: `working`, `episodic`, `semantic`, `project`, `user`.
@@ -175,7 +175,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile
 ```powershell
 pnpm run package:release
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.10.1.tgz
 ```
 
 Артефакт собирается без `node_modules`, проверяется по обязательным файлам и

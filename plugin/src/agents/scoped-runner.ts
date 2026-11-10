@@ -155,19 +155,14 @@ export class ScopedChildRunner implements ChildRunner {
         if (output !== '') break
       }
       if (output === '') {
-        const tail = JSON.stringify(
-          handle.agent.session.snapshotEvents().slice(-10).map((event) => ({
-            type: event.type,
-            data: (event as { data?: unknown }).data,
-          })),
-        ).slice(0, 4000)
+        const tail = handle.agent.session.snapshotEvents().slice(-6).map((event) => event.type).join(',')
         return {
           childId,
           output: '',
           stopReason: 'error',
           diagnostic: timedOut
             ? 'child timeout'
-            : `ребёнок завершил ход без текстового ответа (seq ${initialSeq}); events: ${tail}`,
+            : `ребёнок завершил ход без текстового ответа; events: ${tail}`,
         }
       }
       return { childId, output, stopReason: 'completed', diagnostic: '' }

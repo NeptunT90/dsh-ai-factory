@@ -134,7 +134,18 @@ Error: TOOL_NOT_ALLOWED: factory_dispatch не входит в allowlist про�
 Внук не создан. Scoped workflow `tsk_fd7a9724…` завершился PASSED.
 Полная модель — [SCOPED_TOOLS.md](SCOPED_TOOLS.md).
 
-## 8. Ограничения smoke
+## 8. Model Router fallback (v0.10.0/0.10.1)
+
+Временный профиль `BADROUTE` (`agt_94e0889a…`) с несуществующей моделью
+`deepseek-official/this-model-does-not-exist-xyz`; задача `tsk_51da4ff5…`.
+
+- `model.route`: BADROUTE → fallback `deepseek-official/deepseek-flash`;
+- первый child завершился ошибкой;
+- dispatch повторил child на fallback, результат **PONG**, задача COMPLETED;
+- audit `model.fallback` содержит from/to, без prompt;
+- профиль BADROUTE после теста отключён, конфиг восстановлен.
+
+## 9. Ограничения smoke
 
 - Live workflow полностью проверен: REVIEW→PASS и FAIL→fix→PASS.
 - Сервер синхронизации в live-режиме не подключался; e2e PGlite проверен

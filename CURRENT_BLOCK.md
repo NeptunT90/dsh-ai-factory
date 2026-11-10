@@ -1,6 +1,18 @@
 # Текущий блок
 
-**Phase 7 — Dashboard Models/Sync.**
+**Phase 3c — live Model fallback.**
+
+Сделано:
+
+1. BADROUTE invalid model → fallback deepseek-flash, COMPLETED.
+2. Audit model.route/fallback; diagnostics sanitized in 0.10.1.
+3. Dashboard Models/Sync live (0.10.0).
+4. 54 теста, 35 инструментов, версия 0.10.1.
+
+Осталось: standalone PostgreSQL/TLS, GitHub Release, второй ПК.
+
+## Предыдущий блок: Dashboard Models/Sync
+
 
 Сделано:
 

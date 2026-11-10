@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Live fallback v0.10.1
+
+- BADROUTE invalid model → deepseek-flash fallback; COMPLETED, audit model.fallback.
+- Diagnostics sanitized (no system prompt/event data).
+
 ### Dashboard Models/Sync v0.10.0
 
 - Вкладки «Модели» и «Синхронизация»; capabilities ready.

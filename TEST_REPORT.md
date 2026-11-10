@@ -40,7 +40,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ## 3. Живой DSH
 
-- HMR загрузил AI Factory **v0.10.0**.
+- HMR загрузил AI Factory **v0.10.1**.
 - `factory.started`: schema **4**, agents 7, tools **35**.
 - SQLite v4: `sync_outbox`, `sync_state`, `sync_apply_guard`, triggers
   `memory_sync_insert/update`.
@@ -52,7 +52,7 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 Вызовы сделаны из Web GUI через реальные инструменты:
 
-- `factory_status` → 0.10.0, schema 4, 7 агентов, 35 инструментов.
+- `factory_status` → 0.10.1, schema 4, 7 агентов, 35 инструментов.
 - `factory_memory_remember` → `mem_b0e45f25…`, затем FTS5-поиск нашёл запись.
 - `factory_dispatch` задачи `tsk_a2e5f83e…` → child
   `0adb4aa8…` (`agt_executor`), `completed`, ответ **PONG**, задача COMPLETED.
@@ -83,10 +83,12 @@ invalid payload, HTTP Bearer auth, backup endpoint (gzip), health.
 
 ### Model Router v0.9.0 (live)
 
-- `factory_model_route(role=developer)` → primary `deepseek-official/deepseek-flash`,
-  fallbacks пусты, chain из одной модели.
-- `factory_model_route(role=reviewer)` → тот же route.
-- Unit: profile → parent → fallback, maxAttempts, fallback retry после child error.
+- **Fallback live:** временный профиль BADROUTE с моделью
+  `deepseek-official/this-model-does-not-exist-xyz`; dispatch упал на первом
+  child и повторился на `deepseek-official/deepseek-flash`; задача COMPLETED.
+  Audit `model.route` содержит цепочку, `model.fallback` — переход.
+- `factory_model_route` для DEVELOPER/REVIEWER → deepseek-flash.
+- В 0.10.1 диагностика fallback санитизирована: без event data/system prompt.
 
 ### Reviewer / workflow
 
@@ -135,10 +137,10 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.10.0.tgz`: **143 540 байт**.
-- SHA256: `4ca5f8d8a7d7d443ca6757796ace39425c5b45a32a846917cd1b253f4ff1cc85`.
+- `dist/dsh-ai-factory-0.10.1.tgz`: **143 464 байт**.
+- SHA256: `2ea7b9bd3ed8b3210316435db464af1de6be8001c28dcc5bdb8d24964a0c0e94`.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён с 0.9.0 на 0.10.0; schema 4, 35 инструментов.
+- `portable-test` обновлён с 0.10.0 на 0.10.1; schema 4, 35 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
@@ -153,7 +155,7 @@ Read-only auth/405 проверены автотестами.
   FAIL→fix→PASS.
 - Фоновый автономный цикл и standalone PostgreSQL/TLS не реализованы; Model Router закрыт.
 - Физически второй ПК не проверялся.
-- Полный restart DSH после 0.10.0 не выполнен.
+- Полный restart DSH после 0.10.1 не выполнен.
 
 ## 8. Повтор
 

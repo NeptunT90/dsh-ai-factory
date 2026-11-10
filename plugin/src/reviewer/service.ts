@@ -150,7 +150,7 @@ export class ReviewerService {
               taskId: task.id,
               from: `${route.provider}/${route.model}`,
               to: `${routePlan.attempts[attempt + 1]!.provider}/${routePlan.attempts[attempt + 1]!.model}`,
-              diagnostic: result.diagnostic.slice(0, 300),
+              reason: 'child_error',
             },
           })
         }

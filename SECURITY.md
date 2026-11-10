@@ -78,8 +78,8 @@ host-возможность, которая обходит этот реестр
 ## Model Router
 
 - Маршруты и fallback-и задаются оператором (`modelFallbacks`), не моделью.
-- Audit `model.route`/`model.fallback` хранит provider/model и диагностику, но
-  не prompt и не секреты.
+- Audit `model.route`/`model.fallback` хранит только provider/model и причину
+  (`child_error`); без prompt, system prompt, event data и секретов.
 - Fallback повторяет child только после `stopReason:error`, не после
   содержательного FAIL от REVIEWER.
 - `factory_model_route` read-only; не переключает модель и не запускает child.
