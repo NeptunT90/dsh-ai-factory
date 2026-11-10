@@ -109,8 +109,11 @@ host-возможность, которая обходит этот реестр
   использовать TLS. Outbox лежит в локальной SQLite.
 - Pull применяет данные с LWW; удалённый сервер не должен иметь возможность
   внедрять системные инструкции — payload остаётся данными.
-- Sync-сервер (`server/`) использует PGlite PostgreSQL + pgvector, Bearer
-  token, idempotency и не логирует payload памяти.
+- Sync-сервер (`server/`) использует PGlite или standalone PostgreSQL через
+  `DATABASE_URL` (pgvector), Bearer token, idempotency и не логирует payload.
+  Пароль PostgreSQL задаётся только через env/секреты, не в репозитории.
+- Standalone adapter проверен через PostgreSQL wire protocol; реальный
+  Ubuntu/Docker deploy и TLS termination ещё не выполнены.
 - Сервер по умолчанию слушает `127.0.0.1`; для внешнего доступа обязателен
   HTTPS reverse proxy. Docker Compose публикует порт только на loopback.
 - `SYNC_TOKEN` сервера и `DSH_AI_FACTORY_SYNC_TOKEN` клиента не хранятся в

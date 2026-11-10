@@ -48,9 +48,9 @@
   внешних ассетов и без мутаций.
 - **Sync client/outbox + server**: локальный outbox и `factory_sync`
   (status/push/pull), HTTPS/loopback, токен из env, backoff; сервер
-  `server/` на PGlite PostgreSQL + pgvector с Bearer auth, idempotency,
-  LWW/conflict, Docker Compose. Standalone Ubuntu PostgreSQL ещё не
-  развёрнут; локальный режим полностью автономен.
+  `server/` на embedded PGlite или standalone PostgreSQL (`DATABASE_URL`)
+  с pgvector, Bearer auth, idempotency, LWW/conflict и Docker Compose;
+  реальный Ubuntu/Docker deploy ещё не выполнен. Локальный режим автономен.
 - Аудит действий без записи содержимого памяти.
 - 54 автотеста Vitest (миграции, память, агенты, задачи, planner, dispatch,
   dashboard, sync/auto-sync, reviewer/workflow, tool contract); отдельно
@@ -129,7 +129,7 @@
 triggers), при ошибке остаются там и повторяются с backoff. Pull использует
 LWW по `updatedAt` и не создаёт обратный outbox.
 
-Сервер: [server/README.md](server/README.md) (PGlite PostgreSQL + pgvector,
+Сервер: [server/README.md](server/README.md) (PGlite или standalone PostgreSQL + pgvector,
 Bearer auth, Docker Compose, backup endpoint, restore CLI, scheduled backups).
 Контракт:
 [docs/sync-protocol.md](docs/sync-protocol.md).
@@ -292,7 +292,7 @@ config/                 примеры конфигурации
 - Dashboard v1 — read-only и не содержит Workflows/KB/Models/Scheduler/
   Security/Server/GitHub разделов; они честно помечены как `plan`.
 - Workflow ограничен `maxCycles` 1–5; неограниченного автономного цикла и
-  GitHub Release нет. Серверная синхронизация работает на embedded PGlite.
+  GitHub Release нет. Серверная синхронизация работает на PGlite или standalone PostgreSQL.
 - `node:sqlite` помечен в Node 24 как experimental. Плагин проверяет драйвер и
   сообщает об ошибке; в DSH 0.2.2-rc.1 он проверен и работает.
 - HMR-применение нового bundle зависит от настроек профиля; если плагин не

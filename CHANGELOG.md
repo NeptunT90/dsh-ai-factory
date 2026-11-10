@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0] — 2026-11-10
+
+### Added
+
+- Standalone PostgreSQL adapter (`pg`) behind `DATABASE_URL`; same
+  SyncStore contract as PGlite. Requires pgvector.
+- Docker Compose: pgvector/pgvector:pg16 + sync service, healthcheck, pgdata
+  volume, `.env.example`.
+- 8th server test: PgStore over real PostgreSQL wire protocol (PGlite socket).
+- Backup endpoint/scheduler explicitly PGlite-only; PostgreSQL uses pg_dump.
+- Plugin unchanged (0.10.1, 54 tests, 35 tools).
+
 ## [0.12.0] — 2026-11-10
 
 ### Added

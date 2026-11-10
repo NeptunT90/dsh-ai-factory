@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { timingSafeEqual } from 'node:crypto'
 import type { AddressInfo } from 'node:net'
-import type { PGliteStore } from './store.js'
+import type { SyncStore } from './store-types.js'
 
 const MAX_BODY_BYTES = 8 * 1024 * 1024
 
@@ -30,7 +30,7 @@ export class SyncHttpServer {
   private port = 0
 
   constructor(
-    private readonly store: PGliteStore,
+    private readonly store: SyncStore,
     private readonly token: string,
   ) {
     if (token.trim() === '') throw new Error('SYNC_TOKEN must be non-empty')
@@ -126,6 +126,10 @@ export class SyncHttpServer {
     }
 
     if (req.method === 'GET' && url.pathname === '/v1/admin/backup') {
+      if (!this.store.dump) {
+        this.json(res, 501, { error: 'backup not supported by this store' })
+        return
+      }
       const bytes = await this.store.dump()
       res.writeHead(200, {
         'Content-Type': 'application/gzip',

@@ -14,8 +14,8 @@
 
 ## Следующая очередь
 
-- Standalone PostgreSQL/Ubuntu + TLS reverse proxy (нужен сервер/доступ;
-  локально нет psql/Docker).
+- TLS reverse proxy + фактический Ubuntu/Docker deploy (standalone PostgreSQL
+  adapter уже есть; локально нет psql/Docker).
 - Multi-writer сервера (backup scheduler/restore уже есть).
 - CRDT/merge и server-side conflict journal.
 - Автоматический flush outbox по таймеру уже есть (syncAuto); нужен live-сервер.

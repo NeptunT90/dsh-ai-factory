@@ -106,7 +106,9 @@ SQLite triggers создают `sync_outbox` на реальные измене�
 
 ## Сервер
 
-Реализован в `server/`:
+Реализован в `server/` с двумя backend-ами: embedded PGlite и standalone
+PostgreSQL (`DATABASE_URL`, `pg`, pgvector). Оба используют один HTTP-контракт
+и один `SyncStore`.
 
 - Node HTTP API, Bearer auth, `POST /v1/sync/push`, `GET /v1/sync/pull`,
   `GET /health`;

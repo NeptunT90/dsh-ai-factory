@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import type { PGliteStore } from './store.js'
+export interface DumpableStore {
+  dump(): Promise<Uint8Array>
+}
 
 export interface BackupSchedulerOptions {
   /** Directory for scheduled backups. Empty/undefined disables scheduling. */
@@ -28,7 +30,7 @@ export class BackupScheduler {
   private running = false
 
   constructor(
-    private readonly store: PGliteStore,
+    private readonly store: DumpableStore,
     private readonly options: BackupSchedulerOptions,
     private readonly onError: (error: unknown) => void = () => {},
   ) {}

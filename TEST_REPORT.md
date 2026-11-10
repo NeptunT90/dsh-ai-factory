@@ -30,17 +30,20 @@ contract (35 инструментов).
 ### Sync server
 
 ```
-tests 7
-pass 7
+tests 8
+pass 8
 fail 0
 ```
 
 Покрыто: pgvector health, idempotent push, pull/cursor, LWW и conflict,
 invalid payload, HTTP Bearer auth, backup endpoint (gzip), dump→restore,
-scheduled backup rotation, health.
+scheduled backup rotation, PgStore over PostgreSQL wire protocol, health.
 
 Restore CLI проверен на реальном backup:
 `memories:1`, `operations:2`, `vector:true`; непустой target отклоняется.
+
+Standalone PostgreSQL adapter проверен через PGlite socket (pg wire):
+push/pull/idempotency/health, `vector:true`. Docker Compose не запускался — Docker нет.
 
 ## 3. Живой DSH
 

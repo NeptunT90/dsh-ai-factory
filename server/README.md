@@ -1,10 +1,17 @@
 # AI Factory sync server
 
-Необязательный сервер синхронизации durable-памяти. Использует **PGlite** —
-настоящий PostgreSQL, скомпилированный в WASM, с расширением **pgvector**.
-Данные лежат в локальном каталоге, сервер не требует установки PostgreSQL.
+Необязательный сервер синхронизации durable-памяти. Два режима:
+
+- **standalone PostgreSQL** через `DATABASE_URL` (pgvector обязателен) —
+  production/Docker Compose;
+- **embedded PGlite** PostgreSQL/WASM без установки PostgreSQL — локальный
+  режим и тесты.
+
+Оба режима используют один `SyncStore`-контракт и один HTTP API.
 
 ## Запуск без Docker
+
+Embedded PGlite:
 
 ```powershell
 pnpm install
@@ -17,6 +24,17 @@ $env:SYNC_HOST = "127.0.0.1"
 node server/dist/index.js
 ```
 
+Standalone PostgreSQL (pgvector):
+
+```powershell
+$env:DATABASE_URL = "postgres://factory:password@127.0.0.1:5432/factory"
+$env:SYNC_TOKEN = "длинный-случайный-токен"
+node server/dist/index.js
+```
+
+Сервер сам создаёт `vector`, таблицы и sequence. `DATABASE_URL` имеет приоритет
+над `SYNC_DB_DIR`.
+
 Проверка:
 
 ```powershell
@@ -28,13 +46,16 @@ Invoke-RestMethod http://127.0.0.1:8787/health
 
 ```bash
 cd server
-echo "SYNC_TOKEN=длинный-случайный-токен" > .env
+cp .env.example .env
+# измените SYNC_TOKEN и POSTGRES_PASSWORD
 docker compose up -d --build
 curl http://127.0.0.1:8787/health
 ```
 
-Порт опубликован только на loopback. Для доступа с другого ПК поставьте
-HTTPS reverse proxy (Caddy/Nginx) и не открывайте HTTP напрямую.
+Compose поднимает `pgvector/pgvector:pg16` + sync-сервер с `DATABASE_URL`,
+healthcheck и volume `pgdata`. Порт sync опубликован только на loopback. Для
+доступа с другого ПК поставьте HTTPS reverse proxy (Caddy/Nginx) и не
+открывайте HTTP напрямую.
 
 ## Подключение DSH AI Factory
 
@@ -93,7 +114,9 @@ node server\scripts\restore.mjs .\sync-backup.tar.gz C:\sync-restore\data
 
 ## Scheduled backups
 
-Задайте каталог и интервал:
+Планировщик доступен только для embedded PGlite (`dump`); при standalone
+PostgreSQL endpoint backup возвращает `501` — используйте `pg_dump`/infra
+backup. Для PGlite задайте каталог и интервал:
 
 ```powershell
 $env:SYNC_BACKUP_DIR = "C:\dsh-ai-factory-server\backups"
@@ -107,10 +130,11 @@ env. Планировщик стартует только при непусто�
 
 ## Ограничения
 
-- PGlite — embedded single-process PostgreSQL; для нескольких writer-хостов
-  нужен standalone PostgreSQL + `pg` adapter (следующий шаг).
+- Standalone PostgreSQL adapter (`pg`) проверен через PostgreSQL wire protocol
+  (PGlite socket); реальный Docker/Ubuntu Compose в этом окружении не запускался.
+- PGlite — embedded single-process; multi-writer требует внешнего PostgreSQL.
 - Нет встроенного TLS: используйте reverse proxy с HTTPS.
-- Backup-планировщик пишет архивы, но не проверяет restore автоматически; это
-  отдельный шаг.
+- Backup-планировщик только для PGlite; PostgreSQL backup — через `pg_dump`.
+- Restore PGlite не запускается автоматически после backup.
 - Сервер не логирует payload памяти.
 - Конфликты push возвращаются клиенту; автоматического merge/CRDT нет.

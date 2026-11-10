@@ -320,10 +320,15 @@ SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в
 - URL: HTTPS или loopback HTTP; HTTP на внешний host отклоняется;
 - сетевой сбой не удаляет операцию; локальный режим работает без сервера.
 
-Сервер `server/` использует PGlite (PostgreSQL/WASM) с pgvector, Bearer auth,
-идемпотентную `sync_operations`, LWW upsert и conflict-ответы. Есть
-Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
-следующий шаг; контракт в `docs/sync-protocol.md`.
+Сервер `server/` имеет два backend-а за одним `SyncStore`:
+
+- embedded PGlite (PostgreSQL/WASM) для локального режима/тестов;
+- standalone PostgreSQL через `pg` и `DATABASE_URL` (pgvector обязателен),
+  Docker Compose `pgvector/pgvector:pg16`, healthcheck, volume.
+
+Оба проходят Bearer auth, idempotent `sync_operations`, LWW upsert и conflict.
+Backup endpoint/scheduler доступны только PGlite; PostgreSQL backup — `pg_dump`.
+TLS reverse proxy/Ubuntu deploy остаются; контракт в `docs/sync-protocol.md`.
 
 ### 7.7. Реализовано / ещё нет
 
@@ -337,7 +342,8 @@ Dockerfile/Compose. Standalone PostgreSQL/Ubuntu и TLS reverse proxy —
 | Read-only dashboard на 127.0.0.1 | реализовано |
 | Sync client + SQLite outbox + LWW pull | реализовано |
 | Sync server: PGlite PostgreSQL + pgvector + HTTP/auth | реализовано и проверено e2e |
-| Standalone PostgreSQL/Ubuntu deployment + TLS proxy | Phase 4b |
+| Standalone PostgreSQL adapter (`pg` + `DATABASE_URL`) | реализовано, wire-тест |
+| Ubuntu/Docker deploy + TLS proxy | Phase 4b |
 | Независимый REVIEWER через child-агент + structured verdict | реализовано |
 | Bounded workflow dispatch → review → fix (maxCycles 1–5) | реализовано |
 | Фоновый/неограниченный автономный цикл | Phase 6c |

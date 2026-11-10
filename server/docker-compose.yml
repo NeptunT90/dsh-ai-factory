@@ -1,22 +1,33 @@
 services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: factory
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env or shell}
+      POSTGRES_DB: factory
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factory -d factory"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   sync:
     build: .
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
       SYNC_TOKEN: ${SYNC_TOKEN:?set SYNC_TOKEN in .env or shell}
-      SYNC_DB_DIR: /data
       SYNC_HOST: 0.0.0.0
       SYNC_PORT: 8787
-      SYNC_BACKUP_DIR: /backups
-      SYNC_BACKUP_INTERVAL_HOURS: 24
-      SYNC_BACKUP_KEEP: 7
+      DATABASE_URL: postgres://factory:${POSTGRES_PASSWORD}@postgres:5432/factory
     # Bind to loopback on the host; expose through an HTTPS reverse proxy.
     ports:
       - "127.0.0.1:8787:8787"
-    volumes:
-      - sync-data:/data
-      - sync-backups:/backups
 
 volumes:
-  sync-data:
-  sync-backups:
+  pgdata:

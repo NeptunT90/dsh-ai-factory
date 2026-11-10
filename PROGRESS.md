@@ -125,6 +125,11 @@
   workflow REVIEW→PASS, dashboard с audit review.*.
 - 45 plugin-тестов, 34 инструмента.
 
+### Standalone PostgreSQL v0.13.0
+
+- PgStore (`pg`) + DATABASE_URL; Compose pgvector; 8 server tests.
+- Wire-protocol test; Docker не запускался.
+
 ### Scheduled backups v0.12.0
 
 - `BackupScheduler` + SHA256 sidecar + rotation; env/Compose.
