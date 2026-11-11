@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.26.0] — 2026-11-11
+
+### Added
+
+- Async CONCIERGE listener over `session/event` + `assistant/message` append.
+- CONCIERGE built-in profile; stop/cancel handling and inbox cleanup.
+- 57 tools, 9 built-in profiles, health 54/62, 141 tests.
+- Plugin/root 0.26.0.
+
 ## [0.25.0] — 2026-11-11
 
 ### Changed

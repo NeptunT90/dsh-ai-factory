@@ -1,12 +1,13 @@
 # Текущий блок
 
-**PHASE 1–4 закрыты (v0.25.0 Beta).**
+**PHASE 1–5 (v0.26.0 Beta).**
 
 1. Crash Recovery: REPAIRER, `scripts/watchdog.ps1`, startup recovery task, idempotency.
 2. Human feedback: `factory_task_tell`, active child followup, metadata fallback.
 3. Natural Language Routing: DIRECTOR interface prompt + few-shot.
 4. Dashboard UX: `dashboardAutoStart`, startup link, clickable tool link, client API fallback.
-5. 57 tools, 8 built-ins; health 54/62; 138 tests.
+5. 57 tools, 9 built-ins; health 54/62; 141 tests.
+6. Async CONCIERGE: status/stop replies during a busy RUNNING turn.
 
 Дальше: финальный коммит и внешний Watchdog как отдельный production-блок.
 

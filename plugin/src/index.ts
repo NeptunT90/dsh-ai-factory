@@ -20,6 +20,7 @@ import { registerHealthTools } from './health/tools.js'
 import { registerSkillTools } from './skills/tools.js'
 import { registerCapabilityTools } from './capabilities/tools.js'
 import { registerBackupTools } from './backups/tools.js'
+import { ConciergeService } from './concierge/service.js'
 
 export const name = 'dsh-ai-factory'
 export const inject = ['tools']
@@ -51,6 +52,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
   }
 
   let runtime: FactoryRuntime | undefined
+  let concierge: ConciergeService | undefined
   let startupError: string | undefined
   const disposers: Array<() => void> = []
   const dashboard = new DashboardManager(
@@ -62,6 +64,8 @@ export function apply(ctx: Context, config: FactoryConfig): void {
 
   try {
     runtime = FactoryRuntime.create(config, logger)
+    concierge = new ConciergeService(ctx, runtime)
+    concierge.start()
     const crashRecovery = runtime.recoverCrashReport()
     if (crashRecovery.taskId) {
       logger.warn(`[ai-factory] crash recovery task created: ${crashRecovery.taskId}`)
@@ -144,6 +148,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
         }
       }
       await dashboard.close()
+      concierge?.dispose()
       runtime?.close()
       runtime = undefined
     },

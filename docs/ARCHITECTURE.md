@@ -424,6 +424,14 @@ Host inventory cache, separate from tool health and from tool permissions.
 - logs `Панель управления доступна здесь: <url>`; tool output includes a Markdown link;
 - DSH 0.2.2-rc.1 exposes no documented host-plugin API for injecting a client button; client event fallback is used.
 
+### 7.5n. Async CONCIERGE (v0.26.0)
+
+- Host listener on `session/event` observes `user/message` while the root agent is RUNNING.
+- Status/stop intent is answered by appending a durable `assistant/message` surface event; the queued user copy is removed from the inbox.
+- Normal work instructions are not intercepted.
+- `agent.inbox`, `Session.append`, `followup` and `steer` are the DSH 0.2.2-rc.1 hooks used; no client-side button API was available.
+- Built-in CONCIERGE profile and deterministic listener; 9 built-ins, 57 tools, 141 tests.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в

@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { createTestRuntime, track } from './helpers.js'
 
 describe('AgentRegistry', () => {
-  it('seeds the eight built-in specialists idempotently', () => {
+  it('seeds the nine built-in specialists idempotently', () => {
     const { runtime } = track(createTestRuntime())
     const builtins = runtime.agents.list({ enabledOnly: true })
-    expect(builtins).toHaveLength(8)
+    expect(builtins).toHaveLength(9)
     expect(builtins.map((agent) => agent.role)).toEqual(
       expect.arrayContaining(['director', 'researcher', 'developer', 'sysadmin', 'analyst', 'executor', 'reviewer']),
     )
     runtime.agents.seedBuiltins()
-    expect(runtime.agents.count()).toBe(8)
+    expect(runtime.agents.count()).toBe(9)
   })
 
   it('creates, updates and disables a custom profile', () => {
@@ -36,7 +36,7 @@ describe('AgentRegistry', () => {
     expect(updated.version).toBe(2)
     expect(updated.enabled).toBe(false)
     expect(updated.skills).toEqual(['review', 'tests'])
-    expect(runtime.agents.findByRole('custom')?.id).toBe('agt_repairer')
+    expect(['agt_repairer', 'agt_concierge']).toContain(runtime.agents.findByRole('custom')?.id)
   })
 
   it('rejects duplicate names and disabled task assignment', () => {

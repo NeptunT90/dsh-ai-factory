@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.25.0 (Beta)
+- **Version:** 0.26.0 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v7
 - **Tool surface:** 57 tools
@@ -98,6 +98,16 @@ DIRECTOR is the human interface: it understands intent and calls
 not need to type tool names, JSON or task IDs. The prompt contains few-shot
 examples for remembering facts, reporting tasks and creating work.
 
+### Async CONCIERGE
+
+When the root agent is running, a lightweight host listener observes
+`session/event` `user/message`. For status questions ("Как дела?", "Что там
+с задачами?") it appends a durable assistant reply with the current task queue
+without waiting for the running turn, then removes the queued copy from the
+agent inbox. For "Стоп"/"Отмени" it forwards to the active child or cancels a
+RUNNING task. Normal work instructions are left in the normal queue.
+
+The built-in **CONCIERGE** profile documents this role and its small allowlist.
 ### Dashboard autostart
 
 With `dashboardAutoStart: true` the loopback read-only dashboard starts with
@@ -141,7 +151,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.25.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.26.0.tgz
 ```
 
 ### From source
@@ -161,7 +171,7 @@ factory_status
 ```
 
 Expected fields: `status: ready`, `driver: node:sqlite`, `schemaVersion: 7`,
-`agents: 8` built-in profiles.
+`agents: 9` built-in profiles.
 
 ## Configuration
 
@@ -215,7 +225,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **138 plugin tests** and **10 sync-server tests**. See
+Current gate: **141 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -254,6 +264,7 @@ DeepSeek Harness Desktop.
 - **Human-in-the-loop** — `factory_task_tell` доставляет уточнение в RUNNING-задачу или сохраняет в metadata.
 - **Natural Language Routing** — DIRECTOR понимает намерение, сам вызывает инструменты и отвечает по-человечески.
 - **Dashboard UX** — `dashboardAutoStart`, ссылка «Панель управления доступна здесь» и Markdown-кнопка в выводе.
+- **Async CONCIERGE** — отвечает на «Как дела?»/«Стоп» во время RUNNING-задачи, не дожидаясь текущего хода; нормальные инструкции остаются в очереди.
 - **Agent Marketplace** — экспорт/импорт `.agents/<slug>.json` с проверкой
   `allowedTools`, `accessLevel`, skills и секретов.
 - **Backup** — manifest с хэшами таблиц, gzip-архив, `factory_backup_verify` и
@@ -266,7 +277,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.25.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.26.0.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.
