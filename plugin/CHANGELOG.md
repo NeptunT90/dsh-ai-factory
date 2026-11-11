@@ -1,4 +1,4 @@
 # Changelog
 
 История версий ведётся в корневом `CHANGELOG.md` репозитория
-`dsh-ai-factory`. Installable package version: 0.29.1.
+`dsh-ai-factory`. Installable package version: 0.29.2.

@@ -153,8 +153,8 @@ export class ConciergeService {
     try {
       if (agent.session.header?.parentSession !== null && agent.session.header?.parentSession !== undefined) return
       if (agent.session.header?.origin === 'subagent') return
-      if (agent.status !== 'running' || !agent.inbox) {
-        this.auditSkipped(agent.session, agent, 'agent_not_running')
+      if (!this.isDirectorBusy(agent) || !agent.inbox) {
+        this.auditSkipped(agent.session, agent, 'director_not_busy')
         return
       }
       const message = payload.message
@@ -206,6 +206,18 @@ export class ConciergeService {
         level: 'warn',
         data: { reason: errorMessage(error) },
       })
+    }
+  }
+
+  private isDirectorBusy(agent: AgentLike): boolean {
+    if (agent.status === 'running') return true
+    try {
+      const project = this.runtime.projects.ensure(agent.session.header?.cwd?.trim() || process.cwd())
+      return this.runtime.tasks
+        .list({ projectId: project.id, includeTerminal: false, limit: 200 })
+        .some((task) => task.status === 'RUNNING')
+    } catch {
+      return false
     }
   }
 

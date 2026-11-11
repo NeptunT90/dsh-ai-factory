@@ -9,15 +9,17 @@ const DISPATCH_OUTPUT = {
   additionalProperties: false,
   properties: {
     taskId: { type: 'string', required: true },
-    childId: { type: 'string', required: true },
-    agentId: { type: 'string', required: true },
-    stopReason: { type: 'string', required: true },
-    output: { type: 'string', required: true },
-    diagnostic: { type: 'string', required: true },
-    taskStatus: { type: 'string', required: true },
+    async: { type: 'boolean', required: true },
+    status: { type: 'string', required: true },
+    message: { type: 'string', required: true },
+    childId: { type: 'string' },
+    agentId: { type: 'string' },
+    stopReason: { type: 'string' },
+    output: { type: 'string' },
+    diagnostic: { type: 'string' },
+    taskStatus: { type: 'string' },
   },
 } as const
-
 function runtimeOf(getRuntime: () => FactoryRuntime | undefined, getStartupError: () => string | undefined): FactoryRuntime {
   const runtime = getRuntime()
   if (!runtime) {
@@ -46,31 +48,35 @@ export function registerDispatchTool(
         provider: { type: 'string', description: 'Провайдер subagents (по умолчанию spawn)' },
         leaseMinutes: { type: 'number', description: 'Lease задачи в минутах (по умолчанию 30)' },
         review: { type: 'boolean', description: 'Оставить задачу в REVIEW для независимого ревью вместо COMPLETED' },
+        async: { type: 'boolean', description: 'Запустить в фоне и сразу вернуть ID (по умолчанию true)' },
       },
       output: {
         schema: DISPATCH_OUTPUT,
-        render: (_args, value) => [
-          {
-            type: 'text',
-            text: [
-              `Задача ${value.taskId}: ${value.taskStatus}`,
-              `дочерний агент: ${value.childId} (${value.agentId})`,
-              `остановка: ${value.stopReason}`,
-              value.diagnostic ? `диагностика: ${value.diagnostic}` : '',
-              '',
-              value.output || '(дочерний агент не вернул текст)',
-            ]
-              .filter((line) => line !== '')
-              .join('\n'),
-          },
-        ],
+        render: (_args, value) => [{
+          type: 'text',
+          text: value.async
+            ? [`Задача ${value.taskId}: ${value.status}`, value.message].join('\n')
+            : [
+                `Задача ${value.taskId}: ${value.taskStatus}`,
+                `дочерний агент: ${value.childId} (${value.agentId})`,
+                `остановка: ${value.stopReason}`,
+                value.diagnostic ? `диагностика: ${value.diagnostic}` : '',
+                '',
+                value.output || '(дочерний агент не вернул текст)',
+              ].filter((line) => line !== '').join('\n'),
+        }],
       },
       // A child run may legitimately take many minutes; the cooperative timeout
       // remains below the 30-minute task lease default plus one heartbeat.
       timeoutMs: 45 * 60 * 1000,
       async execute(args, exec) {
         const runtime = runtimeOf(getRuntime, getStartupError)
-        return new DispatchService(ctx, runtime).dispatch(args, exec)
+        const service = new DispatchService(ctx, runtime)
+        if (args.async === false) {
+          const output = await service.dispatch(args, exec)
+          return { ...output, async: false, status: output.taskStatus, message: `Задача ${output.taskId}: ${output.taskStatus}` }
+        }
+        return service.dispatchAsync(args, exec)
       },
     }),
   )

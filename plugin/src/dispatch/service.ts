@@ -17,6 +17,13 @@ export interface DispatchInput {
   readonly review?: boolean
 }
 
+export interface DispatchAsyncOutput {
+  readonly taskId: string
+  readonly async: true
+  readonly status: string
+  readonly message: string
+}
+
 export interface DispatchOutput {
   readonly taskId: string
   readonly childId: string
@@ -290,6 +297,55 @@ export class DispatchService {
       clearInterval(heartbeat)
       if (timeout) clearTimeout(timeout)
       exec.signal.removeEventListener('abort', onParentAbort)
+    }
+  }
+
+  /**
+   * Claim the task and hand the child run to a detached background promise.
+   * The returned promise resolves after the synchronous validation/claim phase,
+   * so a caller sees RUNNING immediately and the DIRECTOR turn can end.
+   *
+   * The child gets a detached AbortSignal: the tool-call signal belongs to the
+   * foreground turn and must not cancel a deliberately background task.
+   */
+  async dispatchAsync(
+    input: DispatchInput,
+    exec: ToolRunContext,
+    allowCrossProject = false,
+  ): Promise<DispatchAsyncOutput> {
+    const controller = new AbortController()
+    const detachedExec = { ...exec, signal: controller.signal } as ToolRunContext
+    const taskId = input.taskId
+    const background = this.dispatch(input, detachedExec, allowCrossProject)
+    let failure: unknown
+    background.catch((error: unknown) => {
+      failure = error
+      try {
+        this.runtime.audit.record({
+          event: 'dispatch.async_failed',
+          level: 'error',
+          projectId: null,
+          data: { taskId, error: errorMessage(error).slice(0, 500) },
+        })
+      } catch {
+        // best effort
+      }
+    })
+
+    // dispatch() performs validation and claim before its first await. Yield two
+    // microtasks so a synchronous validation rejection is observed here.
+    await Promise.resolve()
+    await Promise.resolve()
+    if (failure !== undefined) throw failure
+    const task = this.runtime.tasks.require(taskId)
+    if (task.status !== 'RUNNING' && task.status !== 'COMPLETED' && task.status !== 'REVIEW' && task.status !== 'FAILED') {
+      throw new FactoryError('CONFLICT', `Задача ${taskId} не перешла в RUNNING: ${task.status}`)
+    }
+    return {
+      taskId,
+      async: true,
+      status: task.status,
+      message: `Задача запущена в фоне. ID: ${taskId}`,
     }
   }
 }

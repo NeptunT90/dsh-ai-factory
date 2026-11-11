@@ -84,6 +84,19 @@ describe('CONCIERGE v2 async inbox', () => {
     expect(fake.appended).toHaveLength(0)
   })
 
+  it('intercepts a root message while a background task is RUNNING even if DIRECTOR is idle', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const task = runtime.tasks.create({ projectId, title: 'Фоновая статья' })
+    runtime.tasks.claim(task.id, { owner: 'ses_bg', leaseMs: 60_000 })
+    const fake = fakeSession(project.rootPath)
+    const agent = { id: 'ses_root', status: 'idle', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handleInserted(agent, { message: message('Как дела?') })
+    expect(fake.removed).toEqual(['msg_user_1'])
+    expect(fake.appended).toHaveLength(1)
+    expect(JSON.stringify(fake.appended[0]!.data)).toContain('RUNNING')
+  })
+
   it('does not intercept work commands', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)

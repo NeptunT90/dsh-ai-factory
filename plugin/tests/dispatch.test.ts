@@ -63,6 +63,24 @@ describe('DispatchService', () => {
     expect(captured.input?.prompt).not.toContain(developer.systemInstruction)
   })
 
+  it('starts a background dispatch and leaves the task RUNNING', async () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const developer = runtime.agents.findByRole('developer')!
+    const task = runtime.tasks.create({ projectId, title: 'Долгая фоновая статья', assignedAgentId: developer.id })
+    const service = new DispatchService(fakeContext(), runtime, {
+      async run() {
+        await new Promise((resolve) => setTimeout(resolve, 80))
+        return { childId: 'ses_bg', output: 'фоновая статья готова', stopReason: 'completed', diagnostic: '' }
+      },
+    })
+    const output = await service.dispatchAsync({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
+    expect(output).toMatchObject({ taskId: task.id, async: true, status: 'RUNNING' })
+    expect(runtime.tasks.require(task.id).status).toBe('RUNNING')
+    await new Promise((resolve) => setTimeout(resolve, 160))
+    expect(runtime.tasks.require(task.id).status).toBe('COMPLETED')
+    expect(runtime.tasks.require(task.id).result).toContain('фоновая статья')
+  })
+
   it('leaves the task in REVIEW when review=true', async () => {
     const { runtime, projectId } = track(createTestRuntime())
     const task = runtime.tasks.create({ projectId, title: 'Подготовить ревью' })
