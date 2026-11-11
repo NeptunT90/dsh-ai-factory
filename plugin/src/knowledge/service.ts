@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { existsSync, lstatSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs'
 import { extname, isAbsolute, join, relative, resolve } from 'node:path'
 import { FactoryError } from '../core/errors.js'
 import { now } from '../core/ids.js'
@@ -31,9 +31,46 @@ function isInside(root: string, path: string): boolean {
   return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
 }
 
-function walk(root: string, target: string, recursive: boolean): string[] {
+function assertRealPath(projectRoot: string, knowledgeRoot: string, candidate: string): string {
+  let realProject: string
+  let realKnowledge: string
+  let realCandidate: string
+  try {
+    realProject = realpathSync(resolve(projectRoot))
+    realKnowledge = realpathSync(resolve(knowledgeRoot))
+    realCandidate = realpathSync(resolve(candidate))
+  } catch {
+    throw new FactoryError('INVALID_PATH', 'Не удалось разрешить физический путь knowledge')
+  }
+  if (!isInside(realProject, realKnowledge)) {
+    throw new FactoryError('INVALID_PATH', 'knowledge физически находится вне project root')
+  }
+  if (!isInside(realKnowledge, realCandidate)) {
+    throw new FactoryError('INVALID_PATH', 'Symlink выводит файл за пределы project/knowledge')
+  }
+  // Verify every path segment, not only the final file. A symlinked parent
+  // directory outside the project must be rejected before any read.
+  const rel = relative(resolve(knowledgeRoot), resolve(candidate))
+  let current = realKnowledge
+  for (const segment of rel.split(/[\\/]/).filter((part) => part !== '')) {
+    current = join(current, segment)
+    let realCurrent: string
+    try {
+      realCurrent = realpathSync(current)
+    } catch {
+      throw new FactoryError('INVALID_PATH', 'Родительский путь knowledge не разрешается')
+    }
+    if (!isInside(realKnowledge, realCurrent)) {
+      throw new FactoryError('INVALID_PATH', 'Symlink в родительской папке knowledge запрещён')
+    }
+  }
+  return realCandidate
+}
+
+function walk(root: string, target: string, recursive: boolean, projectRoot: string): string[] {
+  assertRealPath(projectRoot, root, target)
   const stat = lstatSync(target)
-  if (stat.isSymbolicLink()) throw new FactoryError('KNOWLEDGE_INVALID', 'Symlink в knowledge запрещён')
+  if (stat.isSymbolicLink()) throw new FactoryError('INVALID_PATH', 'Symlink в knowledge запрещён')
   if (stat.isFile()) {
     if (!allowedExtension(target)) throw new FactoryError('KNOWLEDGE_UNSUPPORTED', `Формат не поддерживается: ${extensionOf(target)}`)
     return [target]
@@ -44,13 +81,14 @@ function walk(root: string, target: string, recursive: boolean): string[] {
   const visit = (dir: string): void => {
     for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
       const full = join(dir, entry.name)
-      if (entry.isSymbolicLink()) throw new FactoryError('KNOWLEDGE_INVALID', `Symlink в knowledge запрещён: ${full}`)
+      assertRealPath(projectRoot, root, full)
+      if (entry.isSymbolicLink()) throw new FactoryError('INVALID_PATH', `Symlink в knowledge запрещён: ${full}`)
       if (entry.isDirectory()) {
         visit(full)
         continue
       }
       if (entry.isFile() && allowedExtension(full)) {
-        if (!isInside(root, full)) throw new FactoryError('KNOWLEDGE_INVALID', 'Путь вне knowledge отклонён')
+        if (!isInside(root, full)) throw new FactoryError('INVALID_PATH', 'Путь вне knowledge отклонён')
         result.push(full)
         if (result.length > MAX_FILES) throw new FactoryError('KNOWLEDGE_TOO_LARGE', `Слишком много файлов (максимум ${MAX_FILES})`)
       }
@@ -74,8 +112,8 @@ export class KnowledgeService {
     recursive?: boolean
   }): Promise<KnowledgeAddResult> {
     const knowledgeRoot = join(input.rootPath, 'knowledge')
-    const target = this.resolveTarget(knowledgeRoot, input.target)
-    const files = walk(knowledgeRoot, target, input.recursive === true).slice(0, MAX_FILES)
+    const target = this.resolveTarget(knowledgeRoot, input.target, input.rootPath)
+    const files = walk(knowledgeRoot, target, input.recursive === true, input.rootPath).slice(0, MAX_FILES)
     const errors: Array<{ path: string; code: string; message: string }> = []
     let indexed = 0
     let skipped = 0
@@ -83,10 +121,11 @@ export class KnowledgeService {
     for (const file of files) {
       const relativePath = relative(input.rootPath, file).replace(/\\/g, '/')
       try {
-        const stat = lstatSync(file)
-        if (stat.isSymbolicLink()) throw new FactoryError('KNOWLEDGE_INVALID', 'Symlink запрещён')
+        const realFile = assertRealPath(input.rootPath, knowledgeRoot, file)
+        const stat = lstatSync(realFile)
+        if (stat.isSymbolicLink()) throw new FactoryError('INVALID_PATH', 'Symlink запрещён')
         if (stat.size > MAX_FILE_BYTES) throw new FactoryError('KNOWLEDGE_TOO_LARGE', `Файл больше ${MAX_FILE_BYTES} байт`)
-        const buffer = readFileSync(file)
+        const buffer = readFileSync(realFile)
         const fileHash = hash(buffer)
         const existing = this.store.findByPath(input.projectId, relativePath)
         if (existing?.status === 'INDEXED' && existing.sha256 === fileHash) {
@@ -105,7 +144,7 @@ export class KnowledgeService {
           metadata: { extension: extensionOf(file) },
         })
         try {
-          const extracted = await extractKnowledgeText(file, buffer)
+          const extracted = await extractKnowledgeText(realFile, buffer)
           assertKnowledgeTextSafe(extracted.text)
           const chunks = chunkKnowledgeText(extracted.text).slice(0, MAX_CHUNKS)
           if (chunks.length === 0) throw new FactoryError('KNOWLEDGE_INVALID', 'Нет текста для индексации')
@@ -154,7 +193,7 @@ export class KnowledgeService {
     return this.store.count(projectId)
   }
 
-  private resolveTarget(knowledgeRoot: string, target: string): string {
+  private resolveTarget(knowledgeRoot: string, target: string, projectRoot: string): string {
     const raw = target.trim()
     if (raw === '') throw new FactoryError('INVALID_INPUT', 'path не может быть пустым')
     const relativeTarget = raw.replace(/^knowledge(?:[\\/]|$)/, '')
@@ -168,8 +207,6 @@ export class KnowledgeService {
       throw new FactoryError('KNOWLEDGE_INVALID', 'Путь должен находиться внутри project/knowledge')
     }
     if (!existsSync(candidate)) throw new FactoryError('KNOWLEDGE_NOT_FOUND', `Путь не найден: ${target}`)
-    const real = resolve(candidate)
-    if (!isInside(root, real)) throw new FactoryError('KNOWLEDGE_INVALID', 'Symlink/traversal за пределы knowledge')
-    return real
+    return assertRealPath(projectRoot, knowledgeRoot, candidate)
   }
 }

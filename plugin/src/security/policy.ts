@@ -109,6 +109,8 @@ function isFactoryMutation(tool: string): boolean {
   if (tool === 'factory_capability_scan' || tool === 'factory_capability_refresh') return true
   if (tool === 'factory_knowledge_add' || tool === 'factory_knowledge_delete') return true
   if (tool.startsWith('factory_improve_')) return true
+  if (tool === 'factory_plan_create' || tool === 'factory_dispatch' || tool === 'factory_review') return true
+  if (tool === 'factory_workflow_run' || tool === 'factory_auto_workflow') return true
   if (tool === 'factory_backup_restore_test') return true
   return false
 }
@@ -169,6 +171,13 @@ export function evaluateSafety(input: SafetyInput): SafetyDenial | undefined {
     if (WRITE_TOOLS.has(tool)) return deny('safe_write_denied', 'SAFE запрещает запись')
     if (isNetworkRead(tool) || isNetworkWrite(tool)) return deny('safe_egress_denied', 'SAFE запрещает сеть')
     if (isFactoryMutation(tool)) return deny('safe_factory_mutation_denied', 'SAFE запрещает изменяющие factory tools')
+  }
+
+  if (tool === 'factory_sync') {
+    const action = record(args).action
+    if ((action === 'push' || action === 'pull' || action === 'sync') && input.egress !== 'write') {
+      return deny('egress_write_required', 'factory_sync push/pull требует egress write')
+    }
   }
 
   if (isNetworkRead(tool) && input.egress === 'none') {

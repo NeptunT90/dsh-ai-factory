@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.28.0 (Beta)
+- **Version:** 0.28.1 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
 - **Tool surface:** 65 tools
@@ -166,7 +166,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.28.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.28.1.tgz
 ```
 
 ### From source
@@ -185,7 +185,7 @@ Then restart DSH Desktop, or reload the profile bundle. Verify readiness with:
 factory_status
 ```
 
-Expected fields: `status: ready`, `driver: node:sqlite`, `schemaVersion: 8`,
+Expected fields: `status: ready`, `driver: node:sqlite`, `schemaVersion: 9`,
 `agents: 10` built-in profiles.
 
 ## Configuration
@@ -240,7 +240,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **162 plugin tests** and **10 sync-server tests**. See
+Current gate: **165 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -292,7 +292,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.28.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.28.1.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.

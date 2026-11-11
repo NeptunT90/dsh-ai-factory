@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import JSZip from 'jszip'
@@ -85,6 +85,19 @@ describe('knowledge base', () => {
     expect(chunks.length).toBeGreaterThan(1)
     expect(chunks.every((chunk) => chunk.text.length <= 1200)).toBe(true)
     expect(chunks[0]?.heading).toBeDefined()
+  })
+
+  it('rejects a file reached through a symlinked parent outside the project', async () => {
+    const { runtime, dir, projectId } = track(createTestRuntime())
+    const root = join(dir, 'workspace')
+    const knowledge = join(root, 'knowledge')
+    const external = join(dir, 'external-secrets')
+    mkdirSync(knowledge, { recursive: true })
+    mkdirSync(external, { recursive: true })
+    writeFileSync(join(external, 'secret.txt'), 'external secret')
+    symlinkSync(external, join(knowledge, 'external-link'), 'junction')
+    const service = new KnowledgeService(runtime)
+    await expect(service.add({ projectId, rootPath: root, target: 'knowledge/external-link/secret.txt' })).rejects.toMatchObject({ code: 'INVALID_PATH' })
   })
 
   it('indexes, searches, lists and deletes knowledge in one project', async () => {

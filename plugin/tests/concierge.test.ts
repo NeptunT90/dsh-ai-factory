@@ -77,6 +77,21 @@ describe('CONCIERGE async chat', () => {
     expect(JSON.stringify(fake.appended[0]!.data)).toContain('Останавливаю')
   })
 
+  it('keeps the inbox message when the session has no append method', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const removed: string[] = []
+    const session = {
+      id: 'ses_root',
+      header: { cwd: project.rootPath },
+      snapshotEvents() { return [] },
+      inbox: { remove(id: string) { removed.push(id); return true } },
+    }
+    const agent = { id: 'ses_root', status: 'running', session, inbox: session.inbox }
+    serviceFor(runtime, agent).handle(session, userEvent('Как дела?'))
+    expect(removed).toEqual([])
+  })
+
   it('does not intercept a normal work message or a non-running agent', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)

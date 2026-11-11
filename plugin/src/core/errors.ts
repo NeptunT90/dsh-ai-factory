@@ -1,6 +1,7 @@
 /** Stable error codes surfaced by AI Factory tools and diagnostics. */
 export type FactoryErrorCode =
   | 'INVALID_INPUT'
+  | 'INVALID_PATH'
   | 'SECRET_DETECTED'
   | 'NOT_FOUND'
   | 'CONFLICT'

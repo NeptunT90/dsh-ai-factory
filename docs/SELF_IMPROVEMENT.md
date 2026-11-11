@@ -1,4 +1,13 @@
-# Self-Improvement (v0.28.0)
+# Self-Improvement (v0.28.1)
+
+## Implementation reality (v1)
+
+The v1 pipeline uses a **deterministic template**, not an LLM analysis call. It
+derives a skill skeleton from the task title/description/goal and sanitized tool
+metadata. It does not invoke the CURATOR profile as a model and does not invoke
+a separate REVIEWER model. The `factory_improve_apply` gate applies strict
+schema/secret/injection validation before writing; a model-based CURATOR/REVIEWER
+pass is a future enhancement, not current behavior.
 
 ## Trigger
 

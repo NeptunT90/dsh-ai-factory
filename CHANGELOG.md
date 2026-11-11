@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.28.1] — 2026-11-11
+
+### Fixed
+
+- Knowledge Base symlinked-parent traversal now rejected as INVALID_PATH (realpath per segment).
+- SafetyPolicy classifies plan/dispatch/review/workflow tools as mutations; factory_sync push/pull requires egress write.
+- CONCIERGE no longer removes an inbox message when session.append is unavailable.
+- Docs: schema v9, 2026-11-11 dates, deterministic Self-Improvement v1.
+- 165 tests; package 0.28.1.
+
 ## [0.28.0] — 2026-11-11
 
 ### Added

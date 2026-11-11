@@ -127,7 +127,18 @@ export class ConciergeService {
         reply = lines.join('\n')
       }
 
-      this.appendReply(session, reply)
+      const delivered = this.appendReply(session, reply)
+      if (!delivered) {
+        this.runtime.audit.record({
+          event: 'concierge.not_delivered',
+          level: 'warn',
+          actor: 'agt_concierge',
+          projectId: project.id,
+          sessionId: session.id,
+          data: { reason: 'append_unavailable' },
+        })
+        return
+      }
       if (message.id !== undefined && agent.inbox) {
         try { agent.inbox.remove(message.id) } catch { /* message may already be claimed */ }
       }
@@ -161,8 +172,8 @@ export class ConciergeService {
     }
   }
 
-  private appendReply(session: SessionLike, text: string): void {
-    if (!session.append) return
+  private appendReply(session: SessionLike, text: string): boolean {
+    if (!session.append) return false
     const { turn, step } = lastTurn(session)
     session.append('assistant/message', {
       turn,
@@ -173,5 +184,6 @@ export class ConciergeService {
       }),
       stream: [],
     }, { surfaceOp: 'append' })
+    return true
   }
 }

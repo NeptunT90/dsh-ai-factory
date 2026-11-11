@@ -23,6 +23,21 @@ describe('SafetyPolicy', () => {
     expect(runtime.toolDenial('ses_safe', 'web_search', {}, root)).toContain('SAFE')
   })
 
+  it('classifies orchestration mutations and factory_sync push as unsafe', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const root = runtime.projects.require(projectId).rootPath
+    child(runtime, 'ses_safe', ['factory_dispatch', 'factory_plan_create', 'factory_review', 'factory_workflow_run', 'factory_auto_workflow'], 'safe', 'read')
+    for (const tool of ['factory_dispatch', 'factory_plan_create', 'factory_review', 'factory_workflow_run', 'factory_auto_workflow']) {
+      expect(runtime.toolDenial('ses_safe', tool, {}, root)).toContain('SAFE')
+    }
+    child(runtime, 'ses_sync', ['factory_sync'], 'autonomous', 'read')
+    expect(runtime.toolDenial('ses_sync', 'factory_sync', { action: 'push' }, root)).toContain('egress_write_required')
+    expect(runtime.toolDenial('ses_sync', 'factory_sync', { action: 'pull' }, root)).toContain('egress_write_required')
+    expect(runtime.toolDenial('ses_sync', 'factory_sync', { action: 'status' }, root)).toBeUndefined()
+    child(runtime, 'ses_sync_write', ['factory_sync'], 'autonomous', 'write')
+    expect(runtime.toolDenial('ses_sync_write', 'factory_sync', { action: 'push' }, root)).toBeUndefined()
+  })
+
   it('blocks force push, destructive rm, curl upload, database writes and outside paths', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const root = runtime.projects.require(projectId).rootPath

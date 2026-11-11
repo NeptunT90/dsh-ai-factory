@@ -1,6 +1,6 @@
 # TEST_REPORT
 
-Дата: 2026-11-10  
+Дата: 2026-11-11  
 Платформа: Windows 11 x64, Node 22.22.3 (dev), DSH Desktop 0.2.2-rc.1 (Electron 44.7.0, Node 24.21.0)
 
 ## 1. Статические проверки
@@ -19,7 +19,7 @@
 
 ```
 Test Files  32 passed (32)
-Tests       162 passed (162)
+Tests       165 passed (165)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
@@ -77,13 +77,13 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
-### Knowledge Base (v0.28.0 live)
+### Knowledge Base (v0.28.1 live)
 
 - Indexed 3 files (md/json/txt) → `indexed: 3, failed: 0`.
 - Search "пароль" returned `trust=untrusted`.
 - List returned 3 INDEXED documents; delete removed one.
 - Other project had a READY task and 0 knowledge documents.
-- 162 plugin tests / 10 server; schema v9.
+- 165 plugin tests / 10 server; schema v9.
 
 ### Async CONCIERGE (v0.26.0)
 
@@ -270,12 +270,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.28.0.tgz`: **271 186 байт**, SHA256 `f86961736a4d6acab0e9c4b84bf3804d67cbd5a2391e9c7adea34231d8464cb9`.
+- `dist/dsh-ai-factory-0.28.1.tgz`: **272 255 байт**, SHA256 `3ece7e5dc677836fb7e05da42209b4691535b6afe7b8bddb170bc6c59b83dba7`.
 - SHA256: `см. ниже`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.28.0.md` (1 664 байта), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.28.1.md` (1 771 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -287,7 +287,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 0.28.0; schema 9, 65 инструментов.
+- `portable-test` обновлён на 0.28.1; schema 9, 65 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 
