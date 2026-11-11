@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.29.1] — 2026-11-11
+
+### Fixed
+
+- **CONCIERGE v2: критическая ошибка перехвата из-за рекурсии `session.append`.**
+  Старый обработчик `session/event → agent/inbox/spliced` вызывал
+  `agent.inbox.remove()` прямо внутри публикации этого же события. DSH
+  отклонял вложенный append:
+  `session append cannot reenter while another append is being published`.
+  В результате сообщение не перехватывалось, а CONCIERGE писал
+  `concierge.failed` на этапе `remove`.
+- Перехват перенесён на agent-scoped событие `agent/inbox/inserted`, которое
+  публикуется **после** завершения исходного `session.append`. Глобальный
+  `session/event` теперь используется только для обнаружения root-агента и
+  подписки на его контекст.
+- Удаление сообщения больше не re-enters Session.append; сохранены:
+  - root-only (`parentSession == null`);
+  - проверка `agent.status === 'running'`;
+  - race-safe `inbox.remove() === true`;
+  - rollback сообщения при недоступном `append`;
+  - audit `concierge.*`.
+- Тесты CONCIERGE обновлены под `agent/inbox/inserted`: 8/8.
+- Всего 169 plugin tests + 10 server; package v0.29.1.
+
 ## [0.29.0] — 2026-11-11
 
 ### CONCIERGE v2 — независимый секретарь

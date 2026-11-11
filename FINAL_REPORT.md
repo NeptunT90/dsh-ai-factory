@@ -1,6 +1,6 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-11. Плагин **dsh-ai-factory 0.29.0 Beta**, sync-сервер **0.17.0**,
+Дата: 2026-11-11. Плагин **dsh-ai-factory 0.29.1 Beta**, sync-сервер **0.17.0**,
 DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмент.
 
 ## Что внедрено
@@ -22,12 +22,12 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
 | Tests | готово | 169 plugin + 10 server |
-| Install desktop | готово | live 0.29.0, 65 tools, schema 9 |
-| Portable profile | готово | `portable-test` 0.29.0 |
+| Install desktop | готово | live 0.29.1, 65 tools, schema 9 |
+| Portable profile | готово | `portable-test` 0.29.1 |
 
 ## Live-доказательства
 
-- `factory_status`: 0.29.0 Beta, schema 9, **10 builtin-профилей**, **0 задач**, **2 памяти**.
+- `factory_status`: 0.29.1 Beta, schema 9, **10 builtin-профилей**, **5 задач**, **2 памяти**.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -39,7 +39,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
 
-## Autonomy + Self-Improvement (v0.29.0)
+## Autonomy + Self-Improvement (v0.29.1)
 
 - Enforced SAFE/AUTONOMOUS/TRUSTED; per-profile egress.
 - Argument-level SafetyPolicy; security audit; no approvals.
@@ -47,7 +47,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 - CURATOR + review-gated self-improvement candidates; no auto-write.
 - 65 tools, 10 profiles, 162 tests, schema v9.
 
-## Knowledge Base (v0.29.0)
+## Knowledge Base (v0.29.1)
 
 - FTS5 RAG over `knowledge/`; PDF/DOCX extraction.
 - 4 tools; untrusted results; project isolation; live 3 files indexed.
@@ -135,9 +135,9 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-0.29.0.tgz
-  273 644 байт
-  80dd46fbf05787709c48f71fc58958b9785da993876f6934e347e72825eee422
+dist/dsh-ai-factory-0.29.1.tgz
+  274 588 байт
+  22c435c9fe06617600399e2f3706b9f1ef8dbcacc9eb38194157e568b695895c
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -145,7 +145,7 @@ dist/dsh-ai-factory-sync-server-0.17.0.tgz
 ```
 
 `dist/SHA256SUMS` содержит оба файла; release notes —
-`dist/RELEASE_NOTES-v0.29.0.md`.
+`dist/RELEASE_NOTES-v0.29.1.md`.
 
 ## Ограничения (внешняя инфраструктура)
 
@@ -171,7 +171,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.29.1.tgz
 ```
 
 Проверка в DSH:

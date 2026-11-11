@@ -11,7 +11,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/doctor.ps1 -Profile 
 ```
 
 Критические тесты должны пройти до упаковки. Версия берётся из
-`package.json` (root) — `v0.29.0`; installable plugin — `0.29.0`.
+`package.json` (root) — `v0.29.1`; installable plugin — `0.29.1`.
 
 ## 2. Сборка артефакта
 
@@ -27,15 +27,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1
    `README.md`, `LICENSE` и отсутствие `node_modules`;
 4. пишет `dist/SHA256SUMS`.
 
-Артефакт: `dist/dsh-ai-factory-0.29.0.tgz` — 273 644 байт,
-SHA256 `80dd46fbf05787709c48f71fc58958b9785da993876f6934e347e72825eee422`.
+Артефакт: `dist/dsh-ai-factory-0.29.1.tgz` — 274 588 байт,
+SHA256 `22c435c9fe06617600399e2f3706b9f1ef8dbcacc9eb38194157e568b695895c`.
 
 ## 3. Установка из tarball
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.29.1.tgz
 ```
 
 Скрипт делает backup конфигурации профиля, вызывает официальный
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
    ```
 4. Для установки из tarball:
    ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dsh-ai-factory-0.29.0.tgz
+   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 -Profile desktop -Tarball .\dsh-ai-factory-0.29.1.tgz
    ```
 5. Проверить `factory_status`: `schemaVersion: 3`, `agents: 7`.
 6. Перенести память только через `scripts/backup.ps1` / `restore.ps1` или
@@ -67,7 +67,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/update.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.29.1.tgz
 ```
 
 `update.ps1` сначала делает backup данных и профиля, затем устанавливает новую
@@ -94,7 +94,7 @@ pnpm server:build
 dist/dsh-ai-factory-sync-server-0.17.0.tgz — 17 189 байт
 SHA256: 8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5
 
-Release notes: `dist/RELEASE_NOTES-v0.29.0.md` (генерирует `scripts/release-notes.mjs`,
+Release notes: `dist/RELEASE_NOTES-v0.29.1.md` (генерирует `scripts/release-notes.mjs`,
 используется GitHub Actions как `body_path`).
 ```
 

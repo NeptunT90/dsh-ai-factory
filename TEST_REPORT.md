@@ -77,7 +77,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
-### Knowledge Base (v0.29.0 live)
+### Knowledge Base (v0.29.1 live)
 
 - Indexed 3 files (md/json/txt) → `indexed: 3, failed: 0`.
 - Search "пароль" returned `trust=untrusted`.
@@ -270,12 +270,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.29.0.tgz`: **273 644 байт**, SHA256 `80dd46fbf05787709c48f71fc58958b9785da993876f6934e347e72825eee422`.
+- `dist/dsh-ai-factory-0.29.1.tgz`: **274 588 байт**, SHA256 `22c435c9fe06617600399e2f3706b9f1ef8dbcacc9eb38194157e568b695895c`.
 - SHA256: `см. ниже`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.29.0.md` (1 595 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.29.1.md` (2 577 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -287,7 +287,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 0.29.0; schema 9, 65 инструментов.
+- `portable-test` обновлён на 0.29.1; schema 9, 65 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

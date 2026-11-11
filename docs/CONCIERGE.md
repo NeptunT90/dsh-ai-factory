@@ -1,6 +1,6 @@
 # CONCIERGE v2 — Независимый Секретарь
 
-Версия: **0.29.0**.
+Версия: **0.29.1**.
 
 ## Что это
 
@@ -14,16 +14,22 @@ DIRECTOR занят. Он **не создаёт фоновую LLM-сессию*
 `inbox.claim()` и уже во время turn DIRECTOR, поэтому перехватить сообщение
 было нельзя.
 
-Теперь используется:
+Попытка удалить сообщение прямо из `session/event → agent/inbox/spliced`
+приводит к DSH-ошибке:
 
 ```text
-session/event
-  type: agent/inbox/spliced
-  target: next-turn
-  inserted: UserMessage[]
+session append cannot reenter while another append is being published
 ```
 
-Это durable-событие появляется после вставки сообщения в inbox, но до claim.
+Поэтому фактический обработчик подписан на agent-scoped событие:
+
+```text
+agent.ctx.on('agent/inbox/inserted', payload)
+```
+
+Оно публикуется после завершения исходного `session.append`. Глобальный
+`session/event` используется только для обнаружения root-агента и
+подписки на его контекст.
 
 ## Условия перехвата
 
@@ -90,7 +96,9 @@ Audit не хранит текст сообщения и секреты.
 ## Ограничения
 
 - Перехват происходит после вставки в inbox; официального pre-inbox hook нет.
-- `agent/inbox/spliced` и wake могут конкурировать; защита — проверка
+- `agent/inbox/inserted` и wake могут конкурировать; защита — проверка
   результата `remove()`.
+- Нельзя вызывать `inbox.remove()` из `session/event → agent/inbox/spliced`:
+  DSH запрещает reentrant append.
 - Пока нет диалоговой LLM-сессии CONCIERGE; это следующий этап при
   необходимости.

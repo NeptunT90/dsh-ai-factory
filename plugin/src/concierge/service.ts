@@ -14,20 +14,34 @@ interface SessionLike {
   append?(type: string, data: unknown, options?: unknown): unknown
 }
 
+interface MessageLike {
+  id?: string
+  content?: Array<{ type?: string; text?: string }>
+  source?: { kind?: string }
+}
+
 interface AgentLike {
   readonly id: string
   readonly status: string
   readonly session: SessionLike
+  readonly ctx?: {
+    on?(event: string, listener: (payload: { message?: MessageLike }) => void): () => void
+  }
   readonly inbox?: {
+    readonly nextTurn?: readonly MessageLike[]
+    readonly nextStep?: readonly MessageLike[]
     remove(id: string): boolean
-    prepend?(target: 'next-turn' | 'next-step', message: UserMessageLike): void
+    prepend?(target: 'next-turn' | 'next-step', message: MessageLike): void
   }
 }
 
-interface UserMessageLike {
-  id?: string
-  content?: Array<{ type?: string; text?: string }>
-  source?: { kind?: string }
+interface AgentsLike {
+  get(id: string): unknown
+  list?(): unknown[]
+}
+
+interface InsertedPayload {
+  readonly message?: MessageLike
 }
 
 type ConciergeIntent =
@@ -42,7 +56,7 @@ const STOP_COMMAND = /^(?:стоп|stop|останови|отмени|cancel)[\s
 const WORK_MARKER = /(?:напиши|сделай|исправь|python|файл|создай|удали|запусти|проверь|найди|реализуй|переделай|добавь|тест|git|код|проект|ошибк|открой|посмотри|покажи|объясни|настрой|почини)/iu
 const EXPLICIT_PREFIX = /^\/(?:concierge|секретарь)(?:\s+|$)/iu
 
-function textOf(message: UserMessageLike): string {
+function textOf(message: MessageLike): string {
   return (message.content ?? [])
     .filter((block) => block.type === 'text' && typeof block.text === 'string')
     .map((block) => block.text!)
@@ -83,13 +97,14 @@ function lastTurn(session: SessionLike): { turn: number; step: number } {
 /**
  * Independent in-process CONCIERGE router.
  *
- * It observes the durable inbox splice that is written before DSH claims a
- * queued prompt. Only the root DIRECTOR session is eligible, only while it is
- * running, and only for a strict status/stop/explicit intent. The message is
- * removed only when the inbox still owns it; a lost race is never answered.
+ * The earliest safe hook is the agent-scoped `agent/inbox/inserted` event,
+ * emitted after the durable inbox splice has finished publishing. Calling
+ * `inbox.remove()` from a `session/event` callback re-enters Session.append and
+ * is rejected by DSH, so the router attaches to the root Agent's own context.
  */
 export class ConciergeService {
-  private disposeListener: (() => void) | undefined
+  private disposeDiscovery: (() => void) | undefined
+  private readonly attached = new Map<string, () => void>()
 
   constructor(
     private readonly ctx: Context,
@@ -97,68 +112,94 @@ export class ConciergeService {
   ) {}
 
   start(): void {
-    const on = (this.ctx as unknown as { on?: (event: string, listener: (session: SessionLike, event: { type: string; data?: unknown }) => void) => () => void }).on
+    const registry = this.registry()
+    for (const value of registry?.list?.() ?? []) {
+      const agent = value as AgentLike
+      if (agent && typeof agent === 'object') this.attach(agent)
+    }
+
+    const on = (this.ctx as unknown as {
+      on?: (event: string, listener: (session: SessionLike, event: { type: string; data?: unknown }) => void) => () => void
+    }).on
     if (!on) return
-    this.disposeListener = on.call(this.ctx, 'session/event', (session, event) => {
-      this.handle(session, event)
+    this.disposeDiscovery = on.call(this.ctx, 'session/event', (session, event) => {
+      if (event.type !== 'agent/inbox/spliced') return
+      const agent = this.agentFor(session)
+      if (agent) this.attach(agent)
     })
   }
 
   dispose(): void {
-    this.disposeListener?.()
-    this.disposeListener = undefined
+    this.disposeDiscovery?.()
+    this.disposeDiscovery = undefined
+    for (const dispose of this.attached.values()) dispose()
+    this.attached.clear()
+  }
+
+  /** Attach to one root agent's scoped inbox notifications. */
+  private attach(agent: AgentLike): void {
+    if (this.attached.has(agent.id)) return
+    if (!agent.ctx?.on) return
+    if (agent.session.header?.parentSession !== null && agent.session.header?.parentSession !== undefined) return
+    if (agent.session.header?.origin === 'subagent') return
+    const dispose = agent.ctx.on('agent/inbox/inserted', (payload) => {
+      this.handleInserted(agent, payload)
+    })
+    this.attached.set(agent.id, dispose)
   }
 
   /** Public for focused tests and host adapters. */
-  handle(session: SessionLike, event: { type: string; data?: unknown }): void {
+  handleInserted(agent: AgentLike, payload: InsertedPayload): void {
     try {
-      if (event.type !== 'agent/inbox/spliced') return
-      if (session.header?.parentSession !== null && session.header?.parentSession !== undefined) return
-      if (session.header?.origin === 'subagent') return
-      const data = (event.data ?? {}) as { target?: string; inserted?: UserMessageLike[] }
-      if (data.target !== 'next-turn') return
-      const agent = this.agentFor(session)
-      if (!agent || agent.status !== 'running' || !agent.inbox) {
-        this.auditSkipped(session, agent, 'agent_not_running')
+      if (agent.session.header?.parentSession !== null && agent.session.header?.parentSession !== undefined) return
+      if (agent.session.header?.origin === 'subagent') return
+      if (agent.status !== 'running' || !agent.inbox) {
+        this.auditSkipped(agent.session, agent, 'agent_not_running')
         return
       }
-      for (const message of data.inserted ?? []) {
-        if (message.source?.kind !== undefined && message.source.kind !== 'user') continue
-        const text = textOf(message)
-        if (text === '') continue
-        const intent = intentOf(text)
-        if (intent.kind === 'work' || intent.kind === 'ambiguous') {
-          this.auditSkipped(session, agent, 'intent')
-          continue
-        }
-        if (message.id === undefined) {
-          this.auditSkipped(session, agent, 'missing_id')
-          continue
-        }
-        let removed = false
-        try {
-          removed = agent.inbox.remove(message.id)
-        } catch (error) {
-          this.audit(session, 'concierge.failed', 'warn', { reason: errorMessage(error), stage: 'remove' })
-          continue
-        }
-        if (!removed) {
-          this.audit(session, 'concierge.race_lost', 'warn', { intent: intent.kind })
-          continue
-        }
-        this.audit(session, 'concierge.intercepted', 'info', { intent: intent.kind })
-        const reply = this.replyFor(session, intent)
-        if (reply === undefined) {
-          this.audit(session, 'concierge.failed', 'warn', { reason: 'no_reply', stage: 'reply' })
-          continue
-        }
-        if (!this.appendReply(session, reply)) {
-          try { agent.inbox.prepend?.('next-turn', message) } catch { /* best effort restore */ }
-          this.audit(session, 'concierge.failed', 'warn', { reason: 'append_unavailable', stage: 'reply' })
-          continue
-        }
-        this.audit(session, 'concierge.replied', 'info', { intent: intent.kind })
+      const message = payload.message
+      if (!message) return
+      if (message.source?.kind !== undefined && message.source.kind !== 'user') return
+      if (message.id === undefined) {
+        this.auditSkipped(agent.session, agent, 'missing_id')
+        return
       }
+      // The scoped event is emitted for next-turn and next-step insertions.
+      // Only stop/status on a queued turn are eligible; steering stays DIRECTOR.
+      if (agent.inbox.nextTurn !== undefined && !agent.inbox.nextTurn.some((item) => item.id === message.id)) {
+        return
+      }
+      const text = textOf(message)
+      if (text === '') return
+      const intent = intentOf(text)
+      if (intent.kind === 'work' || intent.kind === 'ambiguous') {
+        this.auditSkipped(agent.session, agent, 'intent')
+        return
+      }
+
+      let removed = false
+      try {
+        removed = agent.inbox.remove(message.id)
+      } catch (error) {
+        this.audit(agent.session, 'concierge.failed', 'warn', { reason: errorMessage(error), stage: 'remove' })
+        return
+      }
+      if (!removed) {
+        this.audit(agent.session, 'concierge.race_lost', 'warn', { intent: intent.kind })
+        return
+      }
+      this.audit(agent.session, 'concierge.intercepted', 'info', { intent: intent.kind })
+      const reply = this.replyFor(agent.session, intent)
+      if (reply === undefined) {
+        this.audit(agent.session, 'concierge.failed', 'warn', { reason: 'no_reply', stage: 'reply' })
+        return
+      }
+      if (!this.appendReply(agent.session, reply)) {
+        try { agent.inbox.prepend?.('next-turn', message) } catch { /* best effort restore */ }
+        this.audit(agent.session, 'concierge.failed', 'warn', { reason: 'append_unavailable', stage: 'reply' })
+        return
+      }
+      this.audit(agent.session, 'concierge.replied', 'info', { intent: intent.kind })
     } catch (error) {
       this.runtime.audit.record({
         event: 'concierge.failed',
@@ -233,19 +274,14 @@ export class ConciergeService {
     }
   }
 
-  private auditor(session: SessionLike): { projectId: string; sessionId: string } {
-    const project = this.runtime.projects.ensure(session.header?.cwd?.trim() || process.cwd())
-    return { projectId: project.id, sessionId: session.id }
-  }
-
   private audit(session: SessionLike, event: string, level: 'info' | 'warn', data: Record<string, unknown>): void {
-    const ids = this.auditor(session)
+    const project = this.runtime.projects.ensure(session.header?.cwd?.trim() || process.cwd())
     this.runtime.audit.record({
       event,
       level,
       actor: 'agt_concierge',
-      projectId: ids.projectId,
-      sessionId: ids.sessionId,
+      projectId: project.id,
+      sessionId: session.id,
       data,
     })
   }
@@ -257,14 +293,23 @@ export class ConciergeService {
     })
   }
 
+  private registry(): AgentsLike | undefined {
+    try {
+      return (this.ctx as unknown as { get?: (name: string) => unknown }).get?.('agents') as AgentsLike | undefined
+    } catch {
+      return undefined
+    }
+  }
+
   private agentFor(session: SessionLike): AgentLike | undefined {
     try {
-      const registry = (this.ctx as unknown as { get?: (name: string) => unknown }).get?.('agents') as
-        | { get?: (id: string) => unknown }
-        | undefined
-      const value = registry?.get?.(session.id)
+      const value = this.registry()?.get?.(session.id)
       if (!value || typeof value !== 'object') return undefined
-      return value as AgentLike
+      const agent = value as AgentLike
+      const header = agent.session?.header
+      if (header?.parentSession !== null && header?.parentSession !== undefined) return undefined
+      if (header?.origin === 'subagent') return undefined
+      return agent
     } catch {
       return undefined
     }

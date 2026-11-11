@@ -1,6 +1,6 @@
 # Прогресс
 
-## 2026-11-11 — v0.29.0
+## 2026-11-11 — v0.29.1
 
 ### v0.28.0
 
@@ -9,13 +9,13 @@
 - CURATOR + Self-Improvement (DRAFT → REVIEWER gate → apply).
 - 65 tools, 10 built-ins, schema v9, 162 tests.
 
-### Hotfix v0.29.0
+### Hotfix v0.29.1
 
 - Knowledge Base: realpath per path segment; symlinked parent outside project → INVALID_PATH.
 - SafetyPolicy: orchestration tools classified as mutations; factory_sync push/pull requires egress write.
 - CONCIERGE: append failure leaves the inbox message intact.
 - Docs: schema 9, dates 2026-11-11, deterministic Self-Improvement v1 documented.
-- 169 plugin tests + 10 server; package v0.29.0.
+- 169 plugin tests + 10 server; package v0.29.1.
 ## 2026-11-10
 
 ### Discovery

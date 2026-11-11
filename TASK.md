@@ -2,7 +2,7 @@
 
 Обновлено: 2026-11-11.
 
-## Сделано — v0.29.0
+## Сделано — v0.29.1
 
 - Knowledge Base: FTS5, PDF/DOCX, symlink hardening (`INVALID_PATH`).
 - SafetyPolicy: SAFE/AUTONOMOUS/TRUSTED, egress, argument-level guard.
@@ -14,5 +14,5 @@
 ## Следующая очередь
 
 - CONCIERGE v2 / Независимый Секретарь (разработка приостановлена на время hotfix).
-- GitHub Releases для v0.29.0.
+- GitHub Releases для v0.29.1.
 - Live-проверка symlink на Windows junction (юнит-тест уже покрывает).

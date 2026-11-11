@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.29.0 (Beta)
+- **Version:** 0.29.1 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
 - **Tool surface:** 65 tools
@@ -100,9 +100,10 @@ examples for remembering facts, reporting tasks and creating work.
 
 ### CONCIERGE v2
 
-Independent in-process secretary: listens for `agent/inbox/spliced` before the
-busy DIRECTOR claims queued input, handles strict status/stop and `/concierge`,
-and never swallows work commands. No background LLM session in this release.
+Independent in-process secretary: attached to the root Agent's
+`agent/inbox/inserted`, so it responds before a busy DIRECTOR claims queued
+input without re-entering `session.append`. Handles strict status/stop and
+`/concierge`, and never swallows work commands. No background LLM session.
 
 ### Autonomy and Self-Improvement
 
@@ -172,7 +173,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.29.1.tgz
 ```
 
 ### From source
@@ -298,7 +299,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.29.1.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.
