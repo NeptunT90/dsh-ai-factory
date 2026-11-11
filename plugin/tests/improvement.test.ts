@@ -52,7 +52,7 @@ describe('Self-Improvement', () => {
       'read', 'factory_task_get', 'factory_task_events', 'factory_skill_list',
       'factory_skill_validate', 'factory_memory_search',
     ]))
-    expect(runtime.agents.count()).toBe(10)
+    expect(runtime.agents.count()).toBe(9)
   })
 
   it('creates DRAFT, applies PASS and writes .skills', async () => {

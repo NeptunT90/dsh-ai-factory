@@ -145,14 +145,6 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
 - No network calls, no OCR, no embedding download in this release.
 - Delete is root-only and removes searchable chunks/FTS entries.
 
-## Async CONCIERGE (v0.26.0)
-
-- Listener answers only status questions and stop/cancel commands; normal work stays queued.
-- Replies are appended as assistant messages with a fixed provider/model identity; no new tool permissions are granted.
-- The queued user message is removed only after the reply is appended.
-- Stop command prefers an active child followup; otherwise it cancels the RUNNING task with audit.
-- CONCIERGE is a built-in profile with only status/list/tell/cancel tools.
-
 ## Crash Recovery, Feedback and Natural Language Routing (v0.25.0)
 
 - Watchdog logs are redacted and capped; `crash-report.json` is not executed as code.

@@ -424,14 +424,6 @@ Host inventory cache, separate from tool health and from tool permissions.
 - logs `Панель управления доступна здесь: <url>`; tool output includes a Markdown link;
 - DSH 0.2.2-rc.1 exposes no documented host-plugin API for injecting a client button; client event fallback is used.
 
-### 7.5n. Async CONCIERGE (v0.26.0)
-
-- Host listener on `session/event` observes `user/message` while the root agent is RUNNING.
-- Status/stop intent is answered by appending a durable `assistant/message` surface event; the queued user copy is removed from the inbox.
-- Normal work instructions are not intercepted.
-- `agent.inbox`, `Session.append`, `followup` and `steer` are the DSH 0.2.2-rc.1 hooks used; no client-side button API was available.
-- Built-in CONCIERGE profile and deterministic listener; 10 built-ins, 65 tools, 162 tests.
-
 ### 7.5o. Knowledge Base (v0.27.0)
 
 - project-local `knowledge/`, migration v8 documents/chunks/FTS5;
@@ -446,7 +438,7 @@ Host inventory cache, separate from tool health and from tool permissions.
 - Enforced SAFE/AUTONOMOUS/TRUSTED and per-profile egress; argument-level SafetyPolicy.
 - Task tool metadata → `task_steps` → `factory_metrics`.
 - CURATOR + review-gated Self-Improvement; explicit apply only.
-- 65 tools, 10 built-ins, schema v9, 162 tests.
+- 66 tools, 9 built-ins, schema v9, 163 tests.
 
 ### 7.6. Sync client / outbox
 

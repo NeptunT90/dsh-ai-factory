@@ -1,21 +1,20 @@
 # Прогресс
 
-## 2026-11-11 — v0.30.0
+## 2026-11-11 — v0.30.1
 
 ### v0.28.0
 
 - SafetyPolicy: enforced autonomy, egress, argument-level guard.
 - task_steps, factory_metrics.
 - CURATOR + Self-Improvement (DRAFT → REVIEWER gate → apply).
-- 66 tools, 10 built-ins, schema v9, 172 tests.
+- 66 tools, 9 built-ins, schema v9, 163 tests.
 
-### Hotfix v0.30.0
+### Hotfix v0.30.1
 
 - Knowledge Base: realpath per path segment; symlinked parent outside project → INVALID_PATH.
 - SafetyPolicy: orchestration tools classified as mutations; factory_sync push/pull requires egress write.
-- CONCIERGE: append failure leaves the inbox message intact.
 - Docs: schema 9, dates 2026-11-11, deterministic Self-Improvement v1 documented.
-- 172 plugin tests + 10 server; package v0.30.0.
+- 163 plugin tests + 10 server; package v0.30.1.
 ## 2026-11-10
 
 ### Discovery

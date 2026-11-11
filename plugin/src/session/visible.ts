@@ -38,7 +38,7 @@ export function appendVisibleAssistant(session: VisibleSession, text: string): b
       step,
       message: createAssistantMessage({
         content: [{ type: 'text', text }],
-        source: { provider: 'factory', model: 'concierge' },
+        source: { provider: 'factory', model: 'notification' },
       }),
       stream: [],
     }, { surfaceOp: 'append' })

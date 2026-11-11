@@ -191,26 +191,6 @@ export const BUILTIN_AGENTS: readonly (AgentCreateInput & { readonly id: string 
     enabled: true,
   },
   {
-    id: 'agt_concierge',
-    allowedTools: ['factory_status', 'factory_task_list', 'factory_task_tell', 'factory_task_cancel'],
-    name: 'CONCIERGE',
-    role: 'custom',
-    title: 'Секретарь',
-    description:
-      'Фоновый секретарь: отвечает на вопросы о состоянии задач и передаёт команды остановки/корректировки, пока основной агент занят.',
-    systemInstruction: [
-      'Ты CONCIERGE — вежливый секретарь фабрики.',
-      'Отвечай кратко на вопросы о текущих задачах на основе factory_task_list.',
-      'Если пользователь просит остановить или скорректировать работу, используй factory_task_tell или factory_task_cancel.',
-      'Не выполняй саму работу и не подменяй DIRECTOR; только статус и диспетчеризация.',
-    ].join('\n'),
-    tools: ['factory_status', 'factory_task_list', 'factory_task_tell', 'factory_task_cancel'],
-    accessLevel: 'workspace',
-    memoryScope: 'project',
-    limits: { maxConcurrentTasks: 1, maxAttempts: 1, timeoutMs: 5 * 60 * 1000, autonomy: 'autonomous' },
-    enabled: true,
-  },
-  {
     id: 'agt_curator',
     allowedTools: ['read', 'factory_task_get', 'factory_task_events', 'factory_skill_list', 'factory_skill_validate', 'factory_memory_search'],
     name: 'CURATOR',

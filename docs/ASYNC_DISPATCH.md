@@ -31,7 +31,7 @@ turn, поэтому завершение хода DIRECTOR не отменяе�
 ```
 
 Просто `session.append('assistant/message')` вне turn DSH Web не показывает.
-Поэтому уведомление и ответ CONCIERGE оборачиваются в synthetic turn:
+Поэтому уведомление оборачивается в synthetic turn:
 
 ```text
 turn/start
@@ -65,19 +65,3 @@ factory_run(
 
 Больше не нужно вручную вызывать `factory_task_create` + `factory_dispatch`.
 
-## CONCIERGE
-
-CONCIERGE считает DIRECTOR занятым, если:
-
-- root-агент `running`; **или**
-- в текущем проекте есть задача `RUNNING`.
-
-Ответ Секретаря теперь виден в UI, потому что публикуется внутри synthetic turn.
-
-## Ограничения
-
-- Synthetic turn занимает следующий номер turn; следующий реальный пользовательский
-  turn идёт после него.
-- Уведомление содержит краткий результат (до 800 символов), полный результат
-  остаётся в задаче.
-- `factory_run` не заменяет планирование: для DAG используйте `factory_plan_create`.

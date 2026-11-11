@@ -14,7 +14,7 @@
 
 - `DIRECTOR`, `RESEARCHER`, `EXECUTOR`: `read` egress.
 - `SYSADMIN`: `write` egress; `ssh_*` remains explicit-tool-only.
-- `DEVELOPER`, `REVIEWER`, `REPAIRER`, `ANALYST`, `CONCIERGE`, `CURATOR`: `none`.
+- `DEVELOPER`, `REVIEWER`, `REPAIRER`, `ANALYST`, `CURATOR`: `none`.
 
 ## Enforcement
 

@@ -153,7 +153,12 @@ export class AgentRegistry {
         [JSON.stringify(normalizeTools(agent.allowedTools)), agent.id],
       )
     }
-    const revision = '2026-11-11-improvement-v1'
+    const builtinIds = BUILTIN_AGENTS.map((agent) => agent.id)
+    this.db.run(
+      `DELETE FROM agent_profiles WHERE is_builtin = 1 AND id NOT IN (${builtinIds.map(() => '?').join(', ')})`,
+      builtinIds,
+    )
+    const revision = '2026-11-11-remove-secretary-v1'
     const current = this.db.get<{ value: string }>("SELECT value FROM settings WHERE key = 'builtin_profiles_revision'")?.value
     if (current !== revision) {
       for (const agent of BUILTIN_AGENTS) {

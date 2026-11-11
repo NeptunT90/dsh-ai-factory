@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.30.0 (Beta)
+- **Version:** 0.30.1 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
 - **Tool surface:** 66 tools
@@ -108,15 +108,9 @@ Async dispatch publishes a synthetic completed turn with the final task result
 
 `factory_dispatch` is asynchronous by default: it claims the task as `RUNNING`,
 returns the task id immediately, and runs the child in the background. Pass
-`async: false` for the old synchronous behavior. CONCIERGE treats a project
-with a `RUNNING` task as busy, even when the DIRECTOR agent is idle.
-
-### CONCIERGE v2
-
-Independent in-process secretary: attached to the root Agent's
-`agent/inbox/inserted`, so it responds before a busy DIRECTOR claims queued
-input without re-entering `session.append`. Handles strict status/stop and
-`/concierge`, and never swallows work commands. No background LLM session.
+`async: false` for the synchronous behavior. On completion the plugin publishes
+a visible notification in the main session. Root-only `factory_run` combines
+task creation and async dispatch in one call.
 
 ### Autonomy and Self-Improvement
 
@@ -133,16 +127,6 @@ layer) and DOCX. Search is SQLite FTS5/BM25 with `trust: untrusted` results.
 Indexing is explicit; no watcher or startup scan. Embeddings and `sqlite-vec`
 are intentionally deferred.
 
-### Async CONCIERGE
-
-When the root agent is running, a lightweight host listener observes
-`session/event` `user/message`. For status questions ("Как дела?", "Что там
-с задачами?") it appends a durable assistant reply with the current task queue
-without waiting for the running turn, then removes the queued copy from the
-agent inbox. For "Стоп"/"Отмени" it forwards to the active child or cancels a
-RUNNING task. Normal work instructions are left in the normal queue.
-
-The built-in **CONCIERGE** profile documents this role and its small allowlist.
 ### Dashboard autostart
 
 With `dashboardAutoStart: true` the loopback read-only dashboard starts with
@@ -186,7 +170,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.30.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.1.tgz
 ```
 
 ### From source
@@ -260,7 +244,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **172 plugin tests** and **10 sync-server tests**. See
+Current gate: **163 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -299,7 +283,7 @@ DeepSeek Harness Desktop.
 - **Human-in-the-loop** — `factory_task_tell` доставляет уточнение в RUNNING-задачу или сохраняет в metadata.
 - **Natural Language Routing** — DIRECTOR понимает намерение, сам вызывает инструменты и отвечает по-человечески.
 - **Dashboard UX** — `dashboardAutoStart`, ссылка «Панель управления доступна здесь» и Markdown-кнопка в выводе.
-- **Async CONCIERGE** — отвечает на «Как дела?»/«Стоп» во время RUNNING-задачи, не дожидаясь текущего хода; нормальные инструкции остаются в очереди.
+- **Async dispatch** — задача уходит в фон, DIRECTOR остаётся свободен; по завершении приходит уведомление в чат.
 - **Agent Marketplace** — экспорт/импорт `.agents/<slug>.json` с проверкой
   `allowedTools`, `accessLevel`, skills и секретов.
 - **Backup** — manifest с хэшами таблиц, gzip-архив, `factory_backup_verify` и
@@ -312,7 +296,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.30.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.1.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.

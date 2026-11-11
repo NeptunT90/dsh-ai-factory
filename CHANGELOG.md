@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.30.1] — 2026-11-11
+
+### Removed
+
+- CONCIERGE полностью удалён из плагина: сервис, тесты, регистрация,
+  built-in профиль и `docs/CONCIERGE.md`.
+- Удалён stale built-in профиль `agt_concierge` из существующей БД через
+  seed-cleanup; задачи, ссылавшиеся на него, получают `assigned_agent_id = NULL`
+  по штатному `ON DELETE SET NULL`.
+- `factory_task_tell` оставлен как обычный root/DIRECTOR-инструмент; он не
+  зависит от CONCIERGE и продолжает доставлять feedback в RUNNING-задачи.
+- Сохранены async dispatch, `factory_run` и уведомления о завершении фоновых
+  задач с synthetic turn.
+
+### Tests
+
+- Удалены 9 CONCIERGE-тестов; осталось **163 plugin tests** + 10 server.
+- 66 tools, 9 built-in profiles, health 63/71.
+- Package v0.30.1.
+
 ## [0.30.0] — 2026-11-11
 
 ### UX: диспетчер, который не блокируется

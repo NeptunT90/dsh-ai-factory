@@ -154,7 +154,7 @@ describe('plugin mount', () => {
       count: number
       agents: Array<{ name: string }>
     }
-    expect(agents.count).toBe(10)
+    expect(agents.count).toBe(9)
     expect(agents.agents.map((agent) => agent.name)).toContain('DIRECTOR')
 
     const plan = (await harness.tools.get('factory_plan_create')!.execute(

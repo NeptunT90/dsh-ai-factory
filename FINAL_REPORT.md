@@ -1,6 +1,6 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-11. Плагин **dsh-ai-factory 0.30.0 Beta**, sync-сервер **0.17.0**,
+Дата: 2026-11-11. Плагин **dsh-ai-factory 0.30.1 Beta**, sync-сервер **0.17.0**,
 DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмент.
 
 ## Что внедрено
@@ -11,7 +11,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 | SQLite storage/migrations | готово | schema v9, миграции v1→v9, тесты |
 | Memory Engine | готово | CRUD, версии, FTS5, TTL, import/applyRemote |
 | Task Engine | готово | зависимости, claim/lease, retry, recovery |
-| Tool/Agent registry | готово | 10 builtin-профилей, CRUD, 66 tools |
+| Tool/Agent registry | готово | 9 builtin-профилей, CRUD, 66 tools |
 | Planner/orchestration | готово | `factory_plan_create`, DAG |
 | Dispatch/reviewer | готово | реальные `ctx.agents` children, allowlist |
 | Recovery | готово | stale lease, startup recovery |
@@ -21,13 +21,13 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 | Sync client | готово | outbox, push/pull, LWW, conflict, auto-sync |
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
-| Tests | готово | 172 plugin + 10 server |
-| Install desktop | готово | live 0.30.0, 66 tools, schema 9 |
-| Portable profile | готово | `portable-test` 0.30.0 |
+| Tests | готово | 163 plugin + 10 server |
+| Install desktop | готово | live 0.30.1, 66 tools, schema 9 |
+| Portable profile | готово | `portable-test` 0.30.1 |
 
 ## Live-доказательства
 
-- `factory_status`: 0.30.0 Beta, schema 9, **10 builtin-профилей**, **9 задач**, **2 памяти**.
+- `factory_status`: 0.30.1 Beta, schema 9, **9 builtin-профилей**, **9 задач**, **2 памяти**.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -39,25 +39,19 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
 
-## Autonomy + Self-Improvement (v0.30.0)
+## Autonomy + Self-Improvement (v0.30.1)
 
 - Enforced SAFE/AUTONOMOUS/TRUSTED; per-profile egress.
 - Argument-level SafetyPolicy; security audit; no approvals.
 - Task trajectory + `factory_metrics`.
 - CURATOR + review-gated self-improvement candidates; no auto-write.
-- 66 tools, 10 profiles, 172 tests, schema v9.
+- 66 tools, 9 profiles, 163 tests, schema v9.
 
-## Knowledge Base (v0.30.0)
+## Knowledge Base (v0.30.1)
 
 - FTS5 RAG over `knowledge/`; PDF/DOCX extraction.
 - 4 tools; untrusted results; project isolation; live 3 files indexed.
-- 66 tools, schema v9, 172 tests.
-
-## Phase 5 Async CONCIERGE (v0.26.0)
-
-- Busy-stream listener answers status/stop without waiting for the running turn.
-- Session `user/message` → assistant reply; queued message removed; normal work stays queued.
-- CONCIERGE built-in; 9 profiles, 57 tools, 141 tests.
+- 66 tools, schema v9, 163 tests.
 
 ## Phase 3/4 Natural Routing + Dashboard UX (v0.25.0)
 
@@ -135,9 +129,9 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v9**, **65** инструмен�
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-0.30.0.tgz
-  280 794 байт
-  6d744e7d948c1d05d12b513c9de5ed93b49ccaea3dbe92be33a9a9271d417a8c
+dist/dsh-ai-factory-0.30.1.tgz
+  280 463 байт
+  7f2f83c6523b6166b79c00c83ea613bc2aec04e89e662747b2b51a750d2045d1
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -145,7 +139,7 @@ dist/dsh-ai-factory-sync-server-0.17.0.tgz
 ```
 
 `dist/SHA256SUMS` содержит оба файла; release notes —
-`dist/RELEASE_NOTES-v0.30.0.md`.
+`dist/RELEASE_NOTES-v0.30.1.md`.
 
 ## Ограничения (внешняя инфраструктура)
 
@@ -171,7 +165,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.30.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.30.1.tgz
 ```
 
 Проверка в DSH:
