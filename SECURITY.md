@@ -122,6 +122,14 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Crash Recovery, Feedback and Natural Language Routing (v0.25.0)
+
+- Watchdog logs are redacted and capped; `crash-report.json` is not executed as code.
+- Crash recovery creates a task assigned to REPAIRER; REPAIRER has an explicit small allowlist and cannot bypass tool guard.
+- `factory_task_tell` is root-only; feedback is stored in task metadata or sent to the active child, never both.
+- Natural language routing is a prompt contract, not an authorization mechanism: `allowedTools` and runtime guard remain authoritative.
+- `dashboardAutoStart` binds only loopback; the startup URL contains an ephemeral token and must be treated as a local secret. Audit stores only the port.
+
 ## Agent Marketplace (v0.22.0 / BLOCK 5)
 
 - `factory_agent_export/import/validate` are root-only; no child allowlist.

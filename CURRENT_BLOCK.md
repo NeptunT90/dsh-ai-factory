@@ -1,15 +1,14 @@
 # Текущий блок
 
-**BLOCK 5 — Agent Marketplace закрыт.**
+**PHASE 1–4 закрыты (v0.25.0 Beta).**
 
-Сделано:
+1. Crash Recovery: REPAIRER, `scripts/watchdog.ps1`, startup recovery task, idempotency.
+2. Human feedback: `factory_task_tell`, active child followup, metadata fallback.
+3. Natural Language Routing: DIRECTOR interface prompt + few-shot.
+4. Dashboard UX: `dashboardAutoStart`, startup link, clickable tool link, client API fallback.
+5. 57 tools, 8 built-ins; health 54/62; 138 tests.
 
-1. `.agents/<slug>.json` export/import/validate; no migration.
-2. Built-in templates, name override, allowedTools subset, accessLevel, skills, secret rejection.
-3. 3 root-only tools; 54 tools, health 51/59; 122 tests.
-4. Plugin 0.22.0, root 0.23.0, server 0.17.0.
-
-Дальше: BLOCK 6 — Automatic Backup Expansion. После BLOCK 6 — Watchdog (`scripts/watchdog.ps1`).
+Дальше: финальный коммит и внешний Watchdog как отдельный production-блок.
 
 ## Предыдущий блок: browser/sync/live sync
 

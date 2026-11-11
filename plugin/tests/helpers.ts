@@ -39,6 +39,7 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     capabilityTtlHours: 6,
     capabilityTimeoutMs: 3000,
     capabilityMaxOutputBytes: 4096,
+    dashboardAutoStart: false,
     ...overrides,
   }
 }

@@ -399,7 +399,30 @@ Host inventory cache, separate from tool health and from tool permissions.
 - `factory_backup_verify` (R0) checks gzip, manifest, tar safety, in-memory SQLite quick_check and table hashes.
 - `factory_backup_restore_test` (R1) restores to temp, reports agents/tasks/memory, always cleans up.
 - server backups get a sidecar manifest and `X-Backup-Manifest` header.
-- 56 plugin tools; health 53 factory tools / 61 actions.
+- 57 plugin tools; health 54 factory tools / 62 actions.
+
+### 7.5j. Crash Recovery (v0.25.0)
+
+- `scripts/watchdog.ps1` monitors DSH, writes `crash-report.json` and restarts up to a limit;
+- startup `recoverCrashReport()` creates a DIRECTOR-owned task assigned to built-in REPAIRER;
+- reports are redacted, capped and marked handled for idempotency.
+
+### 7.5k. Human feedback
+
+- `factory_task_tell` (R1, root-only) forwards to a registered active child via `followup`;
+- non-RUNNING / missing child falls back to `task.metadata.feedback`.
+
+### 7.5l. Natural Language Routing
+
+- DIRECTOR system prompt is an interface contract with few-shot examples;
+- DIRECTOR is expected to call memory/task/skill/capability/backup/dashboard tools itself;
+  this does not widen `allowedTools`.
+
+### 7.5m. Dashboard UX
+
+- `dashboardAutoStart` (default false) starts the loopback read-only server at plugin startup;
+- logs `Панель управления доступна здесь: <url>`; tool output includes a Markdown link;
+- DSH 0.2.2-rc.1 exposes no documented host-plugin API for injecting a client button; client event fallback is used.
 
 ### 7.6. Sync client / outbox
 

@@ -19,13 +19,13 @@
 
 ```
 Test Files  24 passed (24)
-Tests       125 passed (125)
+Tests       138 passed (138)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (56 инструментов).
+contract (57 инструментов).
 
 ### Sync server
 
@@ -76,6 +76,14 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 - Dashboard открыт в браузере: 2 задачи, 1 память, audit `review.*`.
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
+
+### Crash Recovery / Human Feedback / Natural Routing (v0.25.0 live)
+
+- 8 built-in profiles incl. REPAIRER; 57 tools; health 54/62.
+- Simulated crash report created task assigned REPAIRER, createdBy DIRECTOR; cleaned.
+- factory_task_tell READY/RUNNING fallback metadata; active child mock followup covered by tests.
+- DIRECTOR prompt and allowlist updated live; dashboard tool returned clickable link.
+- 138 plugin tests / 10 server.
 
 ### Backup Expansion v0.23.0 (live)
 
@@ -248,12 +256,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-1.0.0.tgz`: **229 922 байт**.
-- SHA256: `b884ea7ec84e5019fa89d45e7e407e0201ac7bda3f4cf1310b03fc4c63fb3cc5`.
+- `dist/dsh-ai-factory-0.25.0.tgz`: **236 806 байт**.
+- SHA256: `d80b41f072313834603a5cf07a6c36b06017ce32a2106ee0ae0c811b5f36693a`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v1.0.0.md` (1 532 байта), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.25.0.md` (1 379 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -265,7 +273,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 1.0.0; schema 7, 56 инструментов.
+- `portable-test` обновлён на 0.25.0; schema 7, 57 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

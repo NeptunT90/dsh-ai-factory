@@ -1,7 +1,7 @@
 # DSH AI Factory — итоговый отчёт
 
-Дата: 2026-11-10. Плагин **dsh-ai-factory 1.0.0**, sync-сервер **0.17.0**,
-DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **56** инструментов.
+Дата: 2026-11-10. Плагин **dsh-ai-factory 0.25.0 Beta**, sync-сервер **0.17.0**,
+DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **57** инструментов.
 
 ## Что внедрено
 
@@ -11,7 +11,7 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **56** инструмен�
 | SQLite storage/migrations | готово | schema v7, миграции v1→v7, тесты |
 | Memory Engine | готово | CRUD, версии, FTS5, TTL, import/applyRemote |
 | Task Engine | готово | зависимости, claim/lease, retry, recovery |
-| Tool/Agent registry | готово | 7 builtin-профилей, CRUD, 56 tools |
+| Tool/Agent registry | готово | 8 builtin-профилей, CRUD, 57 tools |
 | Planner/orchestration | готово | `factory_plan_create`, DAG |
 | Dispatch/reviewer | готово | реальные `ctx.agents` children, allowlist |
 | Recovery | готово | stale lease, startup recovery |
@@ -21,13 +21,13 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **56** инструмен�
 | Sync client | готово | outbox, push/pull, LWW, conflict, auto-sync |
 | Sync server | готово | PGlite + standalone PostgreSQL, pgvector, TLS |
 | Release | готово | tarballs, SHA256SUMS, notes, tags, workflow |
-| Tests | готово | 125 plugin + 10 server |
-| Install desktop | готово | live 1.0.0, 56 tools, schema 7 |
-| Portable profile | готово | `portable-test` 1.0.0 |
+| Tests | готово | 138 plugin + 10 server |
+| Install desktop | готово | live 0.25.0, 57 tools, schema 7 |
+| Portable profile | готово | `portable-test` 0.25.0 |
 
 ## Live-доказательства
 
-- `factory_status`: 1.0.0, schema 7, **7 builtin-профилей**, **0 задач**, **2 памяти** после финальной очистки.
+- `factory_status`: 0.25.0 Beta, schema 7, **8 builtin-профилей**, **0 задач**, **2 памяти** после финальной очистки.
 - Scoped allowlist: RESEARCHER/DEVELOPER получали `TOOL_NOT_ALLOWED`.
 - Model fallback: invalid model → `deepseek-flash`, задача COMPLETED.
 - Auto workflow: READY-задача → PASSED, 1 цикл; конфиг восстановлен.
@@ -38,6 +38,18 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **56** инструмен�
 - PostgreSQL multi-writer: два PgStore, один `opId` → ровно один apply.
 - TLS: self-signed cert, HTTPS health.
 - Задача `tsk_37b441ea…` оставлена в `REVIEW` без перезапуска.
+
+## Phase 3/4 Natural Routing + Dashboard UX (v0.25.0)
+
+- DIRECTOR interface prompt + few-shot; memory/task/skill/capability/backup/dashboard routing.
+- dashboardAutoStart and clickable link; host client API unavailable → log/event/tool fallback.
+- 57 tools, health 54/62, 138 tests.
+
+## Phase 1/2 Crash Recovery + Human Feedback (v0.25.0)
+
+- REPAIRER, watchdog, crash-report startup task, idempotency.
+- factory_task_tell with active child followup and metadata fallback.
+- Live: REPAIRER task created and cleaned; 8 builtins; 0 tasks.
 
 ## BLOCK 6 Backup Expansion (v0.23.0)
 
@@ -103,9 +115,9 @@ DSH Desktop **0.2.2-rc.1**, схема SQLite **v7**, **56** инструмен�
 ## Артефакты
 
 ```text
-dist/dsh-ai-factory-1.0.0.tgz
-  229 922 байт
-  b884ea7ec84e5019fa89d45e7e407e0201ac7bda3f4cf1310b03fc4c63fb3cc5
+dist/dsh-ai-factory-0.25.0.tgz
+  236 806 байт
+  d80b41f072313834603a5cf07a6c36b06017ce32a2106ee0ae0c811b5f36693a
 
 dist/dsh-ai-factory-sync-server-0.17.0.tgz
   17 189 байт
@@ -113,7 +125,7 @@ dist/dsh-ai-factory-sync-server-0.17.0.tgz
 ```
 
 `dist/SHA256SUMS` содержит оба файла; release notes —
-`dist/RELEASE_NOTES-v1.0.0.md`.
+`dist/RELEASE_NOTES-v0.25.0.md`.
 
 ## Ограничения (внешняя инфраструктура)
 
@@ -139,7 +151,7 @@ node scripts/release-notes.mjs
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install.ps1 `
-  -Profile desktop -Tarball .\dist\dsh-ai-factory-1.0.0.tgz
+  -Profile desktop -Tarball .\dist\dsh-ai-factory-0.25.0.tgz
 ```
 
 Проверка в DSH:

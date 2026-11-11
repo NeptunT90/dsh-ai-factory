@@ -28,6 +28,7 @@
     modelRouterEnabled: true
     modelFallbacks: ''
     modelMaxAttempts: 2
+    dashboardAutoStart: false
     autoWorkflowEnabled: false
     autoWorkflowIntervalSeconds: 120
     autoWorkflowMaxCycles: 2

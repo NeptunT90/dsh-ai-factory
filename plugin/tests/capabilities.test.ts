@@ -170,9 +170,9 @@ describe('capability discovery', () => {
     expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
 
-  it('has 53 factory capability-aware tools / 61 health actions', () => {
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(53)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(61)
+  it('has 54 factory capability-aware tools / 62 health actions', () => {
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(54)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(62)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_list')?.mode).toBe('probe')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_get')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_scan')?.risk).toBe('R1')

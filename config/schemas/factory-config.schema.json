@@ -33,6 +33,12 @@
     "autoWorkflowEnabled": { "type": "boolean", "default": false },
     "autoWorkflowIntervalSeconds": { "type": "integer", "minimum": 30, "maximum": 86400, "default": 120 },
     "autoWorkflowMaxCycles": { "type": "integer", "minimum": 1, "maximum": 5, "default": 2 },
-    "autoWorkflowMaxTasks": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 }
+    "autoWorkflowMaxTasks": { "type": "integer", "minimum": 1, "maximum": 5, "default": 1 },
+    "capabilityScanEnabled": { "type": "boolean", "default": false },
+    "capabilityProbeMode": { "enum": ["off", "safe"], "default": "off" },
+    "capabilityTtlHours": { "type": "integer", "minimum": 1, "maximum": 720, "default": 6 },
+    "capabilityTimeoutMs": { "type": "integer", "minimum": 500, "maximum": 30000, "default": 3000 },
+    "capabilityMaxOutputBytes": { "type": "integer", "minimum": 256, "maximum": 65536, "default": 4096 },
+    "dashboardAutoStart": { "type": "boolean", "default": false }
   }
 }

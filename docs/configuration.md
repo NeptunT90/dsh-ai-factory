@@ -21,6 +21,7 @@ Patch заменяет конфигурацию строки целиком. Е�
 | `logLevel` | enum | info | debug / info / warn / error |
 | `syncUrl` | string | `""` | URL sync-сервера; пусто = локальный режим |
 | `syncTokenEnv` | string | `DSH_AI_FACTORY_SYNC_TOKEN` | Имя env-переменной с Bearer-токеном |
+| `dashboardAutoStart` | boolean | `false` | Запускать read-only dashboard при старте и писать ссылку в лог |
 | `syncDeviceId` | string | `""` | Постоянный id устройства; пусто = сгенерировать |
 | `syncBatchSize` | number | 50 | Максимум операций в push |
 | `syncTimeoutMs` | number | 15000 | Таймаут запроса |

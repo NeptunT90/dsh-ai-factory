@@ -122,7 +122,7 @@ describe('backup verify/restore', () => {
     ).rejects.toMatchObject({ code: 'INVALID_INPUT' })
   })
 
-  it('is root-only and reports 53 factory tools / 61 actions', async () => {
+  it('is root-only and reports 54 factory tools / 62 actions', async () => {
     const { runtime, dir } = track(createTestRuntime())
     const projectRoot = join(dir, 'project')
     runtime.projects.ensure(projectRoot, 'Backup project')
@@ -134,8 +134,8 @@ describe('backup verify/restore', () => {
         fakeExec('ses_child', projectRoot),
       ),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(53)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(61)
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(54)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(62)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_backup_verify')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_backup_restore_test')?.risk).toBe('R1')
   })

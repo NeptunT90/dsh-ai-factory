@@ -1,9 +1,11 @@
-import { chmodSync, mkdirSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import type { FactoryConfig, ResolvedConfig } from './config.js'
 import { resolveConfig } from './config.js'
 import { AuditLog } from './core/audit.js'
 import { FactoryError, errorMessage } from './core/errors.js'
+import { redactSecrets } from './core/security.js'
 import { workspaceRootOf } from './core/workspace.js'
 import { ProjectService, type ProjectRecord } from './projects/service.js'
 import { FactoryDatabase } from './storage/database.js'
@@ -50,6 +52,17 @@ export interface FactoryStatus {
 }
 
 /** Initialized AI Factory services for one plugin instance. */
+interface ActiveChild {
+  readonly childId: string
+  readonly followup: (message: string) => void
+}
+
+export interface CrashRecoveryResult {
+  readonly handled: boolean
+  readonly taskId?: string
+  readonly reason: string
+}
+
 export class FactoryRuntime {
   readonly config: ResolvedConfig
   readonly db: FactoryDatabase
@@ -71,6 +84,7 @@ export class FactoryRuntime {
   readonly startedAt = Date.now()
   private expiredOnStart = 0
   private recoveredOnStart = 0
+  private readonly activeChildren = new Map<string, ActiveChild>()
 
   private constructor(config: ResolvedConfig, db: FactoryDatabase, logger: PluginLogger) {
     this.config = config
@@ -151,6 +165,127 @@ export class FactoryRuntime {
   /** Expired entries swept during startup; diagnostics only. */
   get expiredAtStartup(): number {
     return this.expiredOnStart
+  }
+
+  /**
+   * Consume a watchdog crash report on startup and create a REPAIRER task
+   * through DIRECTOR. Idempotent: a handled report is ignored.
+   */
+  /** Register the live child of a RUNNING task for human feedback. */
+  registerActiveChild(taskId: string, childId: string, followup: (message: string) => void): void {
+    this.activeChildren.set(taskId, { childId, followup })
+  }
+
+  /** Remove a child mapping only when it belongs to the given child id. */
+  releaseActiveChild(taskId: string, childId: string): void {
+    const current = this.activeChildren.get(taskId)
+    if (current?.childId === childId) this.activeChildren.delete(taskId)
+  }
+
+  /** Send a human correction to the active child, if one is still registered. */
+  followupActiveTask(taskId: string, message: string): { childId: string } | undefined {
+    const current = this.activeChildren.get(taskId)
+    if (!current) return undefined
+    current.followup(message)
+    return { childId: current.childId }
+  }
+
+  recoverCrashReport(path = this.crashReportPath()): CrashRecoveryResult {
+    if (!existsSync(path)) return { handled: false, reason: 'no_report' }
+    let report: Record<string, unknown>
+    try {
+      const raw: unknown = JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, ''))
+      if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+        this.audit.record({ event: 'crash.report_invalid', level: 'warn', data: { reason: 'not_object' } })
+        return { handled: false, reason: 'invalid_report' }
+      }
+      report = raw as Record<string, unknown>
+    } catch (error) {
+      this.audit.record({ event: 'crash.report_invalid', level: 'warn', data: { reason: errorMessage(error) } })
+      return { handled: false, reason: 'invalid_report' }
+    }
+    if (report.handled === true) return { handled: false, reason: 'already_handled' }
+    const repairer = this.agents.list({ limit: 200 }).find((agent) => agent.name === 'REPAIRER' && agent.enabled)
+    const director = this.agents.list({ role: 'director', enabledOnly: true, limit: 1 })[0]
+    if (!repairer || !director) {
+      this.audit.record({ event: 'crash.recovery_unavailable', level: 'error', data: { repairer: Boolean(repairer), director: Boolean(director) } })
+      return { handled: false, reason: 'profile_missing' }
+    }
+    const root = typeof report.projectRoot === 'string' && report.projectRoot.trim() !== ''
+      ? report.projectRoot.trim()
+      : this.projects.list(1)[0]?.rootPath ?? process.cwd()
+    const project = this.projects.ensure(root)
+    const reason = String(report.reason ?? 'DSH process exited').slice(0, 500)
+    const exitCode = Number.isFinite(Number(report.exitCode)) ? Number(report.exitCode) : -1
+    const detectedAt = String(report.detectedAt ?? new Date().toISOString()).slice(0, 100)
+    const restartCount = Number.isFinite(Number(report.restartCount)) ? Number(report.restartCount) : 0
+    const logTail = redactSecrets(String(report.logTail ?? '')).slice(0, 20_000)
+    const description = [
+      'Автоматическое восстановление после аварийного завершения DSH.',
+      '',
+      `Причина: ${reason}`,
+      `Exit code: ${exitCode}`,
+      `Обнаружено: ${detectedAt}`,
+      `Перезапусков до отчёта: ${restartCount}`,
+      '',
+      'Проанализируй отчёт, найди причину, внеси минимальные безопасные исправления и напиши итоговый отчёт.',
+      'Не удаляй пользовательские данные без явного подтверждения.',
+      '',
+      'Лог (хвост, секреты замаскированы):',
+      '---',
+      logTail || '(лог отсутствует)',
+      '---',
+    ].join('\n')
+    let task
+    try {
+      task = this.tasks.create({
+        projectId: project.id,
+        title: `Crash recovery: ${reason}`.slice(0, 300),
+        description,
+        goal: 'Восстановить работоспособность после падения DSH и подтвердить результат.',
+        priority: 95,
+        maxAttempts: 2,
+        assignedAgentId: repairer.id,
+        createdBy: director.id,
+        metadata: {
+          crashReport: {
+            format: 'factory.crash/v1',
+            detectedAt,
+            reason,
+            exitCode,
+            restartCount,
+          },
+        },
+      })
+    } catch (error) {
+      this.audit.record({ event: 'crash.recovery_failed', level: 'error', data: { reason: errorMessage(error) } })
+      return { handled: false, reason: 'task_failed' }
+    }
+    try {
+      const next = {
+        ...report,
+        handled: true,
+        handledAt: new Date().toISOString(),
+        taskId: task.id,
+      }
+      const temp = `${path}.${process.pid}.tmp`
+      mkdirSync(dirname(path), { recursive: true })
+      writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
+      renameSync(temp, path)
+    } catch (error) {
+      this.audit.record({ event: 'crash.report_mark_failed', level: 'warn', data: { taskId: task.id, reason: errorMessage(error) } })
+    }
+    this.audit.record({
+      event: 'crash.recovery_task_created',
+      level: 'warn',
+      data: { projectId: project.id, taskId: task.id, repairerId: repairer.id, exitCode },
+    })
+    return { handled: true, taskId: task.id, reason: 'created' }
+  }
+
+  private crashReportPath(): string {
+    const override = process.env.DSH_AI_FACTORY_CRASH_REPORT?.trim()
+    return override && override !== '' ? override : join(this.config.resolvedDataDir, 'crash-report.json')
   }
 
   status(): FactoryStatus {

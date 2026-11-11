@@ -19,6 +19,8 @@ export interface ScopedRunInput {
   readonly timeoutMs?: number
   /** Project identity for prompt/audit; cwd remains the session boundary. */
   readonly projectId?: string
+  /** Durable task id for live feedback routing. */
+  readonly taskId?: string
   /** Validated project-local skill snapshots, resolved before child creation. */
   readonly skills?: readonly SkillRecord[]
   /** Explicit route selected by the Model Router; overrides profile/parent derivation. */
@@ -161,6 +163,11 @@ export class ScopedChildRunner implements ChildRunner {
       })
       childId = handle.agent.id
       this.runtime.allowToolsForChild(childId, allowed, input.profile.accessLevel)
+      if (input.taskId) {
+        this.runtime.registerActiveChild(input.taskId, childId, (message) => {
+          handle?.agent.followup(createUserMessage({ content: [{ type: 'text', text: message }], source: { kind: 'user' } }))
+        })
+      }
 
       if (input.signal.aborted) {
         throw new FactoryError('UNAVAILABLE', 'Родительская операция отменена до запуска ребёнка')
@@ -244,6 +251,7 @@ export class ScopedChildRunner implements ChildRunner {
       }
     } finally {
       if (childId !== '') this.runtime.releaseChildTools(childId)
+      if (input.taskId) this.runtime.releaseActiveChild(input.taskId, childId)
       if (handle) {
         try {
           await handle.dispose()

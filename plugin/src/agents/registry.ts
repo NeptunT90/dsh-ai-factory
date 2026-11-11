@@ -141,6 +141,37 @@ export class AgentRegistry {
         [JSON.stringify(normalizeTools(agent.allowedTools)), agent.id],
       )
     }
+    const revision = '2026-11-11-natural-routing-v1'
+    const current = this.db.get<{ value: string }>("SELECT value FROM settings WHERE key = 'builtin_profiles_revision'")?.value
+    if (current !== revision) {
+      for (const agent of BUILTIN_AGENTS) {
+        this.db.run(
+          `UPDATE agent_profiles SET name = ?, role = ?, title = ?, description = ?, system_instruction = ?,
+             tools = ?, allowed_tools = ?, access_level = ?, memory_scope = ?, limits = ?, enabled = ?, updated_at = ?
+           WHERE id = ? AND is_builtin = 1`,
+          [
+            agent.name,
+            agent.role ?? 'custom',
+            agent.title ?? agent.name,
+            agent.description ?? '',
+            agent.systemInstruction ?? '',
+            JSON.stringify(normalizeTools(agent.tools)),
+            JSON.stringify(normalizeTools(agent.allowedTools)),
+            agent.accessLevel ?? 'workspace',
+            agent.memoryScope ?? 'project',
+            JSON.stringify(normalizeLimits(agent.limits)),
+            agent.enabled === false ? 0 : 1,
+            ts,
+            agent.id,
+          ],
+        )
+      }
+      this.db.run(
+        `INSERT INTO settings (key, value, updated_at) VALUES ('builtin_profiles_revision', ?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+        [revision, ts],
+      )
+    }
   }
 
   list(options: { role?: AgentRole; enabledOnly?: boolean; limit?: number } = {}): AgentProfile[] {

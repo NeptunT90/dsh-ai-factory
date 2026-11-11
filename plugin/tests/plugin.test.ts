@@ -6,11 +6,13 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
 import { apply } from '../src/index.js'
 import { testConfig } from './helpers.js'
+import type { FactoryConfig } from '../src/config.js'
 
 interface Harness {
   readonly tools: Map<string, ToolDefinition>
   readonly workspace: string
   readonly dir: string
+  readonly logs: string[]
   dispose(): Promise<void>
 }
 
@@ -26,15 +28,16 @@ afterEach(async () => {
   }
 })
 
-function createHarness(): Harness {
+function createHarness(overrides: Partial<FactoryConfig> = {}): Harness {
   const dir = mkdtempSync(join(tmpdir(), 'ai-factory-plugin-'))
   const workspace = join(dir, 'workspace')
   const tools = new Map<string, ToolDefinition>()
+  const logs: string[] = []
   const logger = {
     debug() {},
-    info() {},
-    warn() {},
-    error() {},
+    info(message: string) { logs.push(message) },
+    warn(message: string) { logs.push(message) },
+    error(message: string) { logs.push(message) },
   }
   let lifecycle: (() => void | Promise<void>) | undefined
   const ctx = {
@@ -54,11 +57,12 @@ function createHarness(): Harness {
     },
   } as unknown as Context
 
-  apply(ctx, { ...testConfig(dir), dataDir: dir })
+  apply(ctx, { ...testConfig(dir), dataDir: dir, ...overrides })
   const harness: Harness = {
     tools,
     workspace,
     dir,
+    logs,
     async dispose() {
       await lifecycle?.()
     },
@@ -86,7 +90,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(56)
+    expect(harness.tools.size).toBe(57)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)
@@ -132,6 +136,16 @@ describe('plugin mount', () => {
     expect(entry.title).toBe('Проверка инструмента')
   })
 
+  it('autostarts dashboard and logs a clickable link', async () => {
+    const harness = createHarness({ dashboardAutoStart: true })
+    const deadline = Date.now() + 5000
+    while (Date.now() < deadline && !harness.logs.some((line) => line.includes('Панель управления доступна здесь:'))) {
+      await new Promise((resolve) => setTimeout(resolve, 25))
+    }
+    const line = harness.logs.find((entry) => entry.includes('Панель управления доступна здесь:'))
+    expect(line).toMatch(/Панель управления доступна здесь: http:\/\/127\.0\.0\.1:\d+\/\?token=/)
+  })
+
   it('exposes agent, task and plan tools end-to-end through the tool contract', async () => {
     const harness = createHarness()
     const exec = fakeExec(harness.workspace) as never
@@ -140,7 +154,7 @@ describe('plugin mount', () => {
       count: number
       agents: Array<{ name: string }>
     }
-    expect(agents.count).toBe(7)
+    expect(agents.count).toBe(8)
     expect(agents.agents.map((agent) => agent.name)).toContain('DIRECTOR')
 
     const plan = (await harness.tools.get('factory_plan_create')!.execute(

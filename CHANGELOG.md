@@ -5,6 +5,11 @@
 ### Changed
 
 - Version rolled back from 1.0.0 to 0.25.0 while the project remains Beta.
+- Crash Recovery: REPAIRER built-in, watchdog script, startup crash-report task, idempotency.
+- Human-in-the-loop: root-only factory_task_tell with child followup and metadata fallback.
+- Natural Language Routing: DIRECTOR interface prompt + few-shot examples.
+- Dashboard: dashboardAutoStart, startup clickable link, DSH client-API fallback note.
+- 57 tools; health 54 factory / 62 actions; 138 plugin tests.
 
 ## [1.0.0] — 2026-11-11
 

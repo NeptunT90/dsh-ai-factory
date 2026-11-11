@@ -76,6 +76,8 @@ export interface FactoryConfig {
   capabilityTimeoutMs: number
   /** Maximum bytes captured from one version probe. */
   capabilityMaxOutputBytes: number
+  /** Start the local read-only dashboard at plugin startup. */
+  dashboardAutoStart: boolean
 }
 
 /** Configuration with environment-dependent values resolved. */
@@ -115,6 +117,7 @@ export const Config = Schema.object({
   capabilityTtlHours: Schema.number().min(1).max(24 * 30).default(6),
   capabilityTimeoutMs: Schema.number().min(500).max(30_000).default(3000),
   capabilityMaxOutputBytes: Schema.number().min(256).max(64 * 1024).default(4096),
+  dashboardAutoStart: Schema.boolean().default(false),
 })
 
 const DEFAULT_DIR = join('.dsh', 'ai-factory')

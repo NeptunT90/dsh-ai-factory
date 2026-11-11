@@ -52,9 +52,9 @@ describe('DashboardServer', () => {
       sync: { configured: boolean; auto: boolean; pending: number; failed: number }
     }
     expect(state.overview.version).toBe('0.25.0')
-    expect(state.overview.agents).toBe(7)
+    expect(state.overview.agents).toBe(8)
     expect(state.overview.tasks.total).toBeGreaterThanOrEqual(1)
-    expect(state.agents).toHaveLength(7)
+    expect(state.agents).toHaveLength(8)
     expect(state.tasks.length).toBeGreaterThanOrEqual(1)
     expect(state.tools).toHaveLength(1)
     expect((state.tools[0] as { healthStatus?: string }).healthStatus).toBe('HEALTHY')

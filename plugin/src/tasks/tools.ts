@@ -2,6 +2,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { FactoryError } from '../core/errors.js'
+import { assertNoSecrets } from '../core/security.js'
 import { asJsonValue, type JsonValue } from '../core/json.js'
 import type { FactoryRuntime } from '../runtime.js'
 import type { ProjectRecord } from '../projects/service.js'
@@ -673,6 +674,94 @@ export function registerTaskTools(
             cancelled: stats.cancelled,
             overdue: stats.overdue,
             byStatus: stats.byStatus,
+          }
+        },
+      }),
+    ),
+  )
+
+  disposers.push(
+    ctx.tools.register(
+      defineTool({
+        name: 'factory_task_tell',
+        description:
+          'Передать уточнение/корректировку в активную RUNNING-задачу. Если задача не RUNNING или сессия не найдена — сохранить feedback в metadata. Root-only.',
+        parameters: {
+          taskId: { type: 'string', required: true, description: 'id задачи' },
+          message: { type: 'string', required: true, description: 'сообщение человеку-агенту' },
+        },
+        output: {
+          schema: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              delivered: { type: 'boolean', required: true },
+              channel: { type: 'string', required: true },
+              taskId: { type: 'string', required: true },
+              status: { type: 'string', required: true },
+              childId: { type: 'string', required: true },
+              feedbackCount: { type: 'number', required: true },
+            },
+          },
+          render: (_args, value) => [
+            {
+              type: 'text',
+              text: value.delivered
+                ? `Сообщение доставлено в RUNNING-сессию ${value.childId}`
+                : `Сообщение сохранено в metadata задачи (${value.status}); feedback: ${value.feedbackCount}`,
+            },
+          ],
+        },
+        async execute(args, exec) {
+          const runtime = runtimeOf(getRuntime, getStartupError)
+          if (exec.agent && runtime.hasChildAllowlist(exec.agent.id)) {
+            throw new FactoryError('FORBIDDEN', 'factory_task_tell доступен только root/DIRECTOR')
+          }
+          const message = args.message.trim()
+          if (message === '') throw new FactoryError('INVALID_INPUT', 'message не может быть пустым')
+          if (message.length > 8000) throw new FactoryError('INVALID_INPUT', 'message длиннее 8000 символов')
+          assertNoSecrets(message, 'message')
+          const task = requireTaskFor(runtime, exec, args.taskId, 'write')
+          if (task.status === 'RUNNING') {
+            const delivered = runtime.followupActiveTask(task.id, message)
+            if (delivered) {
+              runtime.auditTool('task.feedback', null, exec, {
+                taskId: task.id,
+                channel: 'child',
+                childId: delivered.childId,
+              })
+              return {
+                delivered: true,
+                channel: 'child',
+                taskId: task.id,
+                status: task.status,
+                childId: delivered.childId,
+                feedbackCount: Array.isArray(task.metadata.feedback) ? task.metadata.feedback.length : 0,
+              }
+            }
+          }
+          const previous = Array.isArray(task.metadata.feedback) ? task.metadata.feedback : []
+          const feedback = [...previous, {
+            message,
+            at: Date.now(),
+            by: exec.agent?.id ?? 'agent',
+            status: task.status,
+            channel: 'metadata',
+          }].slice(-20)
+          const updated = runtime.tasks.update(task.id, { metadata: { feedback } })
+          runtime.auditTool('task.feedback', null, exec, {
+            taskId: task.id,
+            channel: 'metadata',
+            status: task.status,
+            feedbackCount: feedback.length,
+          })
+          return {
+            delivered: false,
+            channel: 'metadata',
+            taskId: task.id,
+            status: updated.status,
+            childId: '',
+            feedbackCount: feedback.length,
           }
         },
       }),

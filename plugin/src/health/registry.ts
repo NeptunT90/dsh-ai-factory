@@ -57,6 +57,7 @@ export const TOOL_HEALTH_SPECS: readonly ToolHealthSpec[] = [
   { tool: 'factory_task_recover', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_task_events', action: '*', risk: 'R0', mode: 'observed', probeReason: 'hidden_side_effect:projects.updated_at' },
   { tool: 'factory_task_stats', action: '*', risk: 'R0', mode: 'observed', probeReason: 'hidden_side_effect:projects.updated_at' },
+  { tool: 'factory_task_tell', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_plan_create', action: '*', risk: 'R1', mode: 'schema' },
   { tool: 'factory_director_brief', action: '*', risk: 'R0', mode: 'observed', probeReason: 'hidden_side_effect:projects.updated_at' },
   { tool: 'factory_tools_list', action: '*', risk: 'R0', mode: 'probe', arguments: {} },

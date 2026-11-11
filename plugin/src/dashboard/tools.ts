@@ -122,7 +122,8 @@ export function registerDashboardTool(ctx: Context, manager: DashboardManager): 
             text: value.running
               ? [
                   'Локальный dashboard запущен (read-only, 127.0.0.1).',
-                  `URL: ${value.url}`,
+                  `Панель управления доступна здесь: ${value.url}`,
+                  `[Открыть Factory Dashboard](${value.url})`,
                   `порт: ${value.port}`,
                   'Токен уже в URL; после открытия он превращается в HttpOnly-cookie и исчезает из адресной строки.',
                   'Сервер не публикует данные во внешнюю сеть и не принимает изменения.',

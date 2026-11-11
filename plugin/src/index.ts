@@ -62,6 +62,12 @@ export function apply(ctx: Context, config: FactoryConfig): void {
 
   try {
     runtime = FactoryRuntime.create(config, logger)
+    const crashRecovery = runtime.recoverCrashReport()
+    if (crashRecovery.taskId) {
+      logger.warn(`[ai-factory] crash recovery task created: ${crashRecovery.taskId}`)
+    } else if (crashRecovery.reason !== 'no_report' && crashRecovery.reason !== 'already_handled') {
+      logger.warn(`[ai-factory] crash recovery: ${crashRecovery.reason}`)
+    }
     runtime.autoWorkflow = new AutoWorkflowService(ctx, runtime)
     runtime.health = new ToolHealthService(ctx, runtime)
     if (config.autoWorkflowEnabled) void runtime.autoWorkflow.start()
@@ -106,6 +112,22 @@ export function apply(ctx: Context, config: FactoryConfig): void {
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)
+      if (config.dashboardAutoStart) {
+        void dashboard
+          .start()
+          .then((status) => {
+            const message = `Панель управления доступна здесь: ${status.url}`
+            logger.info(`[ai-factory] ${message}`)
+            try {
+              const emitter = (ctx as unknown as { emit?: (event: string, data: unknown) => void }).emit
+              emitter?.('factory/dashboard/started', { url: status.url, port: status.port })
+            } catch {
+              // A host without a client event bus still gets the startup log link.
+            }
+            runtime?.audit.record({ event: 'dashboard.autostarted', level: 'info', data: { port: status.port, bind: '127.0.0.1' } })
+          })
+          .catch((error: unknown) => logger.warn(`[ai-factory] dashboard autostart failed: ${errorMessage(error)}`))
+      }
     }
   } catch (error) {
     startupError = startupError ?? errorMessage(error)

@@ -2,7 +2,7 @@
 
 Health-слой для **только `factory_*` инструментов**.
 
-Текущий registry: **53 factory tools / 61 actions** (плюс 3 health tools = **56** зарегистрированных инструментов). Host-tools DSH
+Текущий registry: **54 factory tools / 62 actions** (плюс 3 health tools = **57** зарегистрированных инструментов). Host-tools DSH
 (`read`, `write`, `pwsh`, `browser_*`, `office_*`, `ssh_*`) находятся вне
 зоны плагина: им не ставится ни `UNAVAILABLE`, ни `NOT_TESTABLE`, ни
 `UNKNOWN`, они не фильтруются в `effectiveAllowedTools`.
@@ -94,6 +94,7 @@ Observed R0 помечаются `UNKNOWN` с причиной, потому ч�
 | factory_task_recover | * | R1 | schema |
 | factory_task_events | * | R0 | observed |
 | factory_task_stats | * | R0 | observed |
+| factory_task_tell | * | R1 | schema |
 | factory_plan_create | * | R1 | schema |
 | factory_director_brief | * | R0 | observed |
 | factory_tools_list | * | R0 | probe |

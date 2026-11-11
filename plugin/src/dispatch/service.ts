@@ -170,6 +170,7 @@ export class DispatchService {
           parent,
           cwd: project.rootPath,
           projectId: task.projectId,
+          taskId: task.id,
           skills,
           prompt,
           profile: agent,
