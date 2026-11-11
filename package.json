@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-factory-repo",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "private": true,
   "description": "DSH AI Factory — autonomous multi-agent platform for DeepSeek Harness",
   "license": "MIT",

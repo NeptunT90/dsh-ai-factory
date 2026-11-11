@@ -122,6 +122,15 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Knowledge Base (v0.27.0)
+
+- Only `<project>/knowledge` is indexable; path traversal and symlinks are rejected.
+- File size/file count/chunk limits; PDFs are parsed with timeout; encrypted PDFs are rejected, not cracked.
+- DOCX/PDF content is untrusted data: search results are `trust=untrusted`, never system instructions.
+- Secret-like text is rejected before indexing.
+- No network calls, no OCR, no embedding download in this release.
+- Delete is root-only and removes searchable chunks/FTS entries.
+
 ## Async CONCIERGE (v0.26.0)
 
 - Listener answers only status questions and stop/cancel commands; normal work stays queued.

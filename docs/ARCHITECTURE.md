@@ -432,6 +432,15 @@ Host inventory cache, separate from tool health and from tool permissions.
 - `agent.inbox`, `Session.append`, `followup` and `steer` are the DSH 0.2.2-rc.1 hooks used; no client-side button API was available.
 - Built-in CONCIERGE profile and deterministic listener; 9 built-ins, 57 tools, 141 tests.
 
+### 7.5o. Knowledge Base (v0.27.0)
+
+- project-local `knowledge/`, migration v8 documents/chunks/FTS5;
+- extractors: text/markdown/html/json/csv, mammoth DOCX, pdfjs-dist PDF;
+- incremental sha256 indexing, no auto scan, path/symlink limits;
+- FTS5 BM25 search; `trust: untrusted`; no embeddings yet;
+- 4 tools; search/list allowed to DIRECTOR/RESEARCHER/DEVELOPER/REVIEWER;
+- 61 plugin tools, 58 factory health tools / 66 actions, schema v8.
+
 ### 7.6. Sync client / outbox
 
 SQLite triggers `memory_sync_insert`/`memory_sync_update` пишут в

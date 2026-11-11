@@ -414,4 +414,66 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX ix_capabilities_status ON capabilities(status, expires_at);
     `,
   },
+  {
+    version: 8,
+    name: 'knowledge base',
+    sql: `
+      CREATE TABLE knowledge_documents (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+        path TEXT NOT NULL,
+        title TEXT NOT NULL,
+        mime TEXT,
+        size INTEGER NOT NULL,
+        sha256 TEXT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN ('PENDING', 'INDEXED', 'FAILED', 'DELETED')),
+        error TEXT,
+        metadata TEXT NOT NULL DEFAULT '{}',
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        indexed_at INTEGER,
+        UNIQUE(project_id, path)
+      );
+      CREATE INDEX ix_knowledge_documents_project
+        ON knowledge_documents(project_id, status);
+
+      CREATE TABLE knowledge_chunks (
+        id TEXT PRIMARY KEY,
+        document_id TEXT NOT NULL REFERENCES knowledge_documents(id) ON DELETE CASCADE,
+        project_id TEXT NOT NULL,
+        ordinal INTEGER NOT NULL,
+        heading TEXT NOT NULL DEFAULT '',
+        text TEXT NOT NULL,
+        char_start INTEGER NOT NULL,
+        char_end INTEGER NOT NULL,
+        token_estimate INTEGER NOT NULL,
+        content_hash TEXT NOT NULL,
+        embedding BLOB,
+        embedding_model TEXT,
+        embedding_dim INTEGER,
+        created_at INTEGER NOT NULL,
+        UNIQUE(document_id, ordinal)
+      );
+      CREATE INDEX ix_knowledge_chunks_project ON knowledge_chunks(project_id);
+      CREATE INDEX ix_knowledge_chunks_document ON knowledge_chunks(document_id, ordinal);
+
+      CREATE VIRTUAL TABLE knowledge_fts USING fts5(
+        text,
+        heading,
+        content='knowledge_chunks',
+        content_rowid='rowid',
+        tokenize='unicode61 remove_diacritics 2'
+      );
+      CREATE TRIGGER knowledge_chunks_ai AFTER INSERT ON knowledge_chunks BEGIN
+        INSERT INTO knowledge_fts(rowid, text, heading) VALUES (new.rowid, new.text, new.heading);
+      END;
+      CREATE TRIGGER knowledge_chunks_ad AFTER DELETE ON knowledge_chunks BEGIN
+        INSERT INTO knowledge_fts(knowledge_fts, rowid, text, heading) VALUES ('delete', old.rowid, old.text, old.heading);
+      END;
+      CREATE TRIGGER knowledge_chunks_au AFTER UPDATE ON knowledge_chunks BEGIN
+        INSERT INTO knowledge_fts(knowledge_fts, rowid, text, heading) VALUES ('delete', old.rowid, old.text, old.heading);
+        INSERT INTO knowledge_fts(rowid, text, heading) VALUES (new.rowid, new.text, new.heading);
+      END;
+    `,
+  },
 ]

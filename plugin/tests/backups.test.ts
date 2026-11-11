@@ -77,7 +77,7 @@ describe('backup verify/restore', () => {
       temporaryRemoved: boolean
     }
     expect(verified.ok).toBe(true)
-    expect(verified.schemaVersion).toBe(7)
+    expect(verified.schemaVersion).toBe(8)
     expect(verified.tables.length).toBeGreaterThan(5)
     expect(verified.errors).toEqual([])
     expect(verified.temporaryRemoved).toBe(true)
@@ -91,7 +91,7 @@ describe('backup verify/restore', () => {
       temporaryRemoved: boolean
     }
     expect(restored.ok).toBe(true)
-    expect(restored.schemaVersion).toBe(7)
+    expect(restored.schemaVersion).toBe(8)
     expect(restored.agents).toBeGreaterThanOrEqual(1)
     expect(restored.tasks).toBe(1)
     expect(restored.memory).toBe(1)
@@ -122,7 +122,7 @@ describe('backup verify/restore', () => {
     ).rejects.toMatchObject({ code: 'INVALID_INPUT' })
   })
 
-  it('is root-only and reports 54 factory tools / 62 actions', async () => {
+  it('is root-only and reports 58 factory tools / 66 actions', async () => {
     const { runtime, dir } = track(createTestRuntime())
     const projectRoot = join(dir, 'project')
     runtime.projects.ensure(projectRoot, 'Backup project')
@@ -134,8 +134,8 @@ describe('backup verify/restore', () => {
         fakeExec('ses_child', projectRoot),
       ),
     ).rejects.toMatchObject({ code: 'FORBIDDEN' })
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(54)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(62)
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(58)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(66)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_backup_verify')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_backup_restore_test')?.risk).toBe('R1')
   })

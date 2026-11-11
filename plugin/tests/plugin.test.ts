@@ -90,7 +90,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(57)
+    expect(harness.tools.size).toBe(61)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)

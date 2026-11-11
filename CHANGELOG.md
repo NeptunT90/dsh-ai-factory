@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.27.0] — 2026-11-11
+
+### Added
+
+- Knowledge Base (RAG v1): `knowledge/`, migration v8, FTS5 search.
+- Extractors for md/txt/html/json/csv/docx/pdf.
+- 4 knowledge tools with project isolation and untrusted trust labels.
+- 61 tools, 58 factory health tools / 66 actions, 146 tests.
+- Plugin/root 0.27.0.
+
 ## [0.26.0] — 2026-11-11
 
 ### Added

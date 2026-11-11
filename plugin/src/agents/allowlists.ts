@@ -82,6 +82,7 @@ export const ALLOWLISTS: Readonly<Record<AgentRole, readonly string[]>> = {
     'factory_memory_search', 'factory_memory_get', 'factory_memory_history', 'factory_memory_update',
     'factory_memory_remember', 'factory_memory_stats',
     'factory_task_list', 'factory_task_get', 'factory_task_events', 'factory_task_stats',
+    'factory_knowledge_search', 'factory_knowledge_list',
   ],
   developer: [
     'read', 'write', 'edit', 'grep', 'glob', 'bash', 'pwsh', 'working_directory',
@@ -90,6 +91,7 @@ export const ALLOWLISTS: Readonly<Record<AgentRole, readonly string[]>> = {
     'factory_memory_search', 'factory_memory_get', 'factory_memory_history', 'factory_memory_update',
     'factory_memory_remember', 'factory_memory_stats',
     'factory_task_list', 'factory_task_get', 'factory_task_events', 'factory_task_stats',
+    'factory_knowledge_search', 'factory_knowledge_list',
   ],
   sysadmin: [
     'read', 'write', 'edit', 'grep', 'glob', 'bash', 'pwsh', 'working_directory',
@@ -118,6 +120,7 @@ export const ALLOWLISTS: Readonly<Record<AgentRole, readonly string[]>> = {
     'factory_status', 'factory_tools_list',
     'factory_memory_search', 'factory_memory_get', 'factory_memory_history', 'factory_memory_stats',
     'factory_task_list', 'factory_task_get', 'factory_task_events', 'factory_task_stats',
+    'factory_knowledge_search', 'factory_knowledge_list',
     'factory_director_brief',
   ],
   // A custom profile starts powerless; the operator must add explicit tools.

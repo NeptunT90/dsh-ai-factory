@@ -141,7 +141,7 @@ export class AgentRegistry {
         [JSON.stringify(normalizeTools(agent.allowedTools)), agent.id],
       )
     }
-    const revision = '2026-11-11-natural-routing-v1'
+    const revision = '2026-11-11-knowledge-v1'
     const current = this.db.get<{ value: string }>("SELECT value FROM settings WHERE key = 'builtin_profiles_revision'")?.value
     if (current !== revision) {
       for (const agent of BUILTIN_AGENTS) {
