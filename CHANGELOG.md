@@ -2,11 +2,49 @@
 
 ## [0.29.0] — 2026-11-11
 
+### CONCIERGE v2 — независимый секретарь
+
+- CONCIERGE больше не ждёт `user/message`: это событие появляется уже после
+  того, как занятый DIRECTOR забрал сообщение из inbox. Теперь router слушает
+  `agent/inbox/spliced` — момент, когда сообщение только положено в
+  `next-turn`, но ещё не claimed.
+- Перехват только для root-сессии DIRECTOR (`parentSession == null`,
+  `origin !== 'subagent'`) и только пока DIRECTOR `running`.
+- Race-safe: ответ добавляется только если `agent.inbox.remove(id) === true`.
+  Если сообщение уже забрал DIRECTOR — `concierge.race_lost`, без ответа и без
+  вмешательства в активный turn.
+- Строгий intent allowlist:
+  - статус: «как дела», «как ты», «что там», «что происходит», «статус»,
+    «отчёт», «how are you»;
+  - стоп: «стоп», «stop», «останови», «отмени», «cancel»;
+  - `/concierge ...` — явный канал, перехватывается всегда;
+  - work-маркеры («напиши», «сделай», «исправь», «python», «файл», …) и
+    неоднозначные сообщения остаются DIRECTOR.
+- Статус и стоп работают детерминированно, без LLM и без фоновой сессии;
+  секретарь не тратит токены на ожидание.
+- Остановка: followup активной задачи или cancel RUNNING-задач.
+- Если `session.append` недоступен, сообщение возвращается в inbox через
+  `prepend`, а не теряется.
+- Audit: `concierge.intercepted`, `concierge.skipped`,
+  `concierge.race_lost`, `concierge.replied`, `concierge.failed`; без текста
+  сообщений и секретов.
+- Новый пользовательский сценарий: пока DIRECTOR выполняет длинную работу,
+  можно спросить «как дела?», получить статус или остановить задачи, не
+  дожидаясь окончания turn.
+- Документация: `docs/CONCIERGE.md`.
+- 169 plugin tests + 10 server; schema v9; 65 tools; 10 built-ins.
+- Package v0.29.0.
+
 ### Added
 
-- CONCIERGE v2: `agent/inbox/spliced` router, root-only, strict intent allowlist, race-safe remove.
-- `/concierge` explicit channel, status/stop without LLM, audit events.
-- 169 tests; package 0.29.0.
+- `docs/CONCIERGE.md` — архитектура, intent-таблица, race-condition и audit.
+- `/concierge` как явный канал связи с секретарём.
+
+### Fixed
+
+- Сообщение, пришедшее занятому DIRECTOR, больше не «зависает» без ответа и
+  не приводит к позднему вмешательству в уже начатый turn.
+- Ответ секретаря не добавляется, если inbox-сообщение уже claimed.
 
 ## [0.28.1] — 2026-11-11
 
