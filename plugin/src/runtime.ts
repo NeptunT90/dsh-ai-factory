@@ -22,7 +22,7 @@ import { CapabilityService } from './capabilities/service.js'
 import { isHostCapability } from './agents/allowlists.js'
 import type { AccessLevel } from './agents/types.js'
 
-export const FACTORY_VERSION = '1.0.0'
+export const FACTORY_VERSION = '0.25.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {

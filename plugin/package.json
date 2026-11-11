@@ -1,6 +1,6 @@
 {
   "name": "dsh-ai-factory",
-  "version": "1.0.0",
+  "version": "0.25.0",
   "description": "DSH AI Factory — autonomous multi-agent factory for DeepSeek Harness: durable memory, tasks, tools, review and recovery.",
   "type": "module",
   "main": "lib/index.js",

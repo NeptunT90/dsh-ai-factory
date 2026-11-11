@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.25.0] — 2026-11-11
+
+### Changed
+
+- Version rolled back from 1.0.0 to 0.25.0 while the project remains Beta.
+
 ## [1.0.0] — 2026-11-11
 
 ### Added

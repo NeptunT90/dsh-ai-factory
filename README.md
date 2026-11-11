@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 1.0.0
+- **Version:** 0.25.0 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v7
 - **Tool surface:** 56 tools
