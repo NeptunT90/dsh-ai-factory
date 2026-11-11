@@ -195,9 +195,9 @@ describe('agent marketplace', () => {
     )
   })
 
-  it('has 62 factory tools / 70 actions and 61 plugin tools', () => {
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(62)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(70)
+  it('has 63 factory tools / 71 actions and 66 plugin tools', () => {
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(63)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(71)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_agent_validate')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_agent_import')?.risk).toBe('R1')
   })

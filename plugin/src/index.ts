@@ -9,6 +9,7 @@ import { registerAgentTools } from './agents/tools.js'
 import { registerTaskTools } from './tasks/tools.js'
 import { registerOrchestrationTools } from './orchestration/tools.js'
 import { registerDispatchTool } from './dispatch/tools.js'
+import { registerRunTool } from './dispatch/run-tools.js'
 import { DashboardManager, registerDashboardTool } from './dashboard/tools.js'
 import { registerSyncTool } from './sync/tools.js'
 import { registerReviewerTool } from './reviewer/tools.js'
@@ -107,6 +108,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(...registerTaskTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       disposers.push(registerDispatchTool(ctx, () => runtime, () => startupError))
+      disposers.push(registerRunTool(ctx, () => runtime, () => startupError))
       disposers.push(registerDashboardTool(ctx, dashboard))
       disposers.push(registerSyncTool(ctx, () => runtime, () => startupError))
       disposers.push(registerReviewerTool(ctx, () => runtime, () => startupError))

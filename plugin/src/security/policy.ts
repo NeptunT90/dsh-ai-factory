@@ -109,7 +109,7 @@ function isFactoryMutation(tool: string): boolean {
   if (tool === 'factory_capability_scan' || tool === 'factory_capability_refresh') return true
   if (tool === 'factory_knowledge_add' || tool === 'factory_knowledge_delete') return true
   if (tool.startsWith('factory_improve_')) return true
-  if (tool === 'factory_plan_create' || tool === 'factory_dispatch' || tool === 'factory_review') return true
+  if (tool === 'factory_plan_create' || tool === 'factory_dispatch' || tool === 'factory_run' || tool === 'factory_review') return true
   if (tool === 'factory_workflow_run' || tool === 'factory_auto_workflow') return true
   if (tool === 'factory_backup_restore_test') return true
   return false

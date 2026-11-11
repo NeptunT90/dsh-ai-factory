@@ -6,6 +6,7 @@ import type { FactoryRuntime } from '../runtime.js'
 import type { AgentProfile } from '../agents/types.js'
 import { ScopedChildRunner, type ChildRunner, type ScopedRunResult } from '../agents/scoped-runner.js'
 import type { TaskRecord } from '../tasks/types.js'
+import { appendVisibleAssistant } from '../session/visible.js'
 
 export interface DispatchInput {
   readonly taskId: string
@@ -308,6 +309,34 @@ export class DispatchService {
    * The child gets a detached AbortSignal: the tool-call signal belongs to the
    * foreground turn and must not cancel a deliberately background task.
    */
+  private notifyBackground(taskId: string, session: import('../session/visible.js').VisibleSession | undefined): void {
+    if (!session) return
+    let task: TaskRecord
+    try {
+      task = this.runtime.tasks.require(taskId)
+    } catch {
+      return
+    }
+    if (task.status !== 'COMPLETED' && task.status !== 'FAILED' && task.status !== 'REVIEW') return
+    const title = task.title.slice(0, 200)
+    const text = task.status === 'FAILED'
+      ? `❌ Фоновая задача «${title}» упала. Ошибка: ${(task.error || 'неизвестная ошибка').slice(0, 800)}`
+      : task.status === 'REVIEW'
+        ? `✅ Фоновая задача «${title}» завершена и ждёт ревью. Результат: ${(task.result || '(пусто)').replace(/\s+/g, ' ').slice(0, 800)}`
+        : `✅ Фоновая задача «${title}» завершена. Результат: ${(task.result || '(пусто)').replace(/\s+/g, ' ').slice(0, 800)}`
+    const delivered = appendVisibleAssistant(session, text)
+    try {
+      this.runtime.audit.record({
+        event: 'dispatch.notification',
+        level: delivered ? 'info' : 'warn',
+        projectId: task.projectId,
+        data: { taskId, status: task.status, delivered },
+      })
+    } catch {
+      // best effort
+    }
+  }
+
   async dispatchAsync(
     input: DispatchInput,
     exec: ToolRunContext,
@@ -316,7 +345,13 @@ export class DispatchService {
     const controller = new AbortController()
     const detachedExec = { ...exec, signal: controller.signal } as ToolRunContext
     const taskId = input.taskId
+    const parentSession = (detachedExec.agent as { session?: import('../session/visible.js').VisibleSession } | undefined)?.session
     const background = this.dispatch(input, detachedExec, allowCrossProject)
+    background.then(() => {
+      this.notifyBackground(taskId, parentSession)
+    }).catch(() => {
+      this.notifyBackground(taskId, parentSession)
+    })
     let failure: unknown
     background.catch((error: unknown) => {
       failure = error

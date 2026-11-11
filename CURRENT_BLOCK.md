@@ -1,12 +1,12 @@
 # Текущий блок
 
-**PHASE 1–5 + Autonomy + Self-Improvement (v0.29.2 Beta).**
+**PHASE 1–5 + Autonomy + Self-Improvement (v0.30.0 Beta).**
 
 1. Crash Recovery: REPAIRER, `scripts/watchdog.ps1`, startup recovery task, idempotency.
 2. Human feedback: `factory_task_tell`, active child followup, metadata fallback.
 3. Natural Language Routing: DIRECTOR interface prompt + few-shot.
 4. Dashboard UX: `dashboardAutoStart`, startup link, clickable tool link, client API fallback.
-5. 65 tools, 10 built-ins; health 62/70; 162 tests.
+5. 66 tools, 10 built-ins; health 63/71; 172 tests.
 6. Async CONCIERGE: status/stop replies during a busy RUNNING turn.
 7. SafetyPolicy, egress, task_steps/factory_metrics, CURATOR/improvement, schema v9.
 

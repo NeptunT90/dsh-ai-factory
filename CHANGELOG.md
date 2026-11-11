@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.30.0] — 2026-11-11
+
+### UX: диспетчер, который не блокируется
+
+- **Уведомления о завершении фоновых задач.** Async dispatch теперь после
+  завершения задачи публикует в главную сессию видимое assistant-сообщение:
+  - `✅ Фоновая задача «…» завершена. Результат: …`
+  - `❌ Фоновая задача «…» упала. Ошибка: …`
+  - REVIEW: `✅ … завершена и ждёт ревью.`
+  Уведомление создаёт synthetic turn (`turn/start` → `assistant/message` →
+  `turn/end`), чтобы DSH Web отрисовал его как обычное сообщение в чате.
+- **CONCIERGE теперь виден в UI.** Раньше `assistant/message` добавлялся вне
+  turn-контекста, и Web-клиент его не показывал. Теперь ответ Секретаря
+  оборачивается в synthetic turn и отображается в чате.
+- **Новый `factory_run` (R1, root-only).** Один вызов создаёт задачу и сразу
+  запускает её:
+  ```text
+  factory_run(title, description?, role=executor, async=true)
+  ```
+  Возвращает `taskId`; больше не нужны ручные `task_create` + `dispatch`.
+- **Async dispatch** остаётся default; `async:false` — синхронный режим.
+- **CONCIERGE busy:** учитывает не только `agent.status=running`, но и
+  `RUNNING`-задачи проекта.
+- 66 tools, 63 factory tools / 71 health actions, 172 tests.
+- Package v0.30.0.
+
 ## [0.29.2] — 2026-11-11
 
 ### Added

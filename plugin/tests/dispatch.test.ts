@@ -73,12 +73,17 @@ describe('DispatchService', () => {
         return { childId: 'ses_bg', output: 'фоновая статья готова', stopReason: 'completed', diagnostic: '' }
       },
     })
-    const output = await service.dispatchAsync({ taskId: task.id }, fakeExec(runtime.projects.require(projectId).rootPath))
+    const exec = fakeExec(runtime.projects.require(projectId).rootPath)
+    const events: Array<{ type: string; data: unknown }> = []
+    ;(exec.agent as unknown as { session: { append: (type: string, data: unknown) => void } }).session.append = (type, data) => { events.push({ type, data }) }
+    const output = await service.dispatchAsync({ taskId: task.id }, exec)
     expect(output).toMatchObject({ taskId: task.id, async: true, status: 'RUNNING' })
     expect(runtime.tasks.require(task.id).status).toBe('RUNNING')
     await new Promise((resolve) => setTimeout(resolve, 160))
     expect(runtime.tasks.require(task.id).status).toBe('COMPLETED')
     expect(runtime.tasks.require(task.id).result).toContain('фоновая статья')
+    expect(events.map((event) => event.type)).toEqual(['turn/start', 'step/start', 'assistant/message', 'step/end', 'turn/end'])
+    expect(JSON.stringify(events.find((event) => event.type === 'assistant/message')?.data)).toContain('Фоновая задача')
   })
 
   it('leaves the task in REVIEW when review=true', async () => {

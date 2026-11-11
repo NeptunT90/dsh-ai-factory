@@ -54,6 +54,10 @@ function serviceFor(runtime: ReturnType<typeof createTestRuntime>['runtime'], ag
   return new ConciergeService(ctx, runtime)
 }
 
+function replyEvent(appended: Array<{ type: string; data: unknown; options: unknown }>) {
+  return appended.find((event) => event.type === 'assistant/message')
+}
+
 function message(text: string, id = 'msg_user_1'): FakeMessage {
   return { id, content: [{ type: 'text', text }], source: { kind: 'user' } }
 }
@@ -68,10 +72,11 @@ describe('CONCIERGE v2 async inbox', () => {
     const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
     serviceFor(runtime, agent).handleInserted(agent, { message: message('Как дела?') })
     expect(fake.removed).toEqual(['msg_user_1'])
-    expect(fake.appended).toHaveLength(1)
-    expect(fake.appended[0]!.type).toBe('assistant/message')
-    expect(fake.appended[0]!.options).toEqual({ surfaceOp: 'append' })
-    expect(JSON.stringify(fake.appended[0]!.data)).toContain('RUNNING')
+    const reply = replyEvent(fake.appended)
+    expect(reply).toBeDefined()
+    expect(reply!.options).toEqual({ surfaceOp: 'append' })
+    expect(JSON.stringify(reply!.data)).toContain('RUNNING')
+    expect(fake.appended.map((event) => event.type)).toEqual(['turn/start', 'step/start', 'assistant/message', 'step/end', 'turn/end'])
   })
 
   it('leaves the message to DIRECTOR when it is idle', () => {
@@ -93,8 +98,8 @@ describe('CONCIERGE v2 async inbox', () => {
     const agent = { id: 'ses_root', status: 'idle', session: fake.session, inbox: fake.session.inbox }
     serviceFor(runtime, agent).handleInserted(agent, { message: message('Как дела?') })
     expect(fake.removed).toEqual(['msg_user_1'])
-    expect(fake.appended).toHaveLength(1)
-    expect(JSON.stringify(fake.appended[0]!.data)).toContain('RUNNING')
+    expect(replyEvent(fake.appended)).toBeDefined()
+    expect(JSON.stringify(replyEvent(fake.appended)!.data)).toContain('RUNNING')
   })
 
   it('does not intercept work commands', () => {
@@ -136,8 +141,8 @@ describe('CONCIERGE v2 async inbox', () => {
     const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
     serviceFor(runtime, agent).handleInserted(agent, { message: message('/concierge напиши код') })
     expect(fake.removed).toEqual(['msg_user_1'])
-    expect(fake.appended).toHaveLength(1)
-    expect(JSON.stringify(fake.appended[0]!.data)).toContain('Секретарь на связи')
+    expect(replyEvent(fake.appended)).toBeDefined()
+    expect(JSON.stringify(replyEvent(fake.appended)!.data)).toContain('Секретарь на связи')
   })
 
   it('cancels a RUNNING task on an exact stop command', () => {
@@ -150,8 +155,8 @@ describe('CONCIERGE v2 async inbox', () => {
     serviceFor(runtime, agent).handleInserted(agent, { message: message('Стоп') })
     expect(runtime.tasks.require(task.id).status).toBe('CANCELLED')
     expect(fake.removed).toEqual(['msg_user_1'])
-    expect(fake.appended).toHaveLength(1)
-    expect(JSON.stringify(fake.appended[0]!.data)).toContain('Останавливаю')
+    expect(replyEvent(fake.appended)).toBeDefined()
+    expect(JSON.stringify(replyEvent(fake.appended)!.data)).toContain('Останавливаю')
   })
 
   it('keeps the inbox message when append is unavailable', () => {

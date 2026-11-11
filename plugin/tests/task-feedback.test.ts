@@ -103,8 +103,8 @@ describe('factory_task_tell', () => {
   })
 
   it('updates the health registry to 54 tools / 62 actions', () => {
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(62)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(70)
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(63)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(71)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_task_tell')?.risk).toBe('R1')
   })
 })

@@ -1,6 +1,6 @@
 # CONCIERGE v2 — Независимый Секретарь
 
-Версия: **0.29.2**.
+Версия: **0.30.0**.
 
 ## Что это
 
@@ -35,7 +35,7 @@ agent.ctx.on('agent/inbox/inserted', payload)
 
 1. root-only: `session.header.parentSession == null`;
 2. `session.header.origin !== 'subagent'`;
-3. `agent.status === 'running'`;
+3. DIRECTOR busy: `agent.status === 'running'` **или** в проекте есть задача `RUNNING`;
 4. `agent.inbox.remove(message.id) === true`.
 
 Если `remove()` вернул `false`, сообщение уже забрано. В этом случае:
@@ -55,6 +55,16 @@ agent.ctx.on('agent/inbox/inserted', payload)
 
 Рабочие задачи, вложения, длинные сообщения и неоднозначные формулировки
 остаются DIRECTOR.
+
+## Видимость в UI
+
+Ответ публикуется внутри synthetic turn:
+
+```text
+turn/start → step/start → assistant/message (surfaceOp=append) → step/end → turn/end
+```
+
+Без turn-обёртки DSH Web не отображает assistant/message, добавленный из плагина.
 
 ## Порядок ответа
 

@@ -1,5 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import { createAssistantMessage } from '@deepseek-ai/dsh-llm'
+import { appendVisibleAssistant } from '../session/visible.js'
 import { errorMessage } from '../core/errors.js'
 import type { FactoryRuntime } from '../runtime.js'
 
@@ -194,7 +194,7 @@ export class ConciergeService {
         this.audit(agent.session, 'concierge.failed', 'warn', { reason: 'no_reply', stage: 'reply' })
         return
       }
-      if (!this.appendReply(agent.session, reply)) {
+      if (!appendVisibleAssistant(agent.session, reply)) {
         try { agent.inbox.prepend?.('next-turn', message) } catch { /* best effort restore */ }
         this.audit(agent.session, 'concierge.failed', 'warn', { reason: 'append_unavailable', stage: 'reply' })
         return
@@ -265,25 +265,6 @@ export class ConciergeService {
       ...running.slice(0, 3).map((task) => `- RUNNING: ${task.title}`),
       ...waiting.slice(0, 3).map((task) => `- ${task.status}: ${task.title}`),
     ].join('\n')
-  }
-
-  private appendReply(session: SessionLike, text: string): boolean {
-    if (!session.append) return false
-    const { turn, step } = lastTurn(session)
-    try {
-      session.append('assistant/message', {
-        turn,
-        step,
-        message: createAssistantMessage({
-          content: [{ type: 'text', text }],
-          source: { provider: 'factory', model: 'concierge' },
-        }),
-        stream: [],
-      }, { surfaceOp: 'append' })
-      return true
-    } catch {
-      return false
-    }
   }
 
   private audit(session: SessionLike, event: string, level: 'info' | 'warn', data: Record<string, unknown>): void {

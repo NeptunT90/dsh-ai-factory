@@ -26,7 +26,7 @@ import { isHostCapability } from './agents/allowlists.js'
 import { evaluateSafety, safetyRuleMessage, type EgressMode } from './security/policy.js'
 import type { AccessLevel } from './agents/types.js'
 
-export const FACTORY_VERSION = '0.29.2'
+export const FACTORY_VERSION = '0.30.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {

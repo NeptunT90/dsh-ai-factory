@@ -7,10 +7,10 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.29.2 (Beta)
+- **Version:** 0.30.0 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
-- **Tool surface:** 65 tools
+- **Tool surface:** 66 tools
 - **Runtime:** Node.js 22.19+, `node:sqlite`
 
 > Status: Phase 1 core is implemented and tested end-to-end in a live DSH
@@ -98,6 +98,12 @@ DIRECTOR is the human interface: it understands intent and calls
 not need to type tool names, JSON or task IDs. The prompt contains few-shot
 examples for remembering facts, reporting tasks and creating work.
 
+### Background notifications and factory_run
+
+Async dispatch publishes a synthetic completed turn with the final task result
+(or failure) into the main session, so DSH Web renders it in chat. Root-only
+`factory_run` creates and starts a task in one call.
+
 ### Async dispatch
 
 `factory_dispatch` is asynchronous by default: it claims the task as `RUNNING`,
@@ -180,7 +186,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.29.2.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.0.tgz
 ```
 
 ### From source
@@ -254,7 +260,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **171 plugin tests** and **10 sync-server tests**. See
+Current gate: **172 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -306,7 +312,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.29.2.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.0.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.
