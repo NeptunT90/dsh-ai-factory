@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { ToolRunContext } from '@deepseek-ai/dsh-tools'
@@ -22,9 +23,10 @@ import { ProjectScopeService } from './projects/policy.js'
 import { SkillService } from './skills/service.js'
 import { CapabilityService } from './capabilities/service.js'
 import { isHostCapability } from './agents/allowlists.js'
+import { evaluateSafety, safetyRuleMessage, type EgressMode } from './security/policy.js'
 import type { AccessLevel } from './agents/types.js'
 
-export const FACTORY_VERSION = '0.27.0'
+export const FACTORY_VERSION = '0.28.0'
 
 /** Minimal logger surface shared by Cordis and diagnostics. */
 export interface PluginLogger {
@@ -85,6 +87,8 @@ export class FactoryRuntime {
   private expiredOnStart = 0
   private recoveredOnStart = 0
   private readonly activeChildren = new Map<string, ActiveChild>()
+  private readonly childAutonomy = new Map<string, string>()
+  private readonly childEgress = new Map<string, EgressMode>()
 
   private constructor(config: ResolvedConfig, db: FactoryDatabase, logger: PluginLogger) {
     this.config = config
@@ -329,9 +333,17 @@ export class FactoryRuntime {
   }
 
   /** Register the exact allowlist for one child agent session. */
-  allowToolsForChild(agentId: string, tools: readonly string[], accessLevel: AccessLevel = 'workspace'): void {
+  allowToolsForChild(
+    agentId: string,
+    tools: readonly string[],
+    accessLevel: AccessLevel = 'workspace',
+    autonomy = 'autonomous',
+    egress: EgressMode = 'none',
+  ): void {
     this.childToolAllowlist.set(agentId, new Set(tools))
     this.childAccessLevels.set(agentId, accessLevel)
+    this.childAutonomy.set(agentId, autonomy)
+    this.childEgress.set(agentId, egress)
   }
 
   /** Effective caller access: child profile level, trusted for the root operator. */
@@ -346,6 +358,8 @@ export class FactoryRuntime {
   releaseChildTools(agentId: string): void {
     this.childToolAllowlist.delete(agentId)
     this.childAccessLevels.delete(agentId)
+    this.childAutonomy.delete(agentId)
+    this.childEgress.delete(agentId)
   }
 
   /** True when the agent has an enforced child allowlist (root agents do not). */
@@ -358,14 +372,65 @@ export class FactoryRuntime {
     return allowlist === undefined ? true : allowlist.has(toolName)
   }
 
-  /** Guard reason for a child call outside its profile allowlist. */
-  toolDenial(agentId: string, toolName: string): string | undefined {
-    if (!this.hasChildAllowlist(agentId)) return undefined
-    if (this.isToolAllowed(agentId, toolName)) return undefined
-    if (isHostCapability(toolName)) {
-      return `TOOL_NOT_ALLOWED: host capability ${toolName} не входит в allowlist профиля ребёнка`
+  /**
+   * Guard reason for a child call outside its allowlist, followed by the
+   * argument-level safety policy (autonomy, egress, paths and commands).
+   */
+  toolDenial(agentId: string, toolName: string, args?: unknown, projectRoot?: string): string | undefined {
+    if (this.hasChildAllowlist(agentId) && !this.isToolAllowed(agentId, toolName)) {
+      if (isHostCapability(toolName)) {
+        return `TOOL_NOT_ALLOWED: host capability ${toolName} не входит в allowlist профиля ребёнка`
+      }
+      return `TOOL_NOT_ALLOWED: ${toolName} не входит в allowlist профиля ребёнка`
     }
-    return `TOOL_NOT_ALLOWED: ${toolName} не входит в allowlist профиля ребёнка`
+    const root = projectRoot ?? this.projects.list(1)[0]?.rootPath ?? process.cwd()
+    const autonomy = this.childAutonomy.get(agentId) ?? this.config.defaultAutonomy
+    const egress = this.childEgress.get(agentId) ?? 'read'
+    const accessLevel = this.childAccessLevels.get(agentId) ?? 'trusted'
+    const denial = evaluateSafety({ toolName, args, autonomy, egress, accessLevel, projectRoot: root })
+    if (!denial) return undefined
+    const reason = safetyRuleMessage(denial)
+    try {
+      this.audit.record({
+        event: 'security.violation',
+        level: 'warn',
+        actor: agentId,
+        projectId: this.projects.idForPath(root),
+        sessionId: agentId,
+        data: { tool: toolName, rule: denial.rule, message: denial.message },
+      })
+    } catch {
+      // A denied call must not fail because audit storage is unavailable.
+    }
+    return reason
+  }
+
+  /** Replace the sanitized tool trajectory for one task. No args/content. */
+  recordTaskSteps(
+    taskId: string,
+    projectId: string,
+    steps: ReadonlyArray<{ seq: number; toolName: string; ok: boolean; errorCode: string | null; durationMs: number | null }>,
+  ): void {
+    this.db.transaction(() => {
+      this.db.run('DELETE FROM task_steps WHERE task_id = ?', [taskId])
+      for (const step of steps.slice(0, 500)) {
+        this.db.run(
+          `INSERT INTO task_steps (id, task_id, project_id, seq, tool_name, ok, error_code, duration_ms, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            `stp_${randomUUID()}`,
+            taskId,
+            projectId,
+            step.seq,
+            step.toolName.slice(0, 120),
+            step.ok ? 1 : 0,
+            step.errorCode?.slice(0, 100) ?? null,
+            step.durationMs,
+            Date.now(),
+          ],
+        )
+      }
+    })
   }
 
   close(): void {

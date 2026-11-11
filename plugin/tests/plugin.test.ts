@@ -90,7 +90,7 @@ describe('plugin mount', () => {
     expect(harness.tools.has('factory_status')).toBe(true)
     expect(harness.tools.has('factory_memory_remember')).toBe(true)
     expect(harness.tools.has('factory_memory_search')).toBe(true)
-    expect(harness.tools.size).toBe(61)
+    expect(harness.tools.size).toBe(65)
     expect(harness.tools.has('factory_agent_list')).toBe(true)
     expect(harness.tools.has('factory_task_create')).toBe(true)
     expect(harness.tools.has('factory_plan_create')).toBe(true)
@@ -154,7 +154,7 @@ describe('plugin mount', () => {
       count: number
       agents: Array<{ name: string }>
     }
-    expect(agents.count).toBe(9)
+    expect(agents.count).toBe(10)
     expect(agents.agents.map((agent) => agent.name)).toContain('DIRECTOR')
 
     const plan = (await harness.tools.get('factory_plan_create')!.execute(

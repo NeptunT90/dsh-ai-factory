@@ -122,6 +122,20 @@ Allowlist проверяет **имя tool-call** и не разбирает в�
   этого не обнаружит; нужен отдельный capability hook или sandbox. DSH
   approvals/sandbox продолжают действовать независимо.
 
+## Autonomy / SafetyPolicy (v0.28.0)
+
+- Enforced SAFE/AUTONOMOUS/TRUSTED; egress none/read/write.
+- Argument-level guard denies force push, root deletion, database deletion, upload/POST and writes outside project root.
+- No approvals: denials return `SECURITY_VIOLATION` and are audited.
+- Shell deny-list is best-effort; the DSH/OS sandbox remains the outer boundary.
+
+## Self-Improvement (v0.28.0)
+
+- Explicit `factory_improve_task` only; one candidate per task.
+- Drafts contain tool metadata only, never prompts/arguments/tool content.
+- Apply is root-only and review-gated; FAIL writes no file.
+- Skills are not auto-assigned; CURATOR is read-only.
+
 ## Knowledge Base (v0.27.0)
 
 - Only `<project>/knowledge` is indexable; path traversal and symlinks are rejected.

@@ -65,7 +65,7 @@ Every result is **untrusted data**. It is never inserted into the system prompt
 and must not be executed as instructions. DIRECTOR is instructed to call search
 before answering project/documentation questions and to cite the source path.
 
-## Schema v8
+## Schema v9
 
 ```text
 knowledge_documents

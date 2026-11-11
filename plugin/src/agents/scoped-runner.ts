@@ -42,6 +42,44 @@ export interface ScopedRunResult {
   readonly successfulTools?: number
 }
 
+export interface TaskStepSummary {
+  readonly seq: number
+  readonly toolName: string
+  readonly ok: boolean
+  readonly errorCode: string | null
+  readonly durationMs: number | null
+}
+
+/** Extract tool metadata from session events; arguments/content are never read. */
+export function collectTaskSteps(events: readonly { type: string; time?: number; data?: unknown }[]): TaskStepSummary[] {
+  const calls = new Map<string, { name: string; time: number }>()
+  const steps: TaskStepSummary[] = []
+  for (const event of events) {
+    const data = (event.data ?? {}) as Record<string, unknown>
+    if (event.type === 'tool/call') {
+      const callId = typeof data.callId === 'string' ? data.callId : ''
+      const name = typeof data.name === 'string' ? data.name : 'unknown'
+      if (callId !== '') calls.set(callId, { name, time: Number(event.time ?? 0) })
+      continue
+    }
+    if (event.type !== 'tool/result') continue
+    const message = (data.message ?? {}) as Record<string, unknown>
+    const callId = typeof message.toolCallId === 'string' ? message.toolCallId : ''
+    const call = calls.get(callId)
+    const name = call?.name ?? 'unknown'
+    const error = (data.error ?? {}) as { code?: unknown }
+    const isError = message.isError === true
+    steps.push({
+      seq: steps.length,
+      toolName: name,
+      ok: !isError,
+      errorCode: isError ? String(error.code ?? 'TOOL_ERROR') : null,
+      durationMs: call && event.time !== undefined ? Math.max(0, Number(event.time) - call.time) : null,
+    })
+  }
+  return steps
+}
+
 function textFromBlocks(blocks: readonly ContentBlock[]): string {
   return blocks
     .map((block) => (block.type === 'text' ? block.text : ''))
@@ -162,7 +200,7 @@ export class ScopedChildRunner implements ChildRunner {
         },
       })
       childId = handle.agent.id
-      this.runtime.allowToolsForChild(childId, allowed, input.profile.accessLevel)
+      this.runtime.allowToolsForChild(childId, allowed, input.profile.accessLevel, input.profile.limits.autonomy, input.profile.egress)
       if (input.taskId) {
         this.runtime.registerActiveChild(input.taskId, childId, (message) => {
           handle?.agent.followup(createUserMessage({ content: [{ type: 'text', text: message }], source: { kind: 'user' } }))
@@ -220,6 +258,9 @@ export class ScopedChildRunner implements ChildRunner {
           const message = (event.data as { message?: { isError?: boolean } }).message
           if (message?.isError !== true) successfulTools += 1
         }
+      }
+      if (input.taskId && input.projectId) {
+        this.runtime.recordTaskSteps(input.taskId, input.projectId, collectTaskSteps(events))
       }
       let output = ''
       for (let index = events.length - 1; index >= 0; index -= 1) {

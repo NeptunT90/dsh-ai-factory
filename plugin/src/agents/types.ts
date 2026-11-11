@@ -13,6 +13,9 @@ export type AgentRole = (typeof AGENT_ROLES)[number]
 export const ACCESS_LEVELS = ['read', 'workspace', 'elevated', 'trusted'] as const
 export type AccessLevel = (typeof ACCESS_LEVELS)[number]
 
+export const EGRESS_LEVELS = ['none', 'read', 'write'] as const
+export type EgressLevel = (typeof EGRESS_LEVELS)[number]
+
 export const MEMORY_SCOPES = ['project', 'global', 'both'] as const
 export type AgentMemoryScope = (typeof MEMORY_SCOPES)[number]
 
@@ -44,6 +47,8 @@ export interface AgentProfile {
   /** Project-local .skills ids assigned to this profile. */
   readonly skills: readonly string[]
   readonly accessLevel: AccessLevel
+  /** Network egress policy: none/read/write. */
+  readonly egress: EgressLevel
   readonly memoryScope: AgentMemoryScope
   readonly limits: AgentLimits
   readonly enabled: boolean
@@ -66,6 +71,7 @@ export interface AgentCreateInput {
   readonly allowedTools?: readonly string[]
   readonly skills?: readonly string[]
   readonly accessLevel?: AccessLevel
+  readonly egress?: EgressLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>
   readonly enabled?: boolean
@@ -84,6 +90,7 @@ export interface AgentUpdateInput {
   readonly allowedTools?: readonly string[]
   readonly skills?: readonly string[]
   readonly accessLevel?: AccessLevel
+  readonly egress?: EgressLevel
   readonly memoryScope?: AgentMemoryScope
   readonly limits?: Partial<AgentLimits>
   readonly enabled?: boolean

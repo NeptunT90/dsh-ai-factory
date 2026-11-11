@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.28.0] — 2026-11-11
+
+### Added
+
+- Enforced SAFE/AUTONOMOUS/TRUSTED autonomy and per-profile egress.
+- Argument-level SafetyPolicy with `SECURITY_VIOLATION` and security audit.
+- `task_steps`, `factory_metrics`, success/retry/tool-error metrics.
+- CURATOR + Self-Improvement candidate pipeline (`factory_improve_task/list/apply`).
+- 65 tools, 10 built-ins, schema v9, 162 tests.
+- Plugin/root 0.28.0.
+
 ## [0.27.0] — 2026-11-11
 
 ### Added

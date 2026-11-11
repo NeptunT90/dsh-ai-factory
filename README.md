@@ -7,10 +7,10 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.27.0 (Beta)
+- **Version:** 0.28.0 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
-- **Schema:** v8
-- **Tool surface:** 61 tools
+- **Schema:** v9
+- **Tool surface:** 65 tools
 - **Runtime:** Node.js 22.19+, `node:sqlite`
 
 > Status: Phase 1 core is implemented and tested end-to-end in a live DSH
@@ -98,6 +98,13 @@ DIRECTOR is the human interface: it understands intent and calls
 not need to type tool names, JSON or task IDs. The prompt contains few-shot
 examples for remembering facts, reporting tasks and creating work.
 
+### Autonomy and Self-Improvement
+
+`limits.autonomy` is enforced (SAFE/AUTONOMOUS/TRUSTED), every profile has
+`egress` (none/read/write), and a pre-dispatch `SafetyPolicy` inspects tool
+arguments. Task tool metadata feeds `factory_metrics`; `factory_improve_task`
+creates review-gated `.skills` candidates. CURATOR is a read-only built-in.
+
 ### Knowledge Base (RAG)
 
 Project-local `knowledge/` indexing with four tools: add, search, list and
@@ -159,7 +166,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.27.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.28.0.tgz
 ```
 
 ### From source
@@ -179,7 +186,7 @@ factory_status
 ```
 
 Expected fields: `status: ready`, `driver: node:sqlite`, `schemaVersion: 8`,
-`agents: 9` built-in profiles.
+`agents: 10` built-in profiles.
 
 ## Configuration
 
@@ -233,7 +240,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **146 plugin tests** and **10 sync-server tests**. See
+Current gate: **162 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -285,7 +292,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.27.0.tgz
+  -Tarball .\dist\dsh-ai-factory-0.28.0.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.

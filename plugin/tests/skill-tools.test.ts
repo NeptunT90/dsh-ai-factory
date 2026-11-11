@@ -226,9 +226,9 @@ describe('skill management tools', () => {
     expect(runtime.agents.require('agt_director').skills).toEqual([])
   })
 
-  it('has 58 factory tools / 66 actions in the health registry', () => {
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(58)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(66)
+  it('has 62 factory tools / 70 actions in the health registry', () => {
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(62)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(70)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_skill_get')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_skill_create')?.risk).toBe('R1')
     expect(TOOL_HEALTH_SPECS.some((spec) => spec.tool.startsWith('factory_skill_') && spec.risk === 'R2')).toBe(false)

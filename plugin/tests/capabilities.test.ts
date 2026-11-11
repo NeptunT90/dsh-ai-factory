@@ -170,9 +170,9 @@ describe('capability discovery', () => {
     expect(runtime.tasks.require(task.id).status).toBe('READY')
   })
 
-  it('has 58 factory capability-aware tools / 66 health actions', () => {
-    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(58)
-    expect(TOOL_HEALTH_SPECS).toHaveLength(66)
+  it('has 62 factory capability-aware tools / 70 health actions', () => {
+    expect(new Set(TOOL_HEALTH_SPECS.map((spec) => spec.tool)).size).toBe(62)
+    expect(TOOL_HEALTH_SPECS).toHaveLength(70)
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_list')?.mode).toBe('probe')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_get')?.mode).toBe('observed')
     expect(TOOL_HEALTH_SPECS.find((spec) => spec.tool === 'factory_capability_scan')?.risk).toBe('R1')
@@ -184,7 +184,7 @@ describe('capability discovery', () => {
       .all<{ name: string }>("SELECT name FROM sqlite_master WHERE type = 'table'")
       .map((row) => row.name)
     expect(names).toEqual(expect.arrayContaining(['capability_scans', 'capabilities']))
-    expect(runtime.db.schemaVersion).toBe(8)
+    expect(runtime.db.schemaVersion).toBe(9)
     void mkdirSync
   })
 })

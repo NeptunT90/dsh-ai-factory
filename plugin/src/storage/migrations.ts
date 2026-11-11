@@ -476,4 +476,43 @@ export const MIGRATIONS: readonly Migration[] = [
       END;
     `,
   },
+  {
+    version: 9,
+    name: 'safety policy, task trajectory and improvement candidates',
+    sql: `
+      ALTER TABLE agent_profiles ADD COLUMN egress TEXT NOT NULL DEFAULT 'none'
+        CHECK (egress IN ('none', 'read', 'write'));
+
+      CREATE TABLE task_steps (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        project_id TEXT NOT NULL,
+        seq INTEGER NOT NULL,
+        tool_name TEXT NOT NULL,
+        ok INTEGER NOT NULL,
+        error_code TEXT,
+        duration_ms INTEGER,
+        created_at INTEGER NOT NULL,
+        UNIQUE(task_id, seq)
+      );
+      CREATE INDEX ix_task_steps_task ON task_steps(task_id, seq);
+
+      CREATE TABLE improvement_candidates (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        source_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+        status TEXT NOT NULL CHECK (status IN ('DRAFT', 'REVIEW', 'APPROVED', 'REJECTED', 'WRITTEN')),
+        skill_id TEXT,
+        draft_markdown TEXT,
+        evidence TEXT NOT NULL DEFAULT '{}',
+        reviewer_verdict TEXT,
+        reviewer_notes TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        UNIQUE(project_id, source_task_id)
+      );
+      CREATE INDEX ix_improvement_candidates_project
+        ON improvement_candidates(project_id, status, updated_at DESC);
+    `,
+  },
 ]

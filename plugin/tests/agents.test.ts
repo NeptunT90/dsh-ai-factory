@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest'
 import { createTestRuntime, track } from './helpers.js'
 
 describe('AgentRegistry', () => {
-  it('seeds the nine built-in specialists idempotently', () => {
+  it('seeds the ten built-in specialists idempotently', () => {
     const { runtime } = track(createTestRuntime())
     const builtins = runtime.agents.list({ enabledOnly: true })
-    expect(builtins).toHaveLength(9)
+    expect(builtins).toHaveLength(10)
     expect(builtins.map((agent) => agent.role)).toEqual(
       expect.arrayContaining(['director', 'researcher', 'developer', 'sysadmin', 'analyst', 'executor', 'reviewer']),
     )
     runtime.agents.seedBuiltins()
-    expect(runtime.agents.count()).toBe(9)
+    expect(runtime.agents.count()).toBe(10)
   })
 
   it('creates, updates and disables a custom profile', () => {

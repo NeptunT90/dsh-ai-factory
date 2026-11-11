@@ -3,6 +3,7 @@ import { FactoryError, errorMessage } from './core/errors.js'
 import { Config, resolveConfig, type FactoryConfig } from './config.js'
 import { registerMemoryTools } from './memory/tools.js'
 import { FactoryRuntime, FACTORY_VERSION, type PluginLogger } from './runtime.js'
+import { workspaceRootOf } from './core/workspace.js'
 import { registerStatusTool } from './tools/status.js'
 import { registerAgentTools } from './agents/tools.js'
 import { registerTaskTools } from './tasks/tools.js'
@@ -21,6 +22,8 @@ import { registerSkillTools } from './skills/tools.js'
 import { registerCapabilityTools } from './capabilities/tools.js'
 import { registerBackupTools } from './backups/tools.js'
 import { registerKnowledgeTools } from './knowledge/tools.js'
+import { registerMetricsTool } from './metrics/tools.js'
+import { registerImprovementTools } from './improvement/tools.js'
 import { ConciergeService } from './concierge/service.js'
 
 export const name = 'dsh-ai-factory'
@@ -88,7 +91,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
     disposers.push(
       ctx.tools.guard((execution) => {
         if (!runtime || !execution.agent) return undefined
-        return runtime.toolDenial(execution.agent.id, execution.name)
+        return runtime.toolDenial(execution.agent.id, execution.name, execution.arguments, workspaceRootOf(execution as never))
       }),
     )
     disposers.push(registerStatusTool(ctx, () => runtime, () => startupError))
@@ -99,6 +102,8 @@ export function apply(ctx: Context, config: FactoryConfig): void {
       disposers.push(...registerCapabilityTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerBackupTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerKnowledgeTools(ctx, () => runtime, () => startupError))
+      disposers.push(registerMetricsTool(ctx, () => runtime, () => startupError))
+      disposers.push(...registerImprovementTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerTaskTools(ctx, () => runtime, () => startupError))
       disposers.push(...registerOrchestrationTools(ctx, () => runtime, () => startupError))
       disposers.push(registerDispatchTool(ctx, () => runtime, () => startupError))
@@ -114,7 +119,7 @@ export function apply(ctx: Context, config: FactoryConfig): void {
         level: 'info',
         data: {
           count: disposers.length - 1, // exclude the tool guard
-          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto', 'skills', 'capabilities', 'backups', 'knowledge', 'health'],
+          groups: ['status', 'memory', 'agents', 'tasks', 'orchestration', 'dispatch', 'dashboard', 'sync', 'review', 'workflow', 'models', 'auto', 'skills', 'capabilities', 'backups', 'knowledge', 'metrics', 'improvement', 'health'],
         },
       })
       logger.info(`[ai-factory] registered ${disposers.length} tools`)

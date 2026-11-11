@@ -430,7 +430,7 @@ Host inventory cache, separate from tool health and from tool permissions.
 - Status/stop intent is answered by appending a durable `assistant/message` surface event; the queued user copy is removed from the inbox.
 - Normal work instructions are not intercepted.
 - `agent.inbox`, `Session.append`, `followup` and `steer` are the DSH 0.2.2-rc.1 hooks used; no client-side button API was available.
-- Built-in CONCIERGE profile and deterministic listener; 9 built-ins, 57 tools, 141 tests.
+- Built-in CONCIERGE profile and deterministic listener; 10 built-ins, 65 tools, 162 tests.
 
 ### 7.5o. Knowledge Base (v0.27.0)
 
@@ -439,7 +439,14 @@ Host inventory cache, separate from tool health and from tool permissions.
 - incremental sha256 indexing, no auto scan, path/symlink limits;
 - FTS5 BM25 search; `trust: untrusted`; no embeddings yet;
 - 4 tools; search/list allowed to DIRECTOR/RESEARCHER/DEVELOPER/REVIEWER;
-- 61 plugin tools, 58 factory health tools / 66 actions, schema v8.
+- 65 plugin tools, 62 factory health tools / 70 actions, schema v9.
+
+### 7.5p. Autonomy and Self-Improvement (v0.28.0)
+
+- Enforced SAFE/AUTONOMOUS/TRUSTED and per-profile egress; argument-level SafetyPolicy.
+- Task tool metadata → `task_steps` → `factory_metrics`.
+- CURATOR + review-gated Self-Improvement; explicit apply only.
+- 65 tools, 10 built-ins, schema v9, 162 tests.
 
 ### 7.6. Sync client / outbox
 

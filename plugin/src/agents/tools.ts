@@ -34,6 +34,7 @@ const AGENT_OUTPUT = {
     allowedTools: { type: 'array', items: { type: 'string' }, required: true },
     skills: { type: 'array', items: { type: 'string' }, required: true },
     accessLevel: { type: 'string', required: true },
+    egress: { type: 'string', required: true },
     memoryScope: { type: 'string', required: true },
     limits: { type: 'json', required: true },
     enabled: { type: 'boolean', required: true },
@@ -59,6 +60,7 @@ function view(agent: AgentProfile): AgentView {
     allowedTools: [...agent.allowedTools],
     skills: [...agent.skills],
     accessLevel: agent.accessLevel,
+    egress: agent.egress,
     memoryScope: agent.memoryScope,
     limits: asJsonValue(agent.limits),
     enabled: agent.enabled,
@@ -83,6 +85,7 @@ interface AgentView {
   allowedTools: string[]
   skills: string[]
   accessLevel: string
+  egress: string
   memoryScope: string
   limits: JsonValue
   enabled: boolean
@@ -100,7 +103,7 @@ function asLimits(value: unknown): Partial<AgentLimits> | undefined {
 function formatAgent(agent: AgentView): string {
   return [
     `# ${agent.name} (${agent.role})${agent.enabled ? '' : ' — ОТКЛЮЧЁН'}`,
-    `${agent.title} · доступ: ${agent.accessLevel} · память: ${agent.memoryScope}`,
+    `${agent.title} · доступ: ${agent.accessLevel} · egress: ${agent.egress} · память: ${agent.memoryScope}`,
     agent.model ? `модель: ${agent.modelProvider ?? 'default'}/${agent.model}` : 'модель: по умолчанию',
     `лимиты: ${JSON.stringify(agent.limits)}`,
     `инструменты: ${agent.tools.join(', ') || '—'}`,
@@ -341,6 +344,7 @@ export function registerAgentTools(
           allowedTools: { type: 'array', items: { type: 'string' }, description: 'Точный allowlist инструментов ребёнка' },
           skills: { type: 'array', items: { type: 'string' }, description: 'Project-local skill ids для профиля' },
           accessLevel: { type: 'string', enum: ACCESS_LEVELS, description: 'Уровень доступа' },
+          egress: { type: 'string', enum: ['none', 'read', 'write'], description: 'Сетевой egress' },
           memoryScope: { type: 'string', enum: MEMORY_SCOPES, description: 'Доступ к памяти' },
           limits: { type: 'json', description: 'Лимиты: maxConcurrentTasks, maxAttempts, timeoutMs, autonomy' },
           enabled: { type: 'boolean', description: 'Включён ли профиль' },
@@ -370,6 +374,7 @@ export function registerAgentTools(
                 allowedTools: args.allowedTools,
                 skills: args.skills,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
+                egress: args.egress as 'none' | 'read' | 'write' | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,
                 enabled: args.enabled,
@@ -388,6 +393,7 @@ export function registerAgentTools(
                 allowedTools: args.allowedTools,
                 skills: args.skills,
                 accessLevel: args.accessLevel as AccessLevel | undefined,
+                egress: args.egress as 'none' | 'read' | 'write' | undefined,
                 memoryScope: args.memoryScope as AgentMemoryScope | undefined,
                 limits,
                 enabled: args.enabled,

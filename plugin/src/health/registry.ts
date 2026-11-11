@@ -44,6 +44,10 @@ export const TOOL_HEALTH_SPECS: readonly ToolHealthSpec[] = [
   { tool: 'factory_knowledge_search', action: '*', risk: 'R0', mode: 'probe', arguments: { query: 'factory' } },
   { tool: 'factory_knowledge_list', action: '*', risk: 'R0', mode: 'probe', arguments: {} },
   { tool: 'factory_knowledge_delete', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_metrics', action: '*', risk: 'R0', mode: 'probe', arguments: {} },
+  { tool: 'factory_improve_task', action: '*', risk: 'R1', mode: 'schema' },
+  { tool: 'factory_improve_list', action: '*', risk: 'R0', mode: 'probe', arguments: {} },
+  { tool: 'factory_improve_apply', action: '*', risk: 'R1', mode: 'schema' },
 
 
 

@@ -18,14 +18,14 @@
 ### Plugin
 
 ```
-Test Files  24 passed (24)
-Tests       146 passed (146)
+Test Files  32 passed (32)
+Tests       162 passed (162)
 ```
 
 Покрыто: миграции v1→v2→v3, FTS5, память, агенты, Task Engine, Planner,
 dispatch fake-service, dashboard auth/read-only, sync outbox/push/pull,
 offline/backoff, auth failure, auto-sync timer, reviewer/workflow, tool
-contract (61 инструмент).
+contract (65 инструментов).
 
 ### Sync server
 
@@ -77,17 +77,17 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
-### Knowledge Base (v0.27.0 live)
+### Knowledge Base (v0.28.0 live)
 
 - Indexed 3 files (md/json/txt) → `indexed: 3, failed: 0`.
 - Search "пароль" returned `trust=untrusted`.
 - List returned 3 INDEXED documents; delete removed one.
 - Other project had a READY task and 0 knowledge documents.
-- 146 plugin tests / 10 server; schema v8.
+- 162 plugin tests / 10 server; schema v9.
 
 ### Async CONCIERGE (v0.26.0)
 
-- 9 built-in profiles (CONCIERGE + REPAIRER); 57 tools; health 54/62.
+- 10 built-in profiles (+CURATOR); 65 tools; health 62/70.
 - Busy-stream simulation: status reply appended, queued message removed; stop cancels RUNNING task; normal work not intercepted.
 - 141 plugin tests / 10 server.
 
@@ -270,12 +270,12 @@ Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.27.0.tgz`: **257 026 байт**.
-- SHA256: `ed2247c8bc880287f63ccc411b8ef938049d22ef24eff3bb1465b36895997942`.
+- `dist/dsh-ai-factory-0.28.0.tgz`: **271 186 байт**, SHA256 `f86961736a4d6acab0e9c4b84bf3804d67cbd5a2391e9c7adea34231d8464cb9`.
+- SHA256: `см. ниже`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.26.0.md` (1 572 байта), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.28.0.md` (1 664 байта), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -287,7 +287,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 0.27.0; schema 8, 61 инструмент.
+- `portable-test` обновлён на 0.28.0; schema 9, 65 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

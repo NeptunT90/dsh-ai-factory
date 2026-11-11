@@ -87,6 +87,18 @@ export interface TaskListFilter {
   readonly limit?: number
 }
 
+export interface TaskStepRecord {
+  readonly id: string
+  readonly taskId: string
+  readonly projectId: string
+  readonly seq: number
+  readonly toolName: string
+  readonly ok: boolean
+  readonly errorCode: string | null
+  readonly durationMs: number | null
+  readonly createdAt: number
+}
+
 export interface TaskEvent {
   readonly id: string
   readonly taskId: string

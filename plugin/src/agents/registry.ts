@@ -5,6 +5,7 @@ import { BUILTIN_AGENTS } from './builtins.js'
 import {
   ACCESS_LEVELS,
   AGENT_ROLES,
+  EGRESS_LEVELS,
   DEFAULT_AGENT_LIMITS,
   MEMORY_SCOPES,
   type AccessLevel,
@@ -14,6 +15,7 @@ import {
   type AgentProfile,
   type AgentRole,
   type AgentUpdateInput,
+  type EgressLevel,
 } from './types.js'
 
 interface AgentRow {
@@ -30,6 +32,7 @@ interface AgentRow {
   allowed_tools: string
   skills: string
   access_level: AccessLevel
+  egress: EgressLevel
   memory_scope: AgentMemoryScope
   limits: string
   enabled: number
@@ -41,6 +44,7 @@ interface AgentRow {
 
 const ROLE_SET = new Set<string>(AGENT_ROLES)
 const ACCESS_SET = new Set<string>(ACCESS_LEVELS)
+const EGRESS_SET = new Set<string>(EGRESS_LEVELS)
 const MEMORY_SET = new Set<string>(MEMORY_SCOPES)
 
 function parseTools(text: string): string[] {
@@ -74,6 +78,12 @@ function normalizeLimits(input: Partial<AgentLimits> | undefined): AgentLimits {
   }
 }
 
+function builtinEgress(id: string): EgressLevel {
+  if (id === 'agt_director' || id === 'agt_researcher' || id === 'agt_executor') return 'read'
+  if (id === 'agt_sysadmin') return 'write'
+  return 'none'
+}
+
 function mapAgent(row: AgentRow): AgentProfile {
   return {
     id: row.id,
@@ -89,6 +99,7 @@ function mapAgent(row: AgentRow): AgentProfile {
     allowedTools: parseTools(row.allowed_tools),
     skills: parseTools(row.skills),
     accessLevel: row.access_level,
+    egress: row.egress ?? 'none',
     memoryScope: row.memory_scope,
     limits: normalizeLimits(JSON.parse(row.limits) as Partial<AgentLimits>),
     enabled: row.enabled === 1,
@@ -101,7 +112,7 @@ function mapAgent(row: AgentRow): AgentProfile {
 
 const SELECT = `
   SELECT id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, allowed_tools, skills, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, skills, access_level, egress, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at
   FROM agent_profiles`
 
@@ -116,9 +127,9 @@ export class AgentRegistry {
       this.db.run(
         `INSERT OR IGNORE INTO agent_profiles
           (id, name, role, title, description, system_instruction, model_provider, model,
-           reasoning_effort, tools, allowed_tools, access_level, memory_scope, limits, enabled, is_builtin,
+           reasoning_effort, tools, allowed_tools, access_level, egress, memory_scope, limits, enabled, is_builtin,
            version, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?)`,
         [
           agent.id,
           agent.name,
@@ -129,6 +140,7 @@ export class AgentRegistry {
           JSON.stringify(normalizeTools(agent.tools)),
           JSON.stringify(normalizeTools(agent.allowedTools)),
           agent.accessLevel ?? 'workspace',
+          agent.egress ?? builtinEgress(agent.id),
           agent.memoryScope ?? 'project',
           JSON.stringify(normalizeLimits(agent.limits)),
           agent.enabled === false ? 0 : 1,
@@ -141,13 +153,13 @@ export class AgentRegistry {
         [JSON.stringify(normalizeTools(agent.allowedTools)), agent.id],
       )
     }
-    const revision = '2026-11-11-knowledge-v1'
+    const revision = '2026-11-11-improvement-v1'
     const current = this.db.get<{ value: string }>("SELECT value FROM settings WHERE key = 'builtin_profiles_revision'")?.value
     if (current !== revision) {
       for (const agent of BUILTIN_AGENTS) {
         this.db.run(
           `UPDATE agent_profiles SET name = ?, role = ?, title = ?, description = ?, system_instruction = ?,
-             tools = ?, allowed_tools = ?, access_level = ?, memory_scope = ?, limits = ?, enabled = ?, updated_at = ?
+             tools = ?, allowed_tools = ?, access_level = ?, egress = ?, memory_scope = ?, limits = ?, enabled = ?, updated_at = ?
            WHERE id = ? AND is_builtin = 1`,
           [
             agent.name,
@@ -158,6 +170,7 @@ export class AgentRegistry {
             JSON.stringify(normalizeTools(agent.tools)),
             JSON.stringify(normalizeTools(agent.allowedTools)),
             agent.accessLevel ?? 'workspace',
+            agent.egress ?? builtinEgress(agent.id),
             agent.memoryScope ?? 'project',
             JSON.stringify(normalizeLimits(agent.limits)),
             agent.enabled === false ? 0 : 1,
@@ -209,6 +222,8 @@ export class AgentRegistry {
     if (!ROLE_SET.has(role)) throw new FactoryError('INVALID_INPUT', `Неизвестная роль: ${String(role)}`)
     const accessLevel = input.accessLevel ?? 'workspace'
     if (!ACCESS_SET.has(accessLevel)) throw new FactoryError('INVALID_INPUT', `Неизвестный уровень доступа: ${String(accessLevel)}`)
+    const egress = input.egress ?? 'none'
+    if (!EGRESS_SET.has(egress)) throw new FactoryError('INVALID_INPUT', `Неизвестный egress: ${String(egress)}`)
     const memoryScope = input.memoryScope ?? 'project'
     if (!MEMORY_SET.has(memoryScope)) throw new FactoryError('INVALID_INPUT', `Неизвестная область памяти: ${String(memoryScope)}`)
     const existing = this.db.get<{ id: string }>('SELECT id FROM agent_profiles WHERE name = ?', [name])
@@ -219,9 +234,9 @@ export class AgentRegistry {
     this.db.run(
       `INSERT INTO agent_profiles
         (id, name, role, title, description, system_instruction, model_provider, model,
-         reasoning_effort, tools, allowed_tools, skills, access_level, memory_scope, limits, enabled, is_builtin,
+         reasoning_effort, tools, allowed_tools, skills, access_level, egress, memory_scope, limits, enabled, is_builtin,
          version, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?)`,
       [
         id,
         name,
@@ -236,6 +251,7 @@ export class AgentRegistry {
         JSON.stringify(normalizeTools(input.allowedTools)),
         JSON.stringify(normalizeTools(input.skills)),
         accessLevel,
+        egress,
         memoryScope,
         JSON.stringify(normalizeLimits(input.limits)),
         input.enabled === false ? 0 : 1,
@@ -264,6 +280,8 @@ export class AgentRegistry {
     if (!ROLE_SET.has(role)) throw new FactoryError('INVALID_INPUT', `Неизвестная роль: ${String(role)}`)
     const accessLevel = input.accessLevel ?? current.accessLevel
     if (!ACCESS_SET.has(accessLevel)) throw new FactoryError('INVALID_INPUT', `Неизвестный уровень доступа: ${String(accessLevel)}`)
+    const egress = input.egress ?? current.egress
+    if (!EGRESS_SET.has(egress)) throw new FactoryError('INVALID_INPUT', `Неизвестный egress: ${String(egress)}`)
     const memoryScope = input.memoryScope ?? current.memoryScope
     if (!MEMORY_SET.has(memoryScope)) throw new FactoryError('INVALID_INPUT', `Неизвестная область памяти: ${String(memoryScope)}`)
     const limits = normalizeLimits(input.limits === undefined ? current.limits : { ...current.limits, ...input.limits })
@@ -272,7 +290,7 @@ export class AgentRegistry {
       `UPDATE agent_profiles
        SET name = ?, role = ?, title = ?, description = ?, system_instruction = ?,
            model_provider = ?, model = ?, reasoning_effort = ?, tools = ?, allowed_tools = ?, skills = ?, access_level = ?,
-           memory_scope = ?, limits = ?, enabled = ?, version = version + 1, updated_at = ?
+           egress = ?, memory_scope = ?, limits = ?, enabled = ?, version = version + 1, updated_at = ?
        WHERE id = ?`,
       [
         name,
@@ -287,6 +305,7 @@ export class AgentRegistry {
         JSON.stringify(input.allowedTools === undefined ? current.allowedTools : normalizeTools(input.allowedTools)),
         JSON.stringify(input.skills === undefined ? current.skills : normalizeTools(input.skills)),
         accessLevel,
+        egress,
         memoryScope,
         JSON.stringify(limits),
         (input.enabled === undefined ? current.enabled : input.enabled) ? 1 : 0,

@@ -12,6 +12,7 @@ import {
   AGENT_ROLES,
   MEMORY_SCOPES,
   type AccessLevel,
+  type EgressLevel,
   type AgentProfile,
   type AgentLimits,
   type AgentMemoryScope,
@@ -34,6 +35,7 @@ const PROFILE_KEYS = new Set([
   'allowedTools',
   'skills',
   'accessLevel',
+  'egress',
   'memoryScope',
   'limits',
   'enabled',
@@ -53,6 +55,7 @@ interface PortableProfile {
   allowedTools: string[]
   skills: string[]
   accessLevel: AccessLevel
+  egress: EgressLevel
   memoryScope: AgentMemoryScope
   limits: AgentLimits
   enabled: boolean
@@ -163,6 +166,7 @@ function portableProfile(profile: AgentProfile): PortableProfile {
     allowedTools: [...profile.allowedTools],
     skills: [...profile.skills],
     accessLevel: profile.accessLevel,
+    egress: profile.egress,
     memoryScope: profile.memoryScope,
     limits: { ...profile.limits },
     enabled: profile.enabled,
@@ -181,6 +185,10 @@ function parseProfile(raw: unknown): PortableProfile {
   }
   if (typeof raw.accessLevel !== 'string' || !(ACCESS_LEVELS as readonly string[]).includes(raw.accessLevel)) {
     throw new FactoryError('INVALID_INPUT', 'profile.accessLevel неизвестен')
+  }
+  const egress = raw.egress ?? 'none'
+  if (egress !== 'none' && egress !== 'read' && egress !== 'write') {
+    throw new FactoryError('INVALID_INPUT', 'profile.egress неизвестен')
   }
   if (typeof raw.memoryScope !== 'string' || !(MEMORY_SCOPES as readonly string[]).includes(raw.memoryScope)) {
     throw new FactoryError('INVALID_INPUT', 'profile.memoryScope неизвестен')
@@ -210,6 +218,7 @@ function parseProfile(raw: unknown): PortableProfile {
     allowedTools: stringArray(raw.allowedTools, 'profile.allowedTools'),
     skills: stringArray(raw.skills, 'profile.skills'),
     accessLevel: raw.accessLevel as AccessLevel,
+    egress: egress as EgressLevel,
     memoryScope: raw.memoryScope as AgentMemoryScope,
     limits: validateLimits(raw.limits),
     enabled: raw.enabled,
@@ -387,6 +396,7 @@ export class AgentMarketplaceService {
       allowedTools: profile.allowedTools,
       skills: profile.skills,
       accessLevel: profile.accessLevel,
+      egress: profile.egress,
       memoryScope: profile.memoryScope,
       limits: profile.limits,
       enabled: profile.enabled,
