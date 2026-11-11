@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.28.1 (Beta)
+- **Version:** 0.29.0 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
 - **Tool surface:** 65 tools
@@ -98,6 +98,12 @@ DIRECTOR is the human interface: it understands intent and calls
 not need to type tool names, JSON or task IDs. The prompt contains few-shot
 examples for remembering facts, reporting tasks and creating work.
 
+### CONCIERGE v2
+
+Independent in-process secretary: listens for `agent/inbox/spliced` before the
+busy DIRECTOR claims queued input, handles strict status/stop and `/concierge`,
+and never swallows work commands. No background LLM session in this release.
+
 ### Autonomy and Self-Improvement
 
 `limits.autonomy` is enforced (SAFE/AUTONOMOUS/TRUSTED), every profile has
@@ -166,7 +172,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.28.1.tgz
+  -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
 ```
 
 ### From source
@@ -240,7 +246,7 @@ pnpm verify          # typecheck + plugin tests + build
 pnpm --filter @dsh-ai-factory/sync-server test
 ```
 
-Current gate: **165 plugin tests** and **10 sync-server tests**. See
+Current gate: **169 plugin tests** and **10 sync-server tests**. See
 [TEST_REPORT.md](TEST_REPORT.md).
 
 ## Contributing
@@ -292,7 +298,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.28.1.tgz
+  -Tarball .\dist\dsh-ai-factory-0.29.0.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.

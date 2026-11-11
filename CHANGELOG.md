@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.29.0] — 2026-11-11
+
+### Added
+
+- CONCIERGE v2: `agent/inbox/spliced` router, root-only, strict intent allowlist, race-safe remove.
+- `/concierge` explicit channel, status/stop without LLM, audit events.
+- 169 tests; package 0.29.0.
+
 ## [0.28.1] — 2026-11-11
 
 ### Fixed

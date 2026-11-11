@@ -9,25 +9,36 @@ interface FakeMessage {
   source: { kind: string }
 }
 
-function fakeSession(projectRoot: string) {
+function fakeSession(projectRoot: string, options: { parentSession?: string | null; noAppend?: boolean; removeResult?: boolean } = {}) {
   const appended: Array<{ type: string; data: unknown; options: unknown }> = []
   const removed: string[] = []
+  const prepended: string[] = []
   const session = {
     id: 'ses_root',
-    header: { cwd: projectRoot },
+    header: { cwd: projectRoot, parentSession: options.parentSession === undefined ? null : options.parentSession },
     snapshotEvents() {
       return [
         { type: 'turn/start', data: { turn: 4 } },
         { type: 'step/start', data: { turn: 4, step: 2 } },
       ]
     },
-    append(type: string, data: unknown, options: unknown) {
-      appended.push({ type, data, options })
-      return 1
+    ...(options.noAppend ? {} : {
+      append(type: string, data: unknown, opts: unknown) {
+        appended.push({ type, data, options: opts })
+        return appended.length
+      },
+    }),
+    inbox: {
+      remove(id: string) {
+        removed.push(id)
+        return options.removeResult !== false
+      },
+      prepend(_target: string, value: { id: string }) {
+        prepended.push(value.id)
+      },
     },
-    inbox: { remove(id: string) { removed.push(id); return true } },
   }
-  return { session, appended, removed }
+  return { session, appended, removed, prepended }
 }
 
 function serviceFor(runtime: ReturnType<typeof createTestRuntime>['runtime'], agent: unknown): ConciergeService {
@@ -43,64 +54,105 @@ function serviceFor(runtime: ReturnType<typeof createTestRuntime>['runtime'], ag
   return new ConciergeService(ctx, runtime)
 }
 
-function userEvent(text: string, id = 'msg_user_1'): { type: string; data: FakeMessage } {
-  return { type: 'user/message', data: { id, content: [{ type: 'text', text }], source: { kind: 'user' } } }
+function inboxEvent(messages: FakeMessage[], target = 'next-turn'): { type: string; data: { target: string; inserted: FakeMessage[] } } {
+  return { type: 'agent/inbox/spliced', data: { target, inserted: messages } }
 }
 
-describe('CONCIERGE async chat', () => {
-  it('answers a status question while the root agent is busy and removes the queued message', () => {
+function message(text: string, id = 'msg_user_1'): FakeMessage {
+  return { id, content: [{ type: 'text', text }], source: { kind: 'user' } }
+}
+
+describe('CONCIERGE v2 async inbox', () => {
+  it('answers a status query while DIRECTOR is running and removes the inbox message', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)
     const task = runtime.tasks.create({ projectId, title: 'Run long tests' })
     runtime.tasks.claim(task.id, { owner: 'ses_other', leaseMs: 60_000 })
     const fake = fakeSession(project.rootPath)
     const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
-    serviceFor(runtime, agent).handle(fake.session, userEvent('Как дела?'))
-    expect(fake.appended).toHaveLength(1)
-    const appended = fake.appended[0]!
-    expect(appended.type).toBe('assistant/message')
-    expect(appended.options).toEqual({ surfaceOp: 'append' })
-    expect(JSON.stringify(appended.data)).toContain('RUNNING')
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Как дела?')]))
     expect(fake.removed).toEqual(['msg_user_1'])
+    expect(fake.appended).toHaveLength(1)
+    expect(fake.appended[0]!.type).toBe('assistant/message')
+    expect(fake.appended[0]!.options).toEqual({ surfaceOp: 'append' })
+    expect(JSON.stringify(fake.appended[0]!.data)).toContain('RUNNING')
   })
 
-  it('cancels a RUNNING task on a stop command', () => {
+  it('leaves the message to DIRECTOR when it is idle', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const fake = fakeSession(project.rootPath)
+    const agent = { id: 'ses_root', status: 'idle', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Как дела?')]))
+    expect(fake.removed).toEqual([])
+    expect(fake.appended).toHaveLength(0)
+  })
+
+  it('does not intercept work commands', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const fake = fakeSession(project.rootPath)
+    const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Напиши код на Python')]))
+    expect(fake.removed).toEqual([])
+    expect(fake.appended).toHaveLength(0)
+    expect(runtime.audit.recent(10).some((record) => record.event === 'concierge.skipped')).toBe(true)
+  })
+
+  it('does not answer a lost claim race', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const fake = fakeSession(project.rootPath, { removeResult: false })
+    const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Статус')]))
+    expect(fake.removed).toEqual(['msg_user_1'])
+    expect(fake.appended).toHaveLength(0)
+    expect(runtime.audit.recent(10).some((record) => record.event === 'concierge.race_lost')).toBe(true)
+  })
+
+  it('does not intercept a child session', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const fake = fakeSession(project.rootPath, { parentSession: 'ses_parent' })
+    const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Статус')]))
+    expect(fake.removed).toEqual([])
+    expect(fake.appended).toHaveLength(0)
+  })
+
+  it('always intercepts the explicit /concierge channel', () => {
+    const { runtime, projectId } = track(createTestRuntime())
+    const project = runtime.projects.require(projectId)
+    const fake = fakeSession(project.rootPath)
+    const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('/concierge напиши код')]))
+    expect(fake.removed).toEqual(['msg_user_1'])
+    expect(fake.appended).toHaveLength(1)
+    expect(JSON.stringify(fake.appended[0]!.data)).toContain('Секретарь на связи')
+  })
+
+  it('cancels a RUNNING task on an exact stop command', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)
     const task = runtime.tasks.create({ projectId, title: 'Long task' })
     runtime.tasks.claim(task.id, { owner: 'ses_other', leaseMs: 60_000 })
     const fake = fakeSession(project.rootPath)
     const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
-    serviceFor(runtime, agent).handle(fake.session, userEvent('Стоп'))
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Стоп')]))
     expect(runtime.tasks.require(task.id).status).toBe('CANCELLED')
+    expect(fake.removed).toEqual(['msg_user_1'])
     expect(fake.appended).toHaveLength(1)
     expect(JSON.stringify(fake.appended[0]!.data)).toContain('Останавливаю')
   })
 
-  it('keeps the inbox message when the session has no append method', () => {
+  it('keeps the inbox message when append is unavailable', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)
-    const removed: string[] = []
-    const session = {
-      id: 'ses_root',
-      header: { cwd: project.rootPath },
-      snapshotEvents() { return [] },
-      inbox: { remove(id: string) { removed.push(id); return true } },
-    }
-    const agent = { id: 'ses_root', status: 'running', session, inbox: session.inbox }
-    serviceFor(runtime, agent).handle(session, userEvent('Как дела?'))
-    expect(removed).toEqual([])
-  })
-
-  it('does not intercept a normal work message or a non-running agent', () => {
-    const { runtime, projectId } = track(createTestRuntime())
-    const project = runtime.projects.require(projectId)
-    const fake = fakeSession(project.rootPath)
-    const busy = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
-    serviceFor(runtime, busy).handle(fake.session, userEvent('Сделай рефакторинг модуля'))
-    expect(fake.appended).toHaveLength(0)
-    const idle = { ...busy, status: 'idle' }
-    serviceFor(runtime, idle).handle(fake.session, userEvent('Как дела?'))
-    expect(fake.appended).toHaveLength(0)
+    const fake = fakeSession(project.rootPath, { noAppend: true })
+    const agent = { id: 'ses_root', status: 'running', session: fake.session, inbox: fake.session.inbox }
+    serviceFor(runtime, agent).handle(fake.session, inboxEvent([message('Как дела?')]))
+    expect(fake.removed).toEqual(['msg_user_1'])
+    expect(fake.prepended).toEqual(['msg_user_1'])
+    expect(runtime.audit.recent(10).some((record) => record.event === 'concierge.failed')).toBe(true)
   })
 })

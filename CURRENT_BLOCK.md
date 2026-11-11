@@ -1,6 +1,6 @@
 # Текущий блок
 
-**PHASE 1–5 + Autonomy + Self-Improvement (v0.28.1 Beta).**
+**PHASE 1–5 + Autonomy + Self-Improvement (v0.29.0 Beta).**
 
 1. Crash Recovery: REPAIRER, `scripts/watchdog.ps1`, startup recovery task, idempotency.
 2. Human feedback: `factory_task_tell`, active child followup, metadata fallback.
