@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { assertNoSecrets, detectSecrets, injectionMarkers, redactSecrets } from '../src/core/security.js'
 
 describe('security', () => {
+  const fakeGithubToken = 'ghp_' + 'a'.repeat(36)
+  const fakeApiKey = 'sk-' + 'a'.repeat(36)
   it('detects common credentials without returning the value', () => {
-    const findings = detectSecrets('token = ghp_abcdefghijklmnopqrstuvwxyz0123456789')
+    const findings = detectSecrets(`token = ${fakeGithubToken}`)
     expect(findings.map((f) => f.name)).toContain('github_token')
     expect(JSON.stringify(findings)).not.toContain('ghp_')
   })
@@ -14,8 +16,8 @@ describe('security', () => {
   })
 
   it('throws on secrets and redacts them', () => {
-    expect(() => assertNoSecrets('sk-abcdefghijklmnopqrstuvwxyz123456', 'content')).toThrowError(/секрет/)
-    expect(redactSecrets('sk-abcdefghijklmnopqrstuvwxyz123456')).toBe('[REDACTED]')
+    expect(() => assertNoSecrets(fakeApiKey, 'content')).toThrowError(/секрет/)
+    expect(redactSecrets(fakeApiKey)).toBe('[REDACTED]')
   })
 
   it('flags possible prompt-injection text without acting on it', () => {

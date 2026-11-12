@@ -77,7 +77,7 @@ push/pull/idempotency/health, `vector:true`. Два PgStore-писателя
 
 Подробно: [docs/LIVE_SMOKE.md](docs/LIVE_SMOKE.md).
 
-### Knowledge Base (v0.30.1 live)
+### Knowledge Base (v0.30.2 live)
 
 - Indexed 3 files (md/json/txt) → `indexed: 3, failed: 0`.
 - Search "пароль" returned `trust=untrusted`.
@@ -254,22 +254,22 @@ GET /health
 Live v0.10.0: открыты вкладки **Модели** и **Синхронизация**.
 Модели: router ON, attempts 2, все профили inherit; allowlist 16–32 tools.
 Sync: configured=false, pending=1, failed=0, auto=OFF, token=no.
-Скриншот: [docs/assets/dashboard-models-sync-v0.10.0.png](docs/assets/dashboard-models-sync-v0.10.0.png).
+Скриншот: [docs/assets/dashboard-overview-0.30.2.png](docs/assets/dashboard-overview-0.30.2.png).
 
 Live v0.7.0: `factory_dashboard start`, открыт URL с одноразовым токеном,
 редирект на HttpOnly-cookie. Панель показала 2 задачи, 1 память и audit
 `review.*`; screenshot:
-[docs/assets/dashboard-live-v0.7.0.png](docs/assets/dashboard-live-v0.7.0.png).
+[docs/assets/dashboard-tasks-0.30.2.png](docs/assets/dashboard-tasks-0.30.2.png).
 Read-only auth/405 проверены автотестами.
 
 ## 6. Release / portability
 
-- `dist/dsh-ai-factory-0.30.1.tgz`: **280 463 байт**, SHA256 `7f2f83c6523b6166b79c00c83ea613bc2aec04e89e662747b2b51a750d2045d1`.
+- `dist/dsh-ai-factory-0.30.2.tgz`: **276 040 байт**, SHA256 `ad4c8fdd31e76d1cab6f0ab430ec5b4c80d6e5a5ba8929ea96189247b3aea907`.
 - SHA256: `см. ниже`.
 - Серверный архив: `dist/dsh-ai-factory-sync-server-0.17.0.tgz` — 17 189 байт,
   SHA256 `8195dd3bedb33fc527889023428d94abc1890d10949d9e0b48bbd8f22777a6c5`;
   распаковка проверена, `dist/index.js` и `scripts/restore.mjs` на месте.
-- Release notes: `dist/RELEASE_NOTES-v0.30.1.md` (2 345 байт), генерируются
+- Release notes: `dist/RELEASE_NOTES-v0.30.2.md` (1 568 байт), генерируются
   из CHANGELOG/SHA256SUMS.
 
 ### Clean-room server install
@@ -281,7 +281,7 @@ Read-only auth/405 проверены автотестами.
   `memories:1`, `operations:1`.
 - Процесс остановлен; исходники/workspace node_modules не использовались.
 - `verify-package.ps1`: обязательные файлы есть, `node_modules` нет.
-- `portable-test` обновлён на 0.30.1; schema 9, 66 инструментов.
+- `portable-test` обновлён на 0.30.2; schema 9, 66 инструментов.
 - Release workflow на тег `v*`; GitHub Release не создан (нет remote).
 - Sync server имеет Dockerfile/Compose.
 

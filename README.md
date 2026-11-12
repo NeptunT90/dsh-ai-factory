@@ -7,7 +7,7 @@ official `ctx.tools` contract, keeps state in a local SQLite database, and
 survives DSH restarts. It is designed for one operator working on one or more
 local projects — not as a hosted SaaS.
 
-- **Version:** 0.30.1 (Beta)
+- **Version:** 0.30.2 (Beta)
 - **DSH target:** Desktop 0.2.2-rc.1
 - **Schema:** v9
 - **Tool surface:** 66 tools
@@ -16,6 +16,12 @@ local projects — not as a hosted SaaS.
 > Status: Phase 1 core is implemented and tested end-to-end in a live DSH
 > process. The optional sync server is a separate package and is not required
 > for local operation.
+
+## Screenshots
+
+![AI Factory overview](docs/assets/dashboard-overview-0.30.2.png)
+
+![AI Factory task engine](docs/assets/dashboard-tasks-0.30.2.png)
 
 ## Why AI Factory?
 
@@ -170,7 +176,7 @@ environment variable. The server is not required for local operation.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.30.1.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.2.tgz
 ```
 
 ### From source
@@ -296,7 +302,7 @@ DeepSeek Harness Desktop.
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File scripts/install.ps1 `
   -Profile desktop `
-  -Tarball .\dist\dsh-ai-factory-0.30.1.tgz
+  -Tarball .\dist\dsh-ai-factory-0.30.2.tgz
 ```
 
 После установки перезапустите DSH Desktop и вызовите `factory_status`.

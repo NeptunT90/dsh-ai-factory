@@ -87,11 +87,12 @@ describe('factory_task_tell', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)
     const task = runtime.tasks.create({ projectId, title: 'Feedback security' })
+    const fakeGithubToken = 'ghp_' + 'a'.repeat(36)
     const tools = toolsFor(runtime)
     const root = fakeExec('ses_root', project.rootPath)
     await expect(tools.get('factory_task_tell')!.execute({ taskId: task.id, message: '' }, root)).rejects.toMatchObject({ code: 'INVALID_INPUT' })
     await expect(
-      tools.get('factory_task_tell')!.execute({ taskId: task.id, message: 'token = ghp_abcdefghijklmnopqrstuvwxyz0123456789' }, root),
+      tools.get('factory_task_tell')!.execute({ taskId: task.id, message: `token = ${fakeGithubToken}` }, root),
     ).rejects.toMatchObject({ code: 'SECRET_DETECTED' })
     runtime.allowToolsForChild('ses_child', ['factory_task_tell'])
     await expect(

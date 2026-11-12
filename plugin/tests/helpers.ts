@@ -22,6 +22,7 @@ export function testConfig(dataDir: string, overrides: Partial<FactoryConfig> = 
     logLevel: 'info',
     syncUrl: '',
     syncTokenEnv: 'DSH_AI_FACTORY_SYNC_TOKEN',
+    syncTokenFile: '',
     syncDeviceId: '',
     syncBatchSize: 50,
     syncTimeoutMs: 15_000,

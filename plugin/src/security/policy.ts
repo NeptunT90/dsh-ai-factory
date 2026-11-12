@@ -176,7 +176,10 @@ export function evaluateSafety(input: SafetyInput): SafetyDenial | undefined {
   if (tool === 'factory_sync') {
     const action = record(args).action
     if ((action === 'push' || action === 'pull' || action === 'sync') && input.egress !== 'write') {
-      return deny('egress_write_required', 'factory_sync push/pull требует egress write')
+      // The root operator is explicitly syncing an already configured private-LAN server.
+      if (input.accessLevel !== 'trusted') {
+        return deny('egress_write_required', 'factory_sync push/pull требует egress write')
+      }
     }
   }
 

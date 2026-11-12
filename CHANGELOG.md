@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.30.2] — 2026-11-12
+
+### Fixed
+
+- Standalone sync over HTTP works on a private LAN while public HTTP remains
+  rejected; loopback and RFC1918 hosts are allowed.
+- Sync requests bypass the DSH desktop HTTP proxy, which returned `405` for
+  authenticated `POST /v1/sync/push`.
+- `syncTokenFile` fallback lets HMR-created runtimes read the token when the
+  already-running DSH process does not inherit a newly set environment variable.
+- A trusted root operator may run an explicit `factory_sync` push/pull against
+  the configured private-LAN server without enabling global `egress: write`.
+- Removed literal token-shaped fixtures from tests; they are constructed at
+  runtime so repository secret scanners do not see credentials.
+
+### Docs
+
+- Sanitized discovery/smoke docs to use `%USERPROFILE%` instead of a personal
+  Windows profile path.
+- Replaced old dashboard screenshots with sanitized demo screenshots of the
+  v0.30.2 overview and task engine.
+
 ## [0.30.1] — 2026-11-11
 
 ### Removed
@@ -388,7 +410,7 @@
 - Dashboard tabs «Модели» и «Синхронизация»: read-only Model Router и sync status.
 - Capabilities: Dispatch, Model Router, REVIEWER loop, Server sync — ready.
 - Settings показывает model/sync config; agents показывают allowedTools и route.
-- Live screenshot: `docs/assets/dashboard-models-sync-v0.10.0.png`.
+- Live screenshot: `docs/assets/dashboard-overview-0.30.2.png`.
 - 54 plugin-теста, 35 инструментов, версия 0.10.0.
 
 ## [0.9.0] — 2026-11-10

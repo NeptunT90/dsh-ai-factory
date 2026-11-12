@@ -2,7 +2,7 @@
 
 Дата исследования: 2026-11-10  
 Целевая платформа: DeepSeek Harness Desktop **0.2.2-rc.1**  
-Профиль: `desktop` (`C:\Users\drgnu\.dsh\profiles\desktop`)
+Профиль: `desktop` (`%USERPROFILE%\.dsh\profiles\desktop`)
 
 Документ фиксирует только проверенные факты. Всё, что не удалось подтвердить
 экспериментом, вынесено в раздел «Открытые вопросы»; неподтверждённые API не
@@ -12,7 +12,7 @@
 
 | Факт | Проверенное значение |
 |---|---|
-| Приложение | `C:\Users\drgnu\AppData\Local\Programs\DeepSeek Harness` |
+| Приложение | `%USERPROFILE%\AppData\Local\Programs\DeepSeek Harness` |
 | Версия Desktop | `0.2.2-rc.1` (`resources/runtime/primary-runtime/runtime.json`) |
 | Версия Electron | 44.7.0 (`version` в каталоге приложения) |
 | Node.js хоста | **24.21.0** (поставляется в primary-runtime) |
@@ -26,7 +26,7 @@
 Проверенная команда:
 
 ```powershell
-& "C:\Users\drgnu\AppData\Local\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" --version
+& "%USERPROFILE%\AppData\Local\Programs\DeepSeek Harness\resources\runtime\cli\bin\dsh.cmd" --version
 # 0.2.2-rc.1
 ```
 

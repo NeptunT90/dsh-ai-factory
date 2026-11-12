@@ -1,4 +1,7 @@
-import type { ResolvedConfig } from '../config.js'
+import { readFileSync } from 'node:fs'
+import { Agent as HttpAgent, request as httpRequest } from 'node:http'
+import { Agent as HttpsAgent, request as httpsRequest } from 'node:https'
+import { expandPath, type ResolvedConfig } from '../config.js'
 import { FactoryError, errorMessage } from '../core/errors.js'
 import { newId, now } from '../core/ids.js'
 import type { AuditLog } from '../core/audit.js'
@@ -43,6 +46,13 @@ function isLoopback(hostname: string): boolean {
   return hostname === '127.0.0.1' || hostname === 'localhost' || hostname === '::1' || hostname === '[::1]'
 }
 
+function isPrivateLanHost(hostname: string): boolean {
+  const octets = hostname.split('.').map((part) => Number(part))
+  if (octets.length !== 4 || octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false
+  const [first, second] = octets
+  return first === 10 || (first === 172 && second !== undefined && second >= 16 && second <= 31) || (first === 192 && second === 168)
+}
+
 function normalizeBaseUrl(raw: string): string {
   let url: URL
   try {
@@ -53,8 +63,8 @@ function normalizeBaseUrl(raw: string): string {
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
     throw new FactoryError('INVALID_INPUT', 'syncUrl должен быть http(s)')
   }
-  if (url.protocol === 'http:' && !isLoopback(url.hostname)) {
-    throw new FactoryError('INVALID_INPUT', 'HTTP sync разрешён только для loopback; используйте HTTPS')
+  if (url.protocol === 'http:' && !isLoopback(url.hostname) && !isPrivateLanHost(url.hostname)) {
+    throw new FactoryError('INVALID_INPUT', 'HTTP sync разрешён только для loopback/private LAN; используйте HTTPS')
   }
   return url.toString().replace(/\/+$/, '')
 }
@@ -313,7 +323,17 @@ export class SyncService {
     const envName = this.config.syncTokenEnv.trim()
     if (envName === '') return undefined
     const token = process.env[envName]?.trim()
-    return token && token !== '' ? token : undefined
+    if (token && token !== '') return token
+    const tokenFile = this.config.syncTokenFile.trim()
+    if (tokenFile !== '') {
+      try {
+        const fromFile = readFileSync(expandPath(tokenFile), 'utf8').trim()
+        if (fromFile !== '') return fromFile
+      } catch {
+        // Fall through to the normal missing-token error.
+      }
+    }
+    return undefined
   }
 
   private requireToken(): string {
@@ -338,20 +358,41 @@ export class SyncService {
     token: string,
     init: RequestInit,
   ): Promise<T> {
-    const response = await fetch(`${base}${path}`, {
-      ...init,
-      headers: {
-        ...(init.headers ?? {}),
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
-      signal: AbortSignal.timeout(this.config.syncTimeoutMs),
-    })
-    if (!response.ok) {
-      const text = await response.text().catch(() => '')
-      throw new FactoryError('UNAVAILABLE', `Sync server ${response.status}: ${text.slice(0, 300)}`)
+    const target = new URL(`${base}${path}`)
+    // DSH enables NODE_USE_ENV_PROXY; private-LAN sync must bypass the desktop HTTP proxy.
+    const noProxy = process.env.NO_PROXY ?? process.env.no_proxy ?? ''
+    if (!noProxy.split(',').map((item) => item.trim()).includes(target.hostname)) {
+      process.env.NO_PROXY = [noProxy, target.hostname].filter(Boolean).join(',')
+      process.env.no_proxy = process.env.NO_PROXY
     }
-    return (await response.json()) as T
+    const headers: Record<string, string> = {
+      ...(init.headers as Record<string, string> | undefined),
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json',
+    }
+    const body = typeof init.body === 'string' ? init.body : undefined
+    const response = await new Promise<{ status: number; text: string }>((resolve, reject) => {
+      const requestFn = target.protocol === 'https:' ? httpsRequest : httpRequest
+      const agent = target.protocol === 'https:' ? new HttpsAgent({ keepAlive: false }) : new HttpAgent({ keepAlive: false })
+      const req = requestFn(target, { method: init.method ?? 'GET', headers, agent }, (res) => {
+        const chunks: Buffer[] = []
+        res.on('data', (chunk: Buffer) => chunks.push(Buffer.from(chunk)))
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, text: Buffer.concat(chunks).toString('utf8') }))
+        res.on('error', reject)
+      })
+      req.setTimeout(this.config.syncTimeoutMs, () => req.destroy(new Error('sync request timeout')))
+      req.on('error', reject)
+      if (body !== undefined) req.write(body)
+      req.end()
+    })
+    if (response.status < 200 || response.status >= 300) {
+      throw new FactoryError('UNAVAILABLE', `Sync server ${response.status}: ${response.text.slice(0, 300)}`)
+    }
+    try {
+      return JSON.parse(response.text) as T
+    } catch {
+      throw new FactoryError('UNAVAILABLE', 'Sync server returned invalid JSON')
+    }
   }
 
   private getState(key: string): string | undefined {

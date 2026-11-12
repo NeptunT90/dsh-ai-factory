@@ -2,7 +2,7 @@
 
 Обновлено: 2026-11-11.
 
-## Сделано — v0.30.1
+## Сделано — v0.30.2
 
 - Knowledge Base: FTS5, PDF/DOCX, symlink hardening (`INVALID_PATH`).
 - SafetyPolicy: SAFE/AUTONOMOUS/TRUSTED, egress, argument-level guard.
@@ -12,5 +12,5 @@
 
 ## Следующая очередь
 
-- GitHub Releases для v0.30.1.
+- GitHub Releases для v0.30.2.
 - Live-проверка symlink на Windows junction (юнит-тест уже покрывает).

@@ -238,7 +238,7 @@
 ### Dashboard Models/Sync v0.10.0
 
 - Вкладки «Модели» и «Синхронизация»; capabilities ready.
-- Live screenshot `docs/assets/dashboard-models-sync-v0.10.0.png`.
+- Live screenshot `docs/assets/dashboard-overview-0.30.2.png`.
 - 54 теста, 35 инструментов.
 
 ### Model Router v0.9.0

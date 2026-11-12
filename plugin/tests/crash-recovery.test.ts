@@ -13,6 +13,7 @@ describe('crash recovery', () => {
     const { runtime, projectId } = track(createTestRuntime())
     const project = runtime.projects.require(projectId)
     const reportPath = join(runtime.config.resolvedDataDir, 'crash-report.json')
+    const fakeGithubToken = 'ghp_' + 'a'.repeat(36)
     writeReport(reportPath, {
       format: 'factory.crash/v1',
       detectedAt: '2026-11-11T07:00:00.000Z',
@@ -20,7 +21,7 @@ describe('crash recovery', () => {
       exitCode: 1,
       reason: 'DSH process exited',
       restartCount: 2,
-      logTail: 'fatal error: token = ghp_abcdefghijklmnopqrstuvwxyz0123456789',
+      logTail: `fatal error: token = ${fakeGithubToken}`,
       handled: false,
     })
 
@@ -32,7 +33,7 @@ describe('crash recovery', () => {
     expect(task.createdBy).toBe('agt_director')
     expect(task.status).toBe('READY')
     expect(task.title).toContain('Crash recovery')
-    expect(task.description).not.toContain('ghp_abcdefghijklmnopqrstuvwxyz0123456789')
+    expect(task.description).not.toContain(fakeGithubToken)
     expect(task.description).toContain('[REDACTED]')
     expect(task.metadata.crashReport).toMatchObject({ exitCode: 1, restartCount: 2 })
 

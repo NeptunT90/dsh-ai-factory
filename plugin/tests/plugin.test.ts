@@ -192,10 +192,11 @@ describe('plugin mount', () => {
   })
 
   it('reports a clean tool error when a secret is written', async () => {
+    const fakeGithubToken = 'ghp_' + 'a'.repeat(36)
     const harness = createHarness()
     const remember = harness.tools.get('factory_memory_remember')!
     await expect(
-      remember.execute({ content: 'ghp_abcdefghijklmnopqrstuvwxyz0123456789' }, fakeExec(harness.workspace) as never),
+      remember.execute({ content: fakeGithubToken }, fakeExec(harness.workspace) as never),
     ).rejects.toThrowError(/секрет/)
   })
 

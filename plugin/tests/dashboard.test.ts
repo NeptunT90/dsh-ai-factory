@@ -51,7 +51,7 @@ describe('DashboardServer', () => {
       models: { enabled: boolean; maxAttempts: number; fallbacks: string[] }
       sync: { configured: boolean; auto: boolean; pending: number; failed: number }
     }
-    expect(state.overview.version).toBe('0.30.1')
+    expect(state.overview.version).toBe('0.30.2')
     expect(state.overview.agents).toBe(9)
     expect(state.overview.tasks.total).toBeGreaterThanOrEqual(1)
     expect(state.agents).toHaveLength(9)

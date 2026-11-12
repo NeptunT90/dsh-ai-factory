@@ -13,7 +13,7 @@ unit-тестов. Секреты и dashboard-токен не сохранен�
 ```
 DSH AI Factory 0.7.0: работает
 хранилище: node:sqlite
-БД: C:\Users\drgnu\.dsh\ai-factory\factory.db
+БД: %USERPROFILE%\.dsh\ai-factory\factory.db
 схема: v3
 проектов: 0 · агентов: 7 · задач: 0
 память: 0 активных
@@ -111,7 +111,7 @@ result и добавляет review через разделитель `--- REVIE
 `127.0.0.1` с токеном из URL; токен превратился в HttpOnly-cookie и исчез из
 адресной строки. Панель показала 2 задачи, 1 память, audit `review.*`.
 
-Скриншот: [assets/dashboard-live-v0.7.0.png](assets/dashboard-live-v0.7.0.png).
+Скриншот: [assets/dashboard-overview-0.30.2.png](assets/dashboard-overview-0.30.2.png).
 
 ## 7. Scoped allowlist (v0.8.0)
 

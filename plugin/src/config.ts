@@ -42,6 +42,8 @@ export interface FactoryConfig {
   syncUrl: string
   /** Environment variable that stores the sync bearer token; never put the token in config. */
   syncTokenEnv: string
+  /** Optional local file fallback for hosts that do not inherit the env variable (HMR). */
+  syncTokenFile: string
   /** Stable device id; empty = generated and persisted locally. */
   syncDeviceId: string
   /** Maximum operations per push request. */
@@ -100,6 +102,7 @@ export const Config = Schema.object({
   logLevel: Schema.union(LOG_LEVELS).default('info'),
   syncUrl: Schema.string().default(''),
   syncTokenEnv: Schema.string().default('DSH_AI_FACTORY_SYNC_TOKEN'),
+  syncTokenFile: Schema.string().default(''),
   syncDeviceId: Schema.string().default(''),
   syncBatchSize: Schema.number().min(1).max(200).default(50),
   syncTimeoutMs: Schema.number().min(1000).max(60_000).default(15_000),

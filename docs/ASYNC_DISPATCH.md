@@ -1,6 +1,6 @@
 # Async Dispatch, Notifications and factory_run
 
-Версия: **0.30.0**.
+Версия: **0.30.2**.
 
 ## Что изменилось
 

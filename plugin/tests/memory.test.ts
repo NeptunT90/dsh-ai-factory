@@ -72,10 +72,11 @@ describe('MemoryEngine', () => {
   })
 
   it('rejects credentials before they reach the store', () => {
+    const fakeApiKey = 'sk-' + 'a'.repeat(36)
     const { runtime, projectId } = track(createTestRuntime())
     expect(() =>
       runtime.memory.remember({
-        content: 'ключ: sk-abcdefghijklmnopqrstuvwxyz123456',
+        content: `ключ: ${fakeApiKey}`,
         kind: 'semantic',
         projectId,
       }),
