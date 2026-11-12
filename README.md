@@ -164,8 +164,9 @@ Overview, Agents, Tasks, Memory, Audit, Models, Sync, Tools and Settings.
 ### Optional sync
 
 A local outbox and `factory_sync` (status/push/pull) can synchronize memory to
-the optional PGlite/PostgreSQL server in `server/`. The token comes only from an
-environment variable. The server is not required for local operation.
+the optional PGlite/PostgreSQL server in `server/`. The token comes from
+`syncTokenEnv` or an optional local `syncTokenFile`. The server is not required
+for local operation.
 
 ## Install
 
@@ -196,7 +197,7 @@ factory_status
 ```
 
 Expected fields: `status: ready`, `driver: node:sqlite`, `schemaVersion: 9`,
-`agents: 10` built-in profiles.
+`agents: 9` built-in profiles.
 
 ## Configuration
 
@@ -211,6 +212,7 @@ All options have safe defaults. The most important ones:
 | `capabilityScanEnabled` | `false` | No automatic capability scans |
 | `capabilityProbeMode` | `off` | Filesystem-only detection |
 | `syncTokenEnv` | `DSH_AI_FACTORY_SYNC_TOKEN` | Sync token env var name |
+| `syncTokenFile` | `""` | Optional token file fallback for HMR-created runtimes |
 
 There is no API key in the config. Never put a token in a JSON config,
 `.agents` profile or memory entry.
